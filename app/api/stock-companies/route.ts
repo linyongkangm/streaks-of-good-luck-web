@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import type { StockCompanyListResponse } from '@/types'
 
 // GET /api/stock-companies - 获取所有股票公司信息
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse<StockCompanyListResponse | { error: string }>> {
   try {
     const searchParams = request.nextUrl.searchParams
     const code = searchParams.get('code')

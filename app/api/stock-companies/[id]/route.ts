@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import type { StockCompanyDetailResponse, ApiError } from '@/types'
 
 // GET /api/stock-companies/[id] - 获取单个股票公司信息
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
-) {
+): Promise<NextResponse<StockCompanyDetailResponse | ApiError>> {
   try {
     const id = parseInt(params.id)
 
@@ -34,7 +35,7 @@ export async function GET(
       )
     }
 
-    return NextResponse.json(company)
+    return NextResponse.json({ data: company })
   } catch (error) {
     console.error('获取公司信息失败:', error)
     return NextResponse.json(

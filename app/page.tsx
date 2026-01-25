@@ -1,30 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-interface StockCompany {
-  id: number;
-  company_name: string;
-  company_code: string;
-  company_akshare_code: string;
-  industry: string | null;
-  ipo_date: string | null;
-  create_time: string;
-  update_time: string;
-}
-
-interface ApiResponse {
-  data: StockCompany[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
+import type { info__stock_company, StockCompanyListResponse } from "@/types";
 
 export default function Home() {
-  const [companies, setCompanies] = useState<StockCompany[]>([]);
+  const [companies, setCompanies] = useState<info__stock_company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,7 +18,7 @@ export default function Home() {
           throw new Error('获取数据失败');
         }
 
-        const result: ApiResponse = await response.json();
+        const result: StockCompanyListResponse = await response.json();
         setCompanies(result.data);
       } catch (err) {
         setError(err instanceof Error ? err.message : '未知错误');
