@@ -1,0 +1,267 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model indicator__company_finance {
+  id                                             BigInt              @id @default(autoincrement())
+  company_id                                     Int                 @db.UnsignedInt
+  report_date                                    DateTime            @db.Date
+  diluted_eps                                    Decimal?            @db.Decimal(12, 4)
+  weighted_eps                                   Decimal?            @db.Decimal(12, 4)
+  adjusted_eps                                   Decimal?            @db.Decimal(12, 4)
+  eps_after_deducting_non_recurring_items        Decimal?            @db.Decimal(12, 4)
+  net_asset_per_share_before_adjustment          Decimal?            @db.Decimal(12, 4)
+  net_asset_per_share_after_adjustment           Decimal?            @db.Decimal(12, 4)
+  operating_cash_flow_per_share                  Decimal?            @db.Decimal(12, 4)
+  capital_reserve_per_share                      Decimal?            @db.Decimal(12, 4)
+  undistributed_profit_per_share                 Decimal?            @db.Decimal(12, 4)
+  adjusted_net_asset_per_share                   Decimal?            @db.Decimal(12, 4)
+  total_asset_profit_rate                        Decimal?            @db.Decimal(10, 2)
+  main_business_profit_rate                      Decimal?            @db.Decimal(10, 2)
+  total_asset_net_profit_rate                    Decimal?            @db.Decimal(10, 2)
+  cost_expense_profit_rate                       Decimal?            @db.Decimal(10, 2)
+  operating_profit_rate                          Decimal?            @db.Decimal(10, 2)
+  main_business_cost_rate                        Decimal?            @db.Decimal(10, 2)
+  net_profit_margin                              Decimal?            @db.Decimal(10, 2)
+  share_capital_return_rate                      Decimal?            @db.Decimal(10, 2)
+  net_asset_return_rate                          Decimal?            @db.Decimal(10, 2)
+  asset_return_rate                              Decimal?            @db.Decimal(10, 2)
+  gross_profit_margin                            Decimal?            @db.Decimal(10, 2)
+  three_expenses_ratio                           Decimal?            @db.Decimal(10, 2)
+  non_main_business_ratio                        Decimal?            @db.Decimal(10, 2)
+  main_business_profit_ratio                     Decimal?            @db.Decimal(10, 2)
+  dividend_payout_ratio                          Decimal?            @db.Decimal(10, 2)
+  investment_return_rate                         Decimal?            @db.Decimal(10, 2)
+  main_business_profit                           Decimal?            @db.Decimal(20, 2)
+  roe                                            Decimal?            @db.Decimal(10, 2)
+  weighted_roe                                   Decimal?            @db.Decimal(10, 2)
+  net_profit_after_deducting_non_recurring_items Decimal?            @db.Decimal(20, 2)
+  main_business_revenue_growth_rate              Decimal?            @db.Decimal(10, 2)
+  net_profit_growth_rate                         Decimal?            @db.Decimal(10, 2)
+  net_asset_growth_rate                          Decimal?            @db.Decimal(10, 2)
+  total_asset_growth_rate                        Decimal?            @db.Decimal(10, 2)
+  accounts_receivable_turnover                   Decimal?            @db.Decimal(10, 2)
+  accounts_receivable_turnover_days              Decimal?            @db.Decimal(10, 2)
+  inventory_turnover_days                        Decimal?            @db.Decimal(10, 2)
+  inventory_turnover                             Decimal?            @db.Decimal(10, 2)
+  fixed_asset_turnover                           Decimal?            @db.Decimal(10, 2)
+  total_asset_turnover                           Decimal?            @db.Decimal(10, 2)
+  total_asset_turnover_days                      Decimal?            @db.Decimal(10, 2)
+  current_asset_turnover                         Decimal?            @db.Decimal(10, 2)
+  current_asset_turnover_days                    Decimal?            @db.Decimal(10, 2)
+  shareholders_equity_turnover                   Decimal?            @db.Decimal(10, 2)
+  current_ratio                                  Decimal?            @db.Decimal(10, 2)
+  quick_ratio                                    Decimal?            @db.Decimal(10, 2)
+  cash_ratio                                     Decimal?            @db.Decimal(10, 2)
+  interest_coverage_ratio                        Decimal?            @db.Decimal(10, 2)
+  long_term_debt_to_working_capital_ratio        Decimal?            @db.Decimal(10, 2)
+  shareholders_equity_ratio                      Decimal?            @db.Decimal(10, 2)
+  long_term_liability_ratio                      Decimal?            @db.Decimal(10, 2)
+  shareholders_equity_to_fixed_asset_ratio       Decimal?            @db.Decimal(10, 2)
+  liability_to_equity_ratio                      Decimal?            @db.Decimal(10, 2)
+  long_term_asset_to_long_term_fund_ratio        Decimal?            @db.Decimal(10, 2)
+  capitalization_ratio                           Decimal?            @db.Decimal(10, 2)
+  net_fixed_asset_ratio                          Decimal?            @db.Decimal(10, 2)
+  capital_fixation_ratio                         Decimal?            @db.Decimal(10, 2)
+  debt_to_equity_ratio                           Decimal?            @db.Decimal(10, 2)
+  liquidation_value_ratio                        Decimal?            @db.Decimal(10, 2)
+  fixed_asset_ratio                              Decimal?            @db.Decimal(10, 2)
+  asset_liability_ratio                          Decimal?            @db.Decimal(10, 2)
+  total_assets                                   Decimal?            @db.Decimal(20, 2)
+  operating_cash_flow_to_revenue_ratio           Decimal?            @db.Decimal(10, 2)
+  operating_cash_flow_return_on_assets           Decimal?            @db.Decimal(10, 2)
+  operating_cash_flow_to_net_profit_ratio        Decimal?            @db.Decimal(10, 2)
+  operating_cash_flow_to_liability_ratio         Decimal?            @db.Decimal(10, 2)
+  cash_flow_ratio                                Decimal?            @db.Decimal(10, 2)
+  short_term_stock_investment                    Decimal?            @db.Decimal(20, 2)
+  short_term_bond_investment                     Decimal?            @db.Decimal(20, 2)
+  short_term_other_operating_investment          Decimal?            @db.Decimal(20, 2)
+  long_term_stock_investment                     Decimal?            @db.Decimal(20, 2)
+  long_term_bond_investment                      Decimal?            @db.Decimal(20, 2)
+  long_term_other_operating_investment           Decimal?            @db.Decimal(20, 2)
+  accounts_receivable_within_1_year              Decimal?            @db.Decimal(20, 2)
+  accounts_receivable_1_to_2_years               Decimal?            @db.Decimal(20, 2)
+  accounts_receivable_2_to_3_years               Decimal?            @db.Decimal(20, 2)
+  accounts_receivable_over_3_years               Decimal?            @db.Decimal(20, 2)
+  prepaid_fees_within_1_year                     Decimal?            @db.Decimal(20, 2)
+  prepaid_fees_1_to_2_years                      Decimal?            @db.Decimal(20, 2)
+  prepaid_fees_2_to_3_years                      Decimal?            @db.Decimal(20, 2)
+  prepaid_fees_over_3_years                      Decimal?            @db.Decimal(20, 2)
+  other_receivables_within_1_year                Decimal?            @db.Decimal(20, 2)
+  other_receivables_1_to_2_years                 Decimal?            @db.Decimal(20, 2)
+  other_receivables_2_to_3_years                 Decimal?            @db.Decimal(20, 2)
+  other_receivables_over_3_years                 Decimal?            @db.Decimal(20, 2)
+  create_time                                    DateTime?           @default(now()) @db.DateTime(0)
+  update_time                                    DateTime?           @default(now()) @db.DateTime(0)
+  info__stock_company                            info__stock_company @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "indicator__company_finance_ibfk_1")
+
+  @@unique([company_id, report_date], map: "uk_company_date")
+  @@index([report_date], map: "idx_report_date")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model info__industry_analysis {
+  id                                Int                                 @id @default(autoincrement()) @db.UnsignedInt
+  title                             String                              @db.VarChar(50)
+  summary                           String                              @db.Text
+  publisher                         String?                             @db.VarChar(50)
+  author                            String?                             @db.VarChar(50)
+  original_file                     String?                             @db.VarChar(512)
+  ai_model_version                  String?                             @db.VarChar(50)
+  create_time                       DateTime?                           @default(now()) @db.DateTime(0)
+  update_time                       DateTime?                           @default(now()) @db.DateTime(0)
+  original_url                      String?                             @db.VarChar(512)
+  report_time                       DateTime?                           @db.DateTime(0)
+  relation__board_industry_analysis relation__board_industry_analysis[]
+
+  @@index([create_time], map: "idx_create_time")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model info__stock_board {
+  id                                Int                                 @id @default(autoincrement()) @db.UnsignedInt
+  board_name                        String                              @unique(map: "idx_board_name") @db.VarChar(50)
+  create_time                       DateTime                            @default(now()) @db.DateTime(0)
+  update_time                       DateTime                            @default(now()) @db.DateTime(0)
+  relation__board_industry_analysis relation__board_industry_analysis[]
+  relation__stock_board_company     relation__stock_board_company[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model info__stock_company {
+  id                             Int                              @id @default(autoincrement()) @db.UnsignedInt
+  company_name                   String                           @unique(map: "idx_company_name") @db.VarChar(50)
+  company_code                   String                           @unique(map: "idx_company_code") @db.VarChar(20)
+  company_akshare_code           String                           @unique(map: "idx_company_akshare_code") @db.VarChar(20)
+  create_time                    DateTime                         @default(now()) @db.DateTime(0)
+  update_time                    DateTime                         @default(now()) @db.DateTime(0)
+  industry                       String?                          @db.VarChar(20)
+  ipo_date                       DateTime?                        @db.Date
+  indicator__company_finance     indicator__company_finance[]
+  quote__stock_constituent_daily quote__stock_constituent_daily[]
+  relation__stock_board_company  relation__stock_board_company[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model info__tweet {
+  id            BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  tweet_id      String   @unique(map: "uk_tweet_id") @db.VarChar(64)
+  user_name     String   @db.VarChar(128)
+  tweet_date    DateTime @db.DateTime(0)
+  tweet_text    String   @db.Text
+  reply_count   String   @db.VarChar(20)
+  retweet_count String   @db.VarChar(20)
+  like_count    String   @db.VarChar(20)
+  view_count    String   @db.VarChar(20)
+  tweet_url     String   @db.VarChar(512)
+  tweet_from    String   @db.VarChar(32)
+  collect_from  String   @db.VarChar(512)
+  create_time   DateTime @default(now()) @db.DateTime(0)
+  update_time   DateTime @default(now()) @db.DateTime(0)
+
+  @@index([tweet_date], map: "idx_tweet_date")
+  @@index([user_name], map: "idx_user_name")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model quote__stock_constituent_daily {
+  id                      BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
+  company_id              Int                 @db.UnsignedInt
+  trade_date              DateTime            @db.Date
+  volume                  BigInt
+  turnover                Decimal             @db.Decimal(18, 2)
+  turnover_rate           Decimal             @db.Decimal(6, 3)
+  open_price              Decimal             @db.Decimal(10, 2)
+  close_price             Decimal             @db.Decimal(10, 2)
+  high_price              Decimal             @db.Decimal(10, 2)
+  low_price               Decimal             @db.Decimal(10, 2)
+  change_amt              Decimal             @db.Decimal(10, 2)
+  change_percent          Decimal             @db.Decimal(5, 2)
+  price_range             Decimal             @db.Decimal(10, 2)
+  backward_open_price     Decimal             @db.Decimal(10, 2)
+  backward_close_price    Decimal             @db.Decimal(10, 2)
+  backward_high_price     Decimal             @db.Decimal(10, 2)
+  backward_low_price      Decimal             @db.Decimal(10, 2)
+  backward_change_amt     Decimal             @db.Decimal(10, 2)
+  backward_change_percent Decimal             @db.Decimal(5, 2)
+  backward_price_range    Decimal             @db.Decimal(10, 2)
+  forward_open_price      Decimal             @db.Decimal(10, 2)
+  forward_close_price     Decimal             @db.Decimal(10, 2)
+  forward_high_price      Decimal             @db.Decimal(10, 2)
+  forward_low_price       Decimal             @db.Decimal(10, 2)
+  forward_change_amt      Decimal             @db.Decimal(10, 2)
+  forward_change_percent  Decimal             @db.Decimal(5, 2)
+  forward_price_range     Decimal             @db.Decimal(10, 2)
+  create_time             DateTime            @default(now()) @db.DateTime(0)
+  update_time             DateTime            @default(now()) @db.DateTime(0)
+  info__stock_company     info__stock_company @relation(fields: [company_id], references: [id], map: "fk_quote_company_id")
+
+  @@unique([company_id, trade_date], map: "uk_company_trade_date")
+  @@index([trade_date], map: "idx_trade_date")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model relation__board_industry_analysis {
+  id                      Int                     @id @default(autoincrement()) @db.UnsignedInt
+  board_id                Int                     @db.UnsignedInt
+  industry_analysis_id    Int                     @db.UnsignedInt
+  update_time             DateTime                @default(now()) @db.DateTime(0)
+  create_time             DateTime                @default(now()) @db.DateTime(0)
+  info__stock_board       info__stock_board       @relation(fields: [board_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "relation__stock_board_industry_analysis_ibfk_1")
+  info__industry_analysis info__industry_analysis @relation(fields: [industry_analysis_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "relation__stock_board_industry_analysis_ibfk_2")
+
+  @@unique([board_id, industry_analysis_id], map: "board_id_industry_analysis_id")
+  @@index([board_id], map: "board_id")
+  @@index([industry_analysis_id], map: "industry_analysis_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model relation__stock_board_company {
+  id                  Int                 @id @default(autoincrement()) @db.UnsignedInt
+  company_id          Int                 @db.UnsignedInt
+  weight              Decimal             @default(0.00) @db.Decimal(5, 2)
+  update_time         DateTime            @default(now()) @db.DateTime(0)
+  board_id            Int                 @db.UnsignedInt
+  create_time         DateTime            @default(now()) @db.DateTime(0)
+  info__stock_board   info__stock_board   @relation(fields: [board_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "relation__stock_board_company_ibfk_1")
+  info__stock_company info__stock_company @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "relation__stock_board_company_ibfk_2")
+
+  @@unique([company_id, board_id], map: "company_id")
+  @@index([board_id], map: "board_id")
+  @@index([company_id], map: "company_id_2")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model summary__article {
+  id          BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  title       String    @db.VarChar(255)
+  summary     String    @db.Text
+  source_url  String    @unique(map: "uk_source_url") @db.VarChar(512)
+  tags        String?   @db.VarChar(255)
+  create_time DateTime  @default(now()) @db.DateTime(0)
+  update_time DateTime  @default(now()) @db.DateTime(0)
+  publication String?   @db.VarChar(20)
+  issue_date  DateTime? @db.Date
+
+  @@index([tags], map: "idx_tags")
+  @@index([title], map: "idx_title")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model summary__tweet {
+  id           Int      @id @default(autoincrement()) @db.UnsignedInt
+  collect_from String   @db.VarChar(128)
+  summary      String   @db.Text
+  create_time  DateTime @default(now()) @db.DateTime(0)
+  update_time  DateTime @default(now()) @db.DateTime(0)
+  date         DateTime @db.Date
+
+  @@unique([collect_from, date], map: "collect_from")
+  @@index([collect_from], map: "idx_collect_from")
+  @@index([date], map: "idx_date")
+}
