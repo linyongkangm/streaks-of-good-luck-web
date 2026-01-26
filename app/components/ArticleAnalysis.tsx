@@ -155,11 +155,6 @@ export default function ArticleAnalysis() {
                     查看原文
                     <span className="group-hover:translate-x-1 transition-transform">→</span>
                   </a>
-
-                  <div className="text-xs text-slate-400 flex items-center gap-1">
-                    <span>🕐</span>
-                    {new Date(article.create_time).toLocaleDateString('zh-CN')}
-                  </div>
                 </div>
               </div>
             </div>
