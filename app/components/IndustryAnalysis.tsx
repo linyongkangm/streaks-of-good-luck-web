@@ -205,19 +205,36 @@ export default function IndustryAnalysis() {
               <span className="text-lg">+</span>
             </button>
             <button className='p-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 transition-all shadow-md' onClick={async () => {
-              const response = await fetch("/api/run-luck", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
+              const response = await fetch('/api/run-luck', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+
                 body: JSON.stringify({
-                  commandName: "analyze-tweet",
-                  params: {
+                  commandName: 'analyze-tweet', params: {
                     url: 'https://x.com/elonmusk', date: '2026-01-25'
-                  },
-                }),
-              });
-              console.log(await response.json())
+                  }
+                })
+              })
+              const reader = response.body?.getReader()
+              const decoder = new TextDecoder()
+
+              while (true) {
+                const { done, value } = await reader!.read()
+                if (done) break
+
+                const chunk = decoder.decode(value)
+                const lines = chunk.split('\n')
+
+                for (const line of lines) {
+                  if (line.startsWith('data: ')) {
+                    const data = JSON.parse(line.slice(6))
+                    // data.type 可能是: 'stdout', 'stderr', 'close', 'error'
+                    // data.data 是实际输出内容
+                    // data.code 是退出码（当 type='close' 时）
+                    console.log(data)
+                  }
+                }
+              }
             }}>测试run-luck</button>
           </div>
           <div className="space-y-2 max-h-[calc(100vh-250px)] overflow-y-auto scrollbar-thin pr-2">
