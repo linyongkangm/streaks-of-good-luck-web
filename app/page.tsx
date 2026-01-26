@@ -16,54 +16,38 @@ export default function Home() {
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-lg sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto">
           <div className="flex px-6">
-            <button
-              onClick={() => setActiveTab('industry')}
-              className={`px-6 py-3 font-medium transition-all relative ${
-                activeTab === 'industry'
-                  ? 'text-blue-600'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <span className="relative z-10">🏢 行业分析</span>
-              {activeTab === 'industry' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-500" />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('tweet')}
-              className={`px-6 py-3 font-medium transition-all relative ${
-                activeTab === 'tweet'
-                  ? 'text-blue-600'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <span className="relative z-10">💬 推文分析</span>
-              {activeTab === 'tweet' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-500" />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('article')}
-              className={`px-6 py-3 font-medium transition-all relative ${
-                activeTab === 'article'
-                  ? 'text-blue-600'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <span className="relative z-10">📄 文章分析</span>
-              {activeTab === 'article' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-500" />
-              )}
-            </button>
+            {[
+              { id: 'industry' as const, icon: '🏢', label: '行业分析' },
+              { id: 'tweet' as const, icon: '💬', label: '推文分析' },
+              { id: 'article' as const, icon: '📄', label: '文章分析' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-6 py-3 font-medium transition-all relative ${activeTab === tab.id
+                    ? 'text-blue-600'
+                    : 'text-slate-600 hover:text-slate-900'
+                  }`}
+              >
+                <span className="relative z-10">{tab.icon} {tab.label}</span>
+                {activeTab === tab.id && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-500" />
+                )}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
       {/* 内容区域 */}
       <div>
-        {activeTab === 'industry' && <IndustryAnalysis />}
-        {activeTab === 'tweet' && <TweetAnalysis />}
-        {activeTab === 'article' && <ArticleAnalysis />}
+        {[
+          { id: 'industry' as const, component: IndustryAnalysis },
+          { id: 'tweet' as const, component: TweetAnalysis },
+          { id: 'article' as const, component: ArticleAnalysis }
+        ].map(({ id, component: Component }) => (
+          activeTab === id && <Component key={id} />
+        ))}
       </div>
     </div>
   );
