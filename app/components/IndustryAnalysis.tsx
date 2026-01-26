@@ -204,6 +204,21 @@ export default function IndustryAnalysis() {
             >
               <span className="text-lg">+</span>
             </button>
+            <button className='p-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 transition-all shadow-md' onClick={async () => {
+              const response = await fetch("/api/run-luck", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  commandName: "analyze-tweet",
+                  params: {
+                    url: 'https://x.com/elonmusk', date: '2026-01-25'
+                  },
+                }),
+              });
+              console.log(await response.json())
+            }}>测试run-luck</button>
           </div>
           <div className="space-y-2 max-h-[calc(100vh-250px)] overflow-y-auto scrollbar-thin pr-2">
             {boards.map((board) => (
