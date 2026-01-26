@@ -224,10 +224,10 @@ model relation__board_industry_analysis {
 model relation__stock_board_company {
   id                  Int                 @id @default(autoincrement()) @db.UnsignedInt
   company_id          Int                 @db.UnsignedInt
-  weight              Decimal             @default(0.00) @db.Decimal(5, 2)
   update_time         DateTime            @default(now()) @db.DateTime(0)
   board_id            Int                 @db.UnsignedInt
   create_time         DateTime            @default(now()) @db.DateTime(0)
+  weight              Int                 @default(0) @db.UnsignedInt
   info__stock_board   info__stock_board   @relation(fields: [board_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "relation__stock_board_company_ibfk_1")
   info__stock_company info__stock_company @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "relation__stock_board_company_ibfk_2")
 

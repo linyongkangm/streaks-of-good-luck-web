@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use, useMemo } from 'react'
 import type {
   info__stock_board,
   StockBoardWithRelations,
@@ -26,7 +26,10 @@ export default function IndustryAnalysis() {
   const [allCompanies, setAllCompanies] = useState<info__stock_company[]>([])
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null)
   const [newCompanyWeight, setNewCompanyWeight] = useState('0')
-
+  const totalWeight = useMemo(() => {
+    if (!selectedBoard) return 0
+    return selectedBoard.relation__stock_board_company.reduce((sum, company) => sum + Number(company.weight), 0)
+  }, [selectedBoard])
   useEffect(() => {
     fetchBoards()
     fetchAllCompanies()
@@ -243,7 +246,7 @@ export default function IndustryAnalysis() {
                     type="text"
                     value={editBoardName}
                     onChange={(e) => setEditBoardName(e.target.value)}
-                    className="flex-1 text-3xl font-bold px-3 py-2 border-2 border-blue-500 rounded-lg focus:outline-none"
+                    className="text-slate-900 flex-1 text-3xl font-bold px-3 py-2 border-2 border-blue-500 rounded-lg focus:outline-none"
                   />
                   <button
                     onClick={handleUpdateBoard}
@@ -322,8 +325,8 @@ export default function IndustryAnalysis() {
                                 type="number"
                                 value={editWeightValue}
                                 onChange={(e) => setEditWeightValue(e.target.value)}
-                                className="w-20 px-2 py-1 border-2 border-blue-500 rounded"
-                                step="0.01"
+                                className="text-slate-900 w-20 px-2 py-1 border-2 border-blue-500 rounded"
+                                step="1"
                               />
                               <button
                                 onClick={() => handleUpdateWeight(relation.id, editWeightValue)}
@@ -346,7 +349,7 @@ export default function IndustryAnalysis() {
                               }}
                               className="inline-flex items-center px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 font-medium hover:bg-blue-200"
                             >
-                              {relation.weight.toString()}% ✏️
+                              {((Number(relation.weight) / totalWeight) * 100).toFixed(2)}% ✏️
                             </button>
                           )}
                         </td>
@@ -441,7 +444,7 @@ export default function IndustryAnalysis() {
               value={newBoardName}
               onChange={(e) => setNewBoardName(e.target.value)}
               placeholder="输入板块名称"
-              className="w-full px-4 py-2 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:outline-none mb-4"
+              className="text-slate-900 w-full px-4 py-2 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:outline-none mb-4"
               onKeyPress={(e) => e.key === 'Enter' && handleAddBoard()}
             />
             <div className="flex gap-3">
@@ -477,7 +480,7 @@ export default function IndustryAnalysis() {
               <select
                 value={selectedCompanyId || ''}
                 onChange={(e) => setSelectedCompanyId(Number(e.target.value))}
-                className="w-full px-4 py-2 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:outline-none"
+                className="text-slate-900 w-full px-4 py-2 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:outline-none"
               >
                 <option value="">请选择公司</option>
                 {allCompanies
@@ -499,9 +502,9 @@ export default function IndustryAnalysis() {
                 type="number"
                 value={newCompanyWeight}
                 onChange={(e) => setNewCompanyWeight(e.target.value)}
-                placeholder="0.00"
-                step="0.01"
-                className="w-full px-4 py-2 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:outline-none"
+                placeholder="0"
+                step="1"
+                className="text-slate-900 w-full px-4 py-2 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:outline-none"
               />
             </div>
             <div className="flex gap-3">
