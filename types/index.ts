@@ -1,4 +1,4 @@
-import { info__stock_company, indicator__company_finance } from '@prisma/client'
+import { info__stock_company, indicator__company_finance, info__tweet } from '@prisma/client'
 
 // 导出 Prisma 生成的所有类型
 export {
@@ -6,6 +6,7 @@ export {
   type indicator__company_finance,
   type quote__stock_constituent_daily,
   type relation__stock_board_company,
+  type info__tweet,
 } from '@prisma/client'
 
 // API 响应类型
@@ -32,3 +33,48 @@ export interface StockCompanyWithFinance extends info__stock_company {
 }
 
 export type StockCompanyDetailResponse = ApiResponse<StockCompanyWithFinance>
+
+// 推文列表响应
+export type TweetListResponse = ApiResponse<info__tweet[]>
+
+// 推文详情响应
+export type TweetDetailResponse = ApiResponse<info__tweet>
+
+// 创建推文请求体
+export interface CreateTweetRequest {
+  tweet_id: string
+  user_name: string
+  tweet_date: string | Date
+  tweet_text: string
+  reply_count?: string
+  retweet_count?: string
+  like_count?: string
+  view_count?: string
+  tweet_url: string
+  tweet_from: string
+  collect_from: string
+}
+
+// 更新推文请求体
+export interface UpdateTweetRequest {
+  user_name?: string
+  tweet_date?: string | Date
+  tweet_text?: string
+  reply_count?: string
+  retweet_count?: string
+  like_count?: string
+  view_count?: string
+  tweet_url?: string
+  tweet_from?: string
+  collect_from?: string
+}
+
+// 推文查询参数
+export interface TweetQueryParams {
+  user_name?: string
+  tweet_from?: string
+  start_date?: string
+  end_date?: string
+  page?: number
+  limit?: number
+}

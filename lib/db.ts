@@ -17,3 +17,10 @@ export const prisma =
   })
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+
+// 修复 BigInt 序列化问题
+// 将 BigInt 转换为字符串以便 JSON.stringify 可以处理
+// @ts-ignore
+BigInt.prototype.toJSON = function () {
+  return this.toString()
+}
