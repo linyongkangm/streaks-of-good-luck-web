@@ -43,110 +43,162 @@ export default function ArticleAnalysis() {
     fetchArticles()
   }
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch()
+    }
+  }
+
   if (loading) {
-    return <div className="p-6">加载中...</div>
+    return (
+      <div className="flex items-center justify-center p-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+      </div>
+    )
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <h2 className="text-2xl font-bold">文章分析</h2>
+    <div className="p-6 max-w-[1600px] mx-auto">
+      <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          📄 文章分析
+        </h2>
 
-      {/* 搜索栏 */}
-      <div className="flex gap-4">
-        <input
-          type="text"
-          placeholder="搜索标题..."
-          value={searchTitle}
-          onChange={(e) => setSearchTitle(e.target.value)}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded"
-        />
-        <input
-          type="text"
-          placeholder="搜索标签..."
-          value={searchTags}
-          onChange={(e) => setSearchTags(e.target.value)}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded"
-        />
-        <button
-          onClick={handleSearch}
-          className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          搜索
-        </button>
+        {/* 搜索栏 */}
+        <div className="flex gap-4">
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              placeholder="🔍 搜索标题..."
+              value={searchTitle}
+              onChange={(e) => setSearchTitle(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="w-full px-4 py-3 pl-10 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+            />
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+          </div>
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              placeholder="🏷️ 搜索标签..."
+              value={searchTags}
+              onChange={(e) => setSearchTags(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="w-full px-4 py-3 pl-10 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+            />
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🏷️</span>
+          </div>
+          <button
+            onClick={handleSearch}
+            className="px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg font-medium"
+          >
+            搜索
+          </button>
+        </div>
       </div>
 
       {/* 文章列表 */}
       <div className="space-y-4">
         {articles.map((article) => (
-          <div key={article.id} className="border border-gray-200 rounded p-6 hover:shadow-lg transition">
-            <h3 className="text-lg font-semibold mb-2">{article.title}</h3>
-            
-            <div className="flex gap-4 text-sm text-gray-600 mb-3">
-              {article.publication && (
-                <span>出版物: {article.publication}</span>
-              )}
-              {article.issue_date && (
-                <span>发布日期: {new Date(article.issue_date).toLocaleDateString()}</span>
-              )}
-            </div>
-
-            {article.tags && (
-              <div className="flex gap-2 mb-3 flex-wrap">
-                {article.tags.split(',').map((tag, idx) => (
-                  <span
-                    key={idx}
-                    className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded"
-                  >
-                    {tag.trim()}
-                  </span>
-                ))}
+          <div
+            key={article.id}
+            className="bg-white border-2 border-slate-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-xl transition-all duration-200"
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white text-xl">
+                📄
               </div>
-            )}
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-bold text-slate-900 mb-3 hover:text-blue-600 transition-colors">
+                  {article.title}
+                </h3>
+                
+                <div className="flex flex-wrap gap-3 mb-3">
+                  {article.publication && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                      <span>📰</span>
+                      {article.publication}
+                    </span>
+                  )}
+                  {article.issue_date && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                      <span>📅</span>
+                      {new Date(article.issue_date).toLocaleDateString('zh-CN')}
+                    </span>
+                  )}
+                </div>
 
-            <p className="text-sm mb-4 whitespace-pre-wrap line-clamp-4">
-              {article.summary}
-            </p>
+                {article.tags && (
+                  <div className="flex gap-2 mb-4 flex-wrap">
+                    {article.tags.split(',').map((tag, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs rounded-md font-medium hover:bg-slate-200 transition-colors"
+                      >
+                        #{tag.trim()}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
-            <a
-              href={article.source_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500 hover:underline text-sm"
-            >
-              查看原文 →
-            </a>
+                <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap mb-4 line-clamp-4">
+                  {article.summary}
+                </p>
 
-            <div className="text-xs text-gray-400 mt-3">
-              创建时间: {new Date(article.create_time).toLocaleString()}
+                <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+                  <a
+                    href={article.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm group"
+                  >
+                    查看原文
+                    <span className="group-hover:translate-x-1 transition-transform">→</span>
+                  </a>
+
+                  <div className="text-xs text-slate-400 flex items-center gap-1">
+                    <span>🕐</span>
+                    {new Date(article.create_time).toLocaleDateString('zh-CN')}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         ))}
 
         {articles.length === 0 && (
-          <p className="text-center text-gray-500 py-10">暂无文章</p>
+          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl shadow-lg">
+            <div className="text-6xl mb-4">📭</div>
+            <p className="text-slate-500 text-lg">暂无文章</p>
+          </div>
         )}
       </div>
 
       {/* 分页 */}
-      <div className="flex justify-center gap-2">
-        <button
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page === 1}
-          className="px-4 py-2 border rounded disabled:opacity-50 hover:bg-gray-50"
-        >
-          上一页
-        </button>
-        <span className="px-4 py-2">
-          第 {page} / {totalPages} 页
-        </span>
-        <button
-          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-          disabled={page === totalPages}
-          className="px-4 py-2 border rounded disabled:opacity-50 hover:bg-gray-50"
-        >
-          下一页
-        </button>
-      </div>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-8">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-5 py-2.5 rounded-lg border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 hover:border-slate-300 transition-all font-medium"
+          >
+            ← 上一页
+          </button>
+          <div className="flex items-center gap-2">
+            <span className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg font-medium shadow-md">
+              {page}
+            </span>
+            <span className="text-slate-500">/ {totalPages}</span>
+          </div>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="px-5 py-2.5 rounded-lg border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 hover:border-slate-300 transition-all font-medium"
+          >
+            下一页 →
+          </button>
+        </div>
+      )}
     </div>
   )
 }
