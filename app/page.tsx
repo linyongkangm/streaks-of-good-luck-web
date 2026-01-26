@@ -15,11 +15,6 @@ export default function Home() {
       {/* 标签页导航 */}
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-lg sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between px-6 py-2">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              数据分析平台
-            </h1>
-          </div>
           <div className="flex px-6">
             <button
               onClick={() => setActiveTab('industry')}
