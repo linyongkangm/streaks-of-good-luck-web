@@ -60,7 +60,7 @@ export default function TweetAnalysis() {
     <div className="grid grid-cols-12 gap-6 p-6 max-w-[1800px] mx-auto">
       {/* 左侧：推文摘要列表 */}
       <div className="col-span-4">
-        <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
+        <div className="bg-white rounded-xl shadow-lg p-6 sticky">
           <h2 className="text-xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
             推文摘要
           </h2>

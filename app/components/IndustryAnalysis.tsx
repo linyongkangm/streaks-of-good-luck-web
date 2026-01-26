@@ -192,7 +192,7 @@ export default function IndustryAnalysis() {
     <div className="grid grid-cols-12 gap-6 p-6 max-w-[1800px] mx-auto">
       {/* 左侧：行业板块列表 */}
       <div className="col-span-3">
-        <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
+        <div className="bg-white rounded-xl shadow-lg p-6 sticky">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               行业板块
