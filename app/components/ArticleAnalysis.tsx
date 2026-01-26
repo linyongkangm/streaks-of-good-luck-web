@@ -69,22 +69,22 @@ export default function ArticleAnalysis() {
           <div className="flex-1 relative">
             <input
               type="text"
-              placeholder="🔍 搜索标题..."
+              placeholder="搜索标题..."
               value={searchTitle}
               onChange={(e) => setSearchTitle(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="w-full px-4 py-3 pl-10 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+              className="text-slate-900 w-full px-4 py-3 pl-10 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
             />
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
           </div>
           <div className="flex-1 relative">
             <input
               type="text"
-              placeholder="🏷️ 搜索标签..."
+              placeholder="搜索标签..."
               value={searchTags}
               onChange={(e) => setSearchTags(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="w-full px-4 py-3 pl-10 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+              className="text-slate-900 w-full px-4 py-3 pl-10 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
             />
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🏷️</span>
           </div>
@@ -141,7 +141,7 @@ export default function ArticleAnalysis() {
                   </div>
                 )}
 
-                <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap mb-4 line-clamp-4">
+                <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap mb-4">
                   {article.summary}
                 </p>
 
@@ -180,7 +180,7 @@ export default function ArticleAnalysis() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-5 py-2.5 rounded-lg border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 hover:border-slate-300 transition-all font-medium"
+            className="px-5 py-2.5 rounded-lg text-slate-900 border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 hover:border-slate-300 transition-all font-medium"
           >
             ← 上一页
           </button>
@@ -193,7 +193,7 @@ export default function ArticleAnalysis() {
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="px-5 py-2.5 rounded-lg border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 hover:border-slate-300 transition-all font-medium"
+            className="px-5 py-2.5 rounded-lg text-slate-900 border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 hover:border-slate-300 transition-all font-medium"
           >
             下一页 →
           </button>

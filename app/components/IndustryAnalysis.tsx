@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import type { 
-  info__stock_board, 
-  StockBoardWithRelations 
+import type {
+  info__stock_board,
+  StockBoardWithRelations
 } from '@/types'
 
 export default function IndustryAnalysis() {
@@ -62,11 +62,10 @@ export default function IndustryAnalysis() {
               <button
                 key={board.id}
                 onClick={() => fetchBoardDetail(board.id)}
-                className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 ${
-                  selectedBoard?.id === board.id
-                    ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg scale-105'
+                className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 ${selectedBoard?.id === board.id
+                    ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg '
                     : 'bg-slate-50 text-slate-700 hover:bg-slate-100 hover:shadow-md'
-                }`}
+                  }`}
               >
                 <span className="font-medium">{board.board_name}</span>
               </button>
@@ -91,10 +90,9 @@ export default function IndustryAnalysis() {
 
             {/* 关联公司 */}
             <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <span className="text-2xl">🏢</span>
+              <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-2">
                 <span>关联公司</span>
-                <span className="text-sm text-slate-500 font-normal">
+                <span className="text-lg text-slate-500 font-normal">
                   ({selectedBoard.relation__stock_board_company.length})
                 </span>
               </h3>
@@ -134,10 +132,9 @@ export default function IndustryAnalysis() {
 
             {/* 行业分析报告 */}
             <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <span className="text-2xl">📊</span>
+              <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-2">
                 <span>行业分析报告</span>
-                <span className="text-sm text-slate-500 font-normal">
+                <span className="text-lg text-slate-500 font-normal">
                   ({selectedBoard.relation__board_industry_analysis.length})
                 </span>
               </h3>

@@ -99,7 +99,7 @@ export default function TweetAnalysis() {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-4 py-2 rounded-lg border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 hover:border-slate-300 transition-all"
+              className="px-4 py-2 rounded-lg text-slate-900 border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 hover:border-slate-300 transition-all"
             >
               ←
             </button>
@@ -109,7 +109,7 @@ export default function TweetAnalysis() {
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="px-4 py-2 rounded-lg border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 hover:border-slate-300 transition-all"
+              className="px-4 py-2 rounded-lg text-slate-900 border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 hover:border-slate-300 transition-all"
             >
               →
             </button>
@@ -146,24 +146,20 @@ export default function TweetAnalysis() {
             </div>
 
             <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <span className="text-2xl">📝</span>
+              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 <span>相关推文</span>
-                <span className="text-sm text-slate-500 font-normal">({relatedTweets.length})</span>
+                <span className="text-lg text-slate-500 font-normal">({relatedTweets.length})</span>
               </h3>
               <div className="space-y-4 max-h-[calc(100vh-450px)] overflow-y-auto scrollbar-thin pr-2">
                 {relatedTweets.map((tweet) => (
                   <div key={tweet.id} className="border-2 border-slate-200 rounded-lg p-5 hover:border-blue-300 hover:shadow-md transition-all bg-gradient-to-br from-white to-slate-50">
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold">
-                          {tweet.user_name.charAt(0).toUpperCase()}
-                        </div>
                         <div>
                           <div className="font-semibold text-slate-900">{tweet.user_name}</div>
                           <div className="text-xs text-slate-500 flex items-center gap-1">
-                            <span>🕐</span>
-                            {new Date(tweet.tweet_date).toLocaleString('zh-CN')}
+                            <span>🕐UTC 协调世界时</span>
+                            {new Date(tweet.tweet_date).toISOString().replace('T', ' ').split('.')[0]}
                           </div>
                         </div>
                       </div>
