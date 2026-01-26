@@ -7,8 +7,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const boardId = parseInt(params.id)
-
+    const boardId = parseInt((await params).id)
     const board = await prisma.info__stock_board.findUnique({
       where: { id: boardId },
       include: {
