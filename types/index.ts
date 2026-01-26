@@ -1,4 +1,14 @@
-import { info__stock_company, indicator__company_finance, info__tweet } from '@prisma/client'
+import { 
+  info__stock_company, 
+  indicator__company_finance, 
+  info__tweet,
+  info__stock_board,
+  info__industry_analysis,
+  relation__stock_board_company,
+  relation__board_industry_analysis,
+  summary__tweet,
+  summary__article,
+} from '@prisma/client'
 
 // 导出 Prisma 生成的所有类型
 export {
@@ -7,6 +17,11 @@ export {
   type quote__stock_constituent_daily,
   type relation__stock_board_company,
   type info__tweet,
+  type info__stock_board,
+  type info__industry_analysis,
+  type relation__board_industry_analysis,
+  type summary__tweet,
+  type summary__article,
 } from '@prisma/client'
 
 // API 响应类型
@@ -78,3 +93,23 @@ export interface TweetQueryParams {
   page?: number
   limit?: number
 }
+
+// 行业板块相关类型
+export type StockBoardListResponse = ApiResponse<info__stock_board[]>
+
+export interface StockBoardWithRelations extends info__stock_board {
+  relation__stock_board_company: (relation__stock_board_company & {
+    info__stock_company: info__stock_company
+  })[]
+  relation__board_industry_analysis: (relation__board_industry_analysis & {
+    info__industry_analysis: info__industry_analysis
+  })[]
+}
+
+export type StockBoardDetailResponse = ApiResponse<StockBoardWithRelations>
+
+// 推文摘要相关类型
+export type TweetSummaryListResponse = ApiResponse<summary__tweet[]>
+
+// 文章摘要相关类型
+export type ArticleSummaryListResponse = ApiResponse<summary__article[]>
