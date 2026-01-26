@@ -48,3 +48,61 @@ export async function GET(
     )
   }
 }
+
+// PUT /api/stock-boards/[id] - 更新板块名称
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const boardId = parseInt((await params).id)
+    const body = await request.json()
+    const { board_name } = body
+
+    if (!board_name) {
+      return NextResponse.json(
+        { error: 'Board name is required' },
+        { status: 400 }
+      )
+    }
+
+    const board = await prisma.info__stock_board.update({
+      where: { id: boardId },
+      data: { board_name },
+    })
+
+    return NextResponse.json({
+      data: board,
+    })
+  } catch (error) {
+    console.error('Failed to update stock board:', error)
+    return NextResponse.json(
+      { error: 'Failed to update stock board' },
+      { status: 500 }
+    )
+  }
+}
+
+// DELETE /api/stock-boards/[id] - 删除板块
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const boardId = parseInt((await params).id)
+
+    await prisma.info__stock_board.delete({
+      where: { id: boardId },
+    })
+
+    return NextResponse.json({
+      success: true,
+    })
+  } catch (error) {
+    console.error('Failed to delete stock board:', error)
+    return NextResponse.json(
+      { error: 'Failed to delete stock board' },
+      { status: 500 }
+    )
+  }
+}
