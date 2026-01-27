@@ -1,3 +1,7 @@
 # Python dependencies
 python-dotenv
 click
+fastapi
+uvicorn[standard]
+pydantic
+prisma

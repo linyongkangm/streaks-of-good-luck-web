@@ -1,36 +1,97 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { exec } from 'child_process'
-import { promisify } from 'util'
-import path from 'path'
 
-const execAsync = promisify(exec)
-
-const SCRIPT_ROOT = path.resolve(process.cwd(), "script")
-const MAIN_PY = path.resolve(SCRIPT_ROOT, "main.py")
-
-function runLuckCommand(commandName: string, params: object): string {
-  const options = Object.entries(params)
-    .map(([key, value]) => `--${key} "${value}"`)
-    .join(' ')
-  const command = `python "${MAIN_PY}" ${commandName} ${options}`
-  return command
-}
+const PYTHON_API_URL = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'
 
 async function analyzeTweetsForDateAndSource(collectFrom: string, date: string) {
   try {
-    const command = runLuckCommand('analyze-tweet', {
-      url: collectFrom,
-      date: date,
+    console.log(`Fetching tweets for ${collectFrom} on ${date}...`)
+    
+    // 1. 从数据库查询该日期和来源的所有推文
+    const targetDate = new Date(date)
+    const nextDate = new Date(targetDate)
+    nextDate.setDate(nextDate.getDate() + 1)
+
+    const tweets = await prisma.info__tweet.findMany({
+      where: {
+        collect_from: collectFrom,
+        tweet_date: {
+          gte: targetDate,
+          lt: nextDate,
+        },
+      },
+      orderBy: { tweet_date: 'asc' },
     })
 
-    console.log('Running analyze command:', command)
-    await execAsync(command, {
-      encoding: 'utf8',
-      env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
-      maxBuffer: 10 * 1024 * 1024, // 10MB buffer
+    if (tweets.length === 0) {
+      console.log(`No tweets found for ${collectFrom} on ${date}`)
+      return { collectFrom, date, status: 'skipped', message: 'No tweets found' }
+    }
+
+    console.log(`Found ${tweets.length} tweets for ${collectFrom} on ${date}`)
+
+    // 2. 转换为 API 需要的格式
+    const tweetInfos = tweets.map((tweet) => ({
+      tweet_date: tweet.tweet_date.toISOString().split('T')[0],
+      user_name: tweet.user_name,
+      tweet_from: tweet.tweet_from,
+      tweet_text: tweet.tweet_text,
+    }))
+
+    // 3. 调用 Python API，传递 tweet_infos
+    console.log(`Calling Python API: ${PYTHON_API_URL}/analyze-tweet`)
+    const response = await fetch(`${PYTHON_API_URL}/analyze-tweet`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        collect_from: collectFrom,
+        date: date,
+        tweet_infos: tweetInfos,
+      }),
     })
-    console.log(`Successfully analyzed tweets for ${collectFrom} on ${date}`)
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(`API error: ${response.status} - ${JSON.stringify(errorData)}`)
+    }
+
+    const result = await response.json()
+    console.log(`Successfully received analysis result for ${collectFrom} on ${date}:`, result)
+    
+    // 4. 如果分析成功，保存结果到数据库
+    if (result.success && result.analysis) {
+      console.log(`Saving analysis result to database for ${collectFrom} on ${date}...`)
+      
+      const targetDateObj = new Date(date)
+      const summary = result.analysis.summary || ''
+      
+      // 使用 upsert 来插入或更新记录
+      await prisma.summary__tweet.upsert({
+        where: {
+          collect_from_date: {
+            collect_from: collectFrom,
+            date: targetDateObj,
+          },
+        },
+        update: {
+          summary: summary,
+          update_time: new Date(),
+        },
+        create: {
+          collect_from: collectFrom,
+          date: targetDateObj,
+          summary: summary,
+          create_time: new Date(),
+          update_time: new Date(),
+        },
+      })
+      
+      console.log(`✓ Analysis result saved for ${collectFrom} on ${date}`)
+    }
+    
+    return result
   } catch (error) {
     console.error(`Failed to analyze tweets for ${collectFrom} on ${date}:`, error)
     throw error
