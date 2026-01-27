@@ -6,15 +6,14 @@ import path from 'path'
 
 const execAsync = promisify(exec)
 
-const LUCK_ROOT = path.resolve(process.cwd(), "../streaks-of-good-luck")
-const RUN_LUCK_PATH = path.resolve(LUCK_ROOT, ".venv/Scripts/python.exe")
-const MAIN_PY = path.resolve(LUCK_ROOT, "src/main.py")
+const SCRIPT_ROOT = path.resolve(process.cwd(), "script")
+const MAIN_PY = path.resolve(SCRIPT_ROOT, "main.py")
 
 function runLuckCommand(commandName: string, params: object): string {
   const options = Object.entries(params)
     .map(([key, value]) => `--${key} "${value}"`)
     .join(' ')
-  const command = `"${RUN_LUCK_PATH}" "${MAIN_PY}" ${commandName} ${options}`
+  const command = `python "${MAIN_PY}" ${commandName} ${options}`
   return command
 }
 
