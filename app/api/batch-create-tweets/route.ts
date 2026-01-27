@@ -51,24 +51,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 批量创建推文，使用 upsert 避免重复
-    const results = await Promise.allSettled(
-      tweetRecords.map((record: any) =>
-        prisma.info__tweet.upsert({
-          where: { tweet_id: record.tweetID },
-          update: {
-            user_name: record.userName,
-            tweet_date: new Date(record.tweetDate),
-            tweet_text: record.tweetText,
-            reply_count: record.replyCount,
-            retweet_count: record.retweetCount,
-            like_count: record.likeCount,
-            view_count: record.viewCount,
-            tweet_url: record.tweetUrl,
-            tweet_from: record.tweetFrom,
-            collect_from: record.collectFrom,
-          },
-          create: {
+    // 先查询这些 tweet_ids 是否已存在
+    const existingTweetIds = await prisma.info__tweet.findMany({
+      where: {
+        tweet_id: {
+          in: tweetRecords.map((r: any) => r.tweetID),
+        },
+      },
+      select: { tweet_id: true },
+    })
+    const existingTweetIdSet = new Set(existingTweetIds.map((t) => t.tweet_id))
+
+    // 分离新推文和已存在的推文
+    const newTweetRecords = tweetRecords.filter((r: any) => !existingTweetIdSet.has(r.tweetID))
+    // 批量创建和更新推文
+    const results = await Promise.allSettled([
+      ...newTweetRecords.map((record: any) =>
+        prisma.info__tweet.create({
+          data: {
             tweet_id: record.tweetID,
             user_name: record.userName,
             tweet_date: new Date(record.tweetDate),
@@ -82,43 +82,33 @@ export async function POST(request: NextRequest) {
             collect_from: record.collectFrom,
           },
         })
-      )
-    )
+      ),
+    ])
 
     const successful = results.filter((r) => r.status === 'fulfilled').length
     const failed = results.filter((r) => r.status === 'rejected').length
 
-    // 提取成功创建的推文的日期和 collect_from，按日期和来源分组
-    const successfulRecords = tweetRecords.filter((_, index) => results[index].status === 'fulfilled')
-    const successfulTweetIds = successfulRecords.map((record: any) => record.tweetID)
+    // 只用新推文的记录来确定是否需要分析
+    const successfulNewTweetRecords = newTweetRecords.filter((_, index) => results[index].status === 'fulfilled')
+    const successfulTweetIds = successfulNewTweetRecords.map((record: any) => record.tweetID)
     const dateSourceMap = new Map<string, string>() // key: "collect_from|date"
 
-    successfulRecords.forEach((record: any) => {
+    successfulNewTweetRecords.forEach((record: any) => {
       const date = new Date(record.tweetDate).toISOString().split('T')[0]
       const key = `${record.collectFrom}|${date}`
       dateSourceMap.set(key, record.collectFrom)
     })
 
-    // 对于每个日期和来源，检查是否已有分析，如果有则更新，没有则创建
+    // 对于每个有新推文的日期和来源，使用该日期/来源的全部推文触发分析
     const analysisPromises = Array.from(dateSourceMap.entries()).map(
       async ([key, collectFrom]) => {
         const [source, date] = key.split('|')
-        
-        try {
-          // 检查该日期和来源是否已有分析
-          const existingAnalysis = await prisma.summary__tweet.findFirst({
-            where: {
-              collect_from: source,
-              date: {
-                gte: new Date(date),
-                lt: new Date(new Date(date).getTime() + 24 * 60 * 60 * 1000), // next day
-              },
-            },
-          })
 
-          // 无论是否存在，都运行分析（update or create）
+        try {
+          // 只有当该日期/来源有新推文插入时，才触发分析
+          // 分析会自动拉取该日期/来源的全部推文进行分析（update or create summary）
           await analyzeTweetsForDateAndSource(source, date)
-          
+
           return { collectFrom: source, date, status: 'success' }
         } catch (error) {
           console.error(`Failed to analyze tweets for ${source} on ${date}:`, error)
