@@ -80,7 +80,7 @@ export default function TweetAnalysis() {
         //     "collectFrom": "https://x.com/elonmusk"
         // }]
         console.log('Latest tweets fetched:', event.detail.tweetRecords);
-        
+
         // 批量创建推文
         if (event.detail.tweetRecords && event.detail.tweetRecords.length > 0) {
           try {
@@ -90,10 +90,16 @@ export default function TweetAnalysis() {
               body: JSON.stringify({ tweetRecords: event.detail.tweetRecords }),
             })
             const data = await response.json()
-            
+
             if (data.success) {
               alert(`成功导入 ${data.successful} 条推文${data.failed > 0 ? `，${data.failed} 条失败` : ''}`)
               // 刷新摘要列表
+              document.dispatchEvent(new CustomEvent('MARK_TWEET_RECORDED', {
+                detail: {
+                  tweetIDs: data.successfulTweetIds || []
+                }
+              }))
+
               setTimeout(() => {
                 fetchSummaries()
                 fetchCollectFromList()

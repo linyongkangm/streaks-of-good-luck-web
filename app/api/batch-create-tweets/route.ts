@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
             like_count: record.likeCount,
             view_count: record.viewCount,
             tweet_url: record.tweetUrl,
-            tweet_from: record.collectFrom,
+            tweet_from: record.tweetFrom,
             collect_from: record.collectFrom,
           },
         })
@@ -90,6 +90,7 @@ export async function POST(request: NextRequest) {
 
     // 提取成功创建的推文的日期和 collect_from，按日期和来源分组
     const successfulRecords = tweetRecords.filter((_, index) => results[index].status === 'fulfilled')
+    const successfulTweetIds = successfulRecords.map((record: any) => record.tweetID)
     const dateSourceMap = new Map<string, string>() // key: "collect_from|date"
 
     successfulRecords.forEach((record: any) => {
@@ -138,6 +139,7 @@ export async function POST(request: NextRequest) {
       successful,
       failed,
       analysisCompleted: analysisSuccessful,
+      successfulTweetIds,
     })
   } catch (error) {
     console.error('Failed to batch create tweets:', error)
