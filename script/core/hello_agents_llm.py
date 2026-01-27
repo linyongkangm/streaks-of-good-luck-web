@@ -1,6 +1,7 @@
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageParam
 from typing import List, Optional
+import utils
 
 
 class HelloAgentsLLM:
@@ -40,7 +41,8 @@ class HelloAgentsLLM:
         """
         调用大语言模型进行思考，并返回其响应。
         """
-        print(f"🧠 正在调用 {self.model} 模型...")
+        logger = utils.locator.get_project_logger()
+        logger.info(f"🧠 正在调用 {self.model} 模型...")
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -50,15 +52,14 @@ class HelloAgentsLLM:
             )
 
             # 处理流式响应
-            print("✅ 大语言模型响应成功:")
+            logger.info("✅ 大语言模型响应成功:")
             collected_content = []
             for chunk in response:
                 content = chunk.choices[0].delta.content or ""
-                print(content, end="", flush=True)
+                logger.info(content)
                 collected_content.append(content)
-            print()  # 在流式输出结束后换行
             return "".join(collected_content)
 
         except Exception as e:
-            print(f"❌ 调用LLM API时发生错误: {e}")
+            logger.error(f"❌ 调用LLM API时发生错误: {e}")
             raise ValueError("调用LLM API时发生错误，请检查配置和网络连接。") from e

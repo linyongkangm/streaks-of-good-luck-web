@@ -1,7 +1,7 @@
 import asyncio
-from datetime import datetime, date
 import click
 import tasks
+import json
 
 # from tasks import (
 #     add_companies,
@@ -80,6 +80,18 @@ def cli():
 #     asyncio.run(store_qiushi_from_file())
 #     click.echo("✓ 成功存储求是数据")
 
+
+@cli.command()
+@click.option("--file", default=None, help="推文文件路径")
+def analyze_tweet(file):
+    """生成推特分析
+
+    示例: python main.py analyze-tweet --file "path/to/tweet_files.json"
+    """
+    content = open(file, mode="r", encoding="utf-8").read()
+    tweet_infos = json.loads(content)
+    result = asyncio.run(tasks.gen_tweet_analysis(tweet_infos))
+    click.echo(result)
 
 @cli.command()
 def test():

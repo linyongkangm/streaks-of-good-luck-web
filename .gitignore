@@ -47,3 +47,4 @@ prisma/migrations
 # python
 *logs/
 *__pycache__/
+temp/
