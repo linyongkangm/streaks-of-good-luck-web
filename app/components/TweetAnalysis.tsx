@@ -16,6 +16,8 @@ export default function TweetAnalysis() {
   const [collectFromList, setCollectFromList] = useState<string[]>([])
   const [selectedCollectFrom, setSelectedCollectFrom] = useState<string>('all')
   const [isFetchingLatest, setIsFetchingLatest] = useState(false)
+  const [newCollectFrom, setNewCollectFrom] = useState<string>('')
+  const [isAddingCollectFrom, setIsAddingCollectFrom] = useState(false)
 
   useEffect(() => {
     fetchCollectFromList()
@@ -27,13 +29,35 @@ export default function TweetAnalysis() {
 
   const fetchCollectFromList = async () => {
     try {
-      const response = await fetch('/api/tweet-summaries?limit=1000')
+      const response = await fetch('/api/tweet-summaries?collect_from_only=true')
       const data = await response.json()
-      const uniqueCollectFroms = [...new Set(data.data.map((s: summary__tweet) => s.collect_from))] as string[]
-      setCollectFromList(uniqueCollectFroms)
+      setCollectFromList(data.data || [])
     } catch (error) {
       console.error('Failed to fetch collect_from list:', error)
     }
+  }
+
+  const handleAddCollectFrom = () => {
+    const trimmedInput = newCollectFrom.trim()
+    
+    if (!trimmedInput) {
+      alert('请输入有效的推文来源')
+      return
+    }
+
+    if (collectFromList.includes(trimmedInput)) {
+      alert('该推文来源已存在')
+      return
+    }
+
+    setIsAddingCollectFrom(true)
+    // 添加到列表
+    setCollectFromList([...collectFromList, trimmedInput])
+    // 选中新添加的来源
+    setSelectedCollectFrom(trimmedInput)
+    // 清空输入框
+    setNewCollectFrom('')
+    setIsAddingCollectFrom(false)
   }
 
   const fetchSummaries = async () => {
@@ -164,7 +188,7 @@ export default function TweetAnalysis() {
             <label className="block text-sm font-medium text-slate-700 mb-2">
               推文来源筛选
             </label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-4">
               <button
                 onClick={() => {
                   setSelectedCollectFrom('all')
@@ -192,6 +216,29 @@ export default function TweetAnalysis() {
                   {collectFrom}
                 </button>
               ))}
+            </div>
+
+            {/* 增加 CollectFrom 输入框 */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newCollectFrom}
+                onChange={(e) => setNewCollectFrom(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleAddCollectFrom()
+                  }
+                }}
+                placeholder="输入新的推文来源 (如: https://x.com/username)"
+                className="flex-1 px-4 py-2 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 transition-all text-sm"
+              />
+              <button
+                onClick={handleAddCollectFrom}
+                disabled={isAddingCollectFrom || !newCollectFrom.trim()}
+                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                增加来源
+              </button>
             </div>
           </div>
           {

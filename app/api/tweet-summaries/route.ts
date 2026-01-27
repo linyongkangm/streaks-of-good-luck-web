@@ -10,6 +10,32 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get('end_date')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '50')
+    const collectFromOnly = searchParams.get('collect_from_only')
+
+    // 如果只需要获取 unique collect_from 列表
+    if (collectFromOnly === 'true') {
+      try {
+        const uniqueCollectFroms = await prisma.summary__tweet.findMany({
+          select: {
+            collect_from: true,
+          },
+          distinct: ['collect_from'],
+          orderBy: {
+            collect_from: 'asc',
+          },
+        })
+
+        return NextResponse.json({
+          data: uniqueCollectFroms.map(item => item.collect_from),
+        })
+      } catch (error) {
+        console.error('Failed to fetch unique collect_from list:', error)
+        return NextResponse.json(
+          { error: 'Failed to fetch unique collect_from list' },
+          { status: 500 }
+        )
+      }
+    }
 
     const where: any = {}
 
