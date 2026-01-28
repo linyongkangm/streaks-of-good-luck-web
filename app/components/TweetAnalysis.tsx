@@ -103,15 +103,15 @@ export default function TweetAnalysis() {
         //     "tweetFrom": "Retweet",
         //     "collectFrom": "https://x.com/elonmusk"
         // }]
-        console.log('Latest tweets fetched:', event.detail.tweetRecords);
-
+        console.log('Latest tweets fetched:', event.detail.records);
+        const records = event.detail.records;
         // 批量创建推文
-        if (event.detail.tweetRecords && event.detail.tweetRecords.length > 0) {
+        if (records && records.length > 0) {
           try {
             const response = await fetch('/api/batch-create-tweets', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ tweetRecords: event.detail.tweetRecords }),
+              body: JSON.stringify({ tweetRecords: records }),
             })
             const data = await response.json()
 

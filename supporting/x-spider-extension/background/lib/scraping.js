@@ -14,7 +14,7 @@ export async function xScraping(tab) {
       if (records.length - cacheRecords.length >= 20) {
         running = false;
       }
-      const mSecond = (await chrome.storage.local.get(["XScrapingInterval"])).XScrapingInterval || 1000;
+      const mSecond = Number((await chrome.storage.local.get(["XScrapingInterval"])).XScrapingInterval || 1000);
       await new Promise(resolve => setTimeout(resolve, mSecond));
     }
   })();
