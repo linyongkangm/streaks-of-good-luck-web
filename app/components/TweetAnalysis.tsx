@@ -231,7 +231,7 @@ export default function TweetAnalysis() {
                   }
                 }}
                 placeholder="输入新的推文来源 (如: https://x.com/username)"
-                className="flex-1 px-4 py-2 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 transition-all text-sm"
+                className="text-slate-900 flex-1 px-4 py-2 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 transition-all text-sm"
               />
               <button
                 onClick={handleAddCollectFrom}
