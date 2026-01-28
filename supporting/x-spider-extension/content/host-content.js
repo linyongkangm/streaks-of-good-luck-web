@@ -23,17 +23,3 @@ document.addEventListener('MARK_TWEET_RECORDED', function (e) {
     collect_from: e.detail.collect_from,
   });
 });
-
-// (async function () {
-//   const collect_from = 'https://x.com/elonmusk';
-//   const response = await chrome.runtime.sendMessage({
-//     action: "COLLECT_LATEST_TWEETS",
-//     collect_from,
-//   });
-//   chrome.runtime.sendMessage({
-//     action: "MARK_TWEET_RECORDED",
-//     tweetIDs: response.data.records.map(record => record.tweetID),
-//     collect_from: collect_from,
-//   });
-//   console.log('Initial tweet collection response in host-content script:', response);
-// })()

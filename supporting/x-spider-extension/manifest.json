@@ -40,6 +40,14 @@
     },
     {
       "matches": [
+        "https://www.wsj.com/*"
+      ],
+      "js": [
+        "content/wsj-content.js"
+      ]
+    },
+    {
+      "matches": [
         "http://localhost:3000/*",
         "https://www.google.com.hk/*"
       ],
