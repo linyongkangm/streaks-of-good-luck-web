@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "server": "python script/main.py server",
+    "webIntell": "python supporting/webIntell/main.py server",    
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
