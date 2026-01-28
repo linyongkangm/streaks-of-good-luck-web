@@ -1,0 +1,54 @@
+{
+  "manifest_version": 3,
+  "name": "X-Spider Extension",
+  "version": "1.0.0",
+  "description": "A basic Chrome Extension project.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "sidePanel",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "X-Spider"
+  },
+  "background": {
+    "service_worker": "./background/service-worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content/content.js"
+      ]
+    },
+    {
+      "matches": [
+        "https://x.com/*"
+      ],
+      "js": [
+        "content/x-content.js"
+      ]
+    },
+    {
+      "matches": [
+        "http://localhost:3000/*",
+        "https://www.google.com.hk/*"
+      ],
+      "js": [
+        "content/host-content.js"
+      ]
+    }
+  ],
+  "side_panel": {
+    "default_path": "sidepanel/sidepanel.html"
+  }
+}

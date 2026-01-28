@@ -1,0 +1,33 @@
+body {
+  font-family: Arial, sans-serif;
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
+pre {
+  padding: 8px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+pre:hover {
+  background-color: #45a049;
+}
+
+button {
+  padding: 8px;
+  background-color: #4c82af;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #1f2e91;
+}
