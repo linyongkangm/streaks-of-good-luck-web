@@ -25,6 +25,18 @@ export default class MessageObserver {
     }
     return this; // 链式调用：observer.on('a', fn).on('b', fn2)
   }
+  once(action, callback) {
+    // 校验参数：事件名非空、回调是函数
+    if (!action || typeof callback !== 'function') return this;
+    // 包装回调，执行后自动取消订阅
+    const onceCallback = (...args) => {
+      callback.apply(this, args); // 执行原回调
+      this.off(action, onceCallback); // 取消订阅
+    }; 
+    // 订阅包装后的回调
+    this.on(action, onceCallback);
+    return this; // 链式调用
+  }
 
   /**
    * 发布事件（触发事件）

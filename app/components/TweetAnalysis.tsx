@@ -120,7 +120,8 @@ export default function TweetAnalysis() {
               // 刷新摘要列表
               document.dispatchEvent(new CustomEvent('MARK_TWEET_RECORDED', {
                 detail: {
-                  tweetIDs: data.successfulTweetIds || []
+                  tweetIDs: data.successfulTweetIds || [],
+                  collect_from: selectedCollectFrom,
                 }
               }))
 

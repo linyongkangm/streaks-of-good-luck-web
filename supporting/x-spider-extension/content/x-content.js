@@ -11,32 +11,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('Message received in x-content script:', request.action, request);
   if (request.action === "SCRAPING") {
     scraping(tweetRecords)
-    sendResponse({ success: true, data: { tweetRecords: Array.from(tweetRecords.values()) } });
+    sendResponse({ success: true, data: { records: Array.from(tweetRecords.values()) } });
   }
-  // else if (request.action === "GET_QIUSHI_DIRECTORY") {
-  //   const pubtime = new Date(document.querySelector('.pubtime').textContent);
-  //   const aElements = document.querySelectorAll('#detailContent a');
-  //   const links = [];
-  //   if (aElements) {
-  //     aElements.forEach(aElement => {
-  //       const exitingLink = links.find(link => link.url === aElement.href);
-  //       if (exitingLink) {
-  //         exitingLink.title += ` ${aElement.textContent}`;
-  //       } else {
-  //         links.push({ url: aElement.href, title: aElement.textContent });
-  //       }
-  //     });
-  //   }
-  //   sendResponse({
-  //     success: true,
-  //     data: {
-  //       date: pubtime.toISOString().split('T')[0],
-  //       links: links
-  //     }
-  //   });
-  // }
 });
-
 
 function scraping(tweetRecords) {
   window.scrollTo({

@@ -1,6 +1,6 @@
 import MessageObserver from './lib/MessageObserver.js';
 import { getCurrentTab } from './lib/utils.js';
-
+import { scraping, xScraping, markTweetRecorded } from './lib/scraping.js';
 // Background Service Worker
 const messageObserver = new MessageObserver();
 
@@ -14,10 +14,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   const sendFailedResponse = async (data = {}, message) => await sendResponse({ success: false, data, message });
   setTimeout(() => {
     messageObserver.emit(request.action, request, sender, sendSuccessResponse, sendFailedResponse);
-  }, 0); // 10 seconds timeout
+  }, 0);
   return true; // Keep the message channel open for async response
 });
-
 
 messageObserver.on("RELOAD_EXTENSION", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
   sendSuccessResponse();
@@ -63,10 +62,7 @@ messageObserver.on("STOP_SCRAPING", (request, sender, sendSuccessResponse, sendF
 });
 
 messageObserver.on("MARK_TWEET_RECORDED", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
-  const tweetIDs = request.tweetIDs;
-  const localStorage = await chrome.storage.local.get("recordedTweets");
-  const recordedTweets = localStorage.recordedTweets || [];
-  await chrome.storage.local.set({ recordedTweets: [...new Set([...recordedTweets, ...tweetIDs])] });
+  await markTweetRecorded(request.collect_from, request.tweetIDs);
   sendSuccessResponse();
 });
 
@@ -78,39 +74,27 @@ messageObserver.on("COLLECT_LATEST_TWEETS", async (request, sender, sendSuccessR
     xTab = await chrome.tabs.create({ url: request.collect_from });
   }
   await chrome.tabs.update(xTab.id, { active: true });
-  console.log(xTab.status);
+  do {
+    xTab = (await chrome.tabs.query({ url: request.collect_from }))[0];
+    await new Promise(resolve => setTimeout(resolve, 500));
+  } while (xTab.status !== 'complete');
+
+  isScraping = true;
+  const xScraper = await xScraping(xTab);
+  messageObserver.once("STOP_SCRAPING", () => {
+    if (xScraper.getRunning()) {
+      xScraper.stopScraping();
+    }
+  });
+  while (xScraper.getRunning()) {
+    console.log("Scraping in progress...", xScraper.getCacheRecords());
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+  isScraping = false;
+  console.log("Scraping completed.", xScraper.getCacheRecords());
+  sendSuccessResponse({ records: xScraper.getCacheRecords() });
+  await chrome.tabs.update(sender.tab.id, { active: true });
 });
-
-
-async function scraping(tabID, onComplete) {
-  const second = (await chrome.storage.local.get(["scrapingInterval"])).scrapingInterval || 1000;
-  setTimeout(async () => {
-    const response = await chrome.tabs.sendMessage(tabID, { action: "SCRAPING" });
-    const localStorage = await chrome.storage.local.get(["recordedTweets"]);
-    const recordedTweets = localStorage.recordedTweets || [];
-    let currentRecordedTweetsCount = 0
-    const tweetRecords = response.data.tweetRecords.filter(item => {
-      if (recordedTweets.includes(item.tweetID)) {
-        currentRecordedTweetsCount += 1;
-        return false;
-      }
-      return true;
-    });
-    try {
-      chrome.runtime.sendMessage({ action: "UPDATE_PREVIEW_TWEET_RECORDS", tweetRecords });
-    } catch (error) {
-      console.error('Failed to send tweet records to preview:', error);
-    }
-    if (currentRecordedTweetsCount >= 10) {
-      isScraping = false;
-    }
-    if (isScraping) {
-      scraping(tabID, onComplete);
-    } else {
-      onComplete(tweetRecords)
-    }
-  }, second);
-}
 
 
 

@@ -1,0 +1,50 @@
+export async function scraping(tab) {
+  const response = await chrome.tabs.sendMessage(tab.id, { action: "SCRAPING" });
+  return response?.data?.records || [];
+}
+
+export async function xScraping(tab) {
+  let running = true;
+  let cacheRecords = [];
+  (async function scrapeLoop() {
+    while (running) {
+      const recordedTweets = await getRecordedTweets(tab.url);
+      const records = await scraping(tab);
+      cacheRecords = records.filter(item => !recordedTweets.includes(item.tweetID));
+      if (records.length - cacheRecords.length >= 20) {
+        running = false;
+      }
+      const mSecond = (await chrome.storage.local.get(["XScrapingInterval"])).XScrapingInterval || 1000;
+      await new Promise(resolve => setTimeout(resolve, mSecond));
+    }
+  })();
+  return {
+    getRunning: function () {
+      return running;
+    },
+    getCacheRecords: function () {
+      return cacheRecords;
+    },
+    stopScraping() {
+      running = false;
+      return cacheRecords
+    },
+  }
+}
+
+export async function getRecordedTweets(url) {
+  const localStorage = await chrome.storage.local.get("RecordedTweets");
+  const recordedTweets = localStorage.RecordedTweets?.[url] || [];
+  return recordedTweets
+}
+
+export async function markTweetRecorded(url, tweetIDs) {
+  const localStorage = await chrome.storage.local.get("RecordedTweets");
+  const recordedTweets = localStorage.RecordedTweets?.[url] || [];
+  await chrome.storage.local.set({
+    RecordedTweets: {
+      ...localStorage.RecordedTweets,
+      [url]: [...new Set([...recordedTweets, ...tweetIDs])].slice(-200)
+    }
+  });
+}

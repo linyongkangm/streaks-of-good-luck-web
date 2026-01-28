@@ -16,15 +16,24 @@ document.addEventListener('GET_LATEST_TWEETS', async function (e) {
 
 document.addEventListener('MARK_TWEET_RECORDED', function (e) {
   console.log('Custom event received in host-content script to mark tweets recorded:', e.detail);
-  tweetIDs = e.detail.tweetIDs;
 
   chrome.runtime.sendMessage({
     action: "MARK_TWEET_RECORDED",
-    tweetIDs: tweetIDs,
+    tweetIDs: e.detail.tweetIDs,
+    collect_from: e.detail.collect_from,
   });
 });
 
-// chrome.runtime.sendMessage({
-//   action: "COLLECT_LATEST_TWEETS",
-//   // collect_from: e.detail.collect_from,
-// });
+// (async function () {
+//   const collect_from = 'https://x.com/elonmusk';
+//   const response = await chrome.runtime.sendMessage({
+//     action: "COLLECT_LATEST_TWEETS",
+//     collect_from,
+//   });
+//   chrome.runtime.sendMessage({
+//     action: "MARK_TWEET_RECORDED",
+//     tweetIDs: response.data.records.map(record => record.tweetID),
+//     collect_from: collect_from,
+//   });
+//   console.log('Initial tweet collection response in host-content script:', response);
+// })()
