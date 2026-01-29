@@ -21,7 +21,7 @@ export default function ArticleAnalysis() {
         page: page.toString(),
         limit: '20',
       })
-      
+
       if (searchTitle) params.append('title', searchTitle)
       if (searchTags) params.append('tags', searchTags)
 
@@ -94,6 +94,23 @@ export default function ArticleAnalysis() {
           >
             搜索
           </button>
+          <button
+            onClick={() => {
+              const callbackCode = 'CALLBACK_REDIRECT_SCRAPING_' + Math.random().toString(36).substring(2)
+              document.addEventListener(callbackCode, (e: any) => {
+                console.log('Redirect scraping completed.', e.detail)
+              })
+              document.dispatchEvent(new CustomEvent('REDIRECT_SCRAPING', {
+                detail: {
+                  target: 'https://www.qstheory.cn/20251231/2d916da295774130ac2fb223fd208895/c.html',
+                  callbackCode
+                }
+              }))
+            }}
+            className="px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg font-medium"
+          >
+            获取
+          </button>
         </div>
       </div>
 
@@ -112,7 +129,7 @@ export default function ArticleAnalysis() {
                 <h3 className="text-lg font-bold text-slate-900 mb-3 hover:text-blue-600 transition-colors">
                   {article.title}
                 </h3>
-                
+
                 <div className="flex flex-wrap gap-3 mb-3">
                   {article.publication && (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">

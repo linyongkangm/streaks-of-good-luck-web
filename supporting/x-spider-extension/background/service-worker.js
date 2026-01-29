@@ -1,5 +1,5 @@
 import MessageObserver from './lib/MessageObserver.js';
-import { getCurrentTab } from './lib/utils.js';
+import { getCurrentTab, redirectToTargetTab } from './lib/utils.js';
 import { scraping, xScraping, markTweetRecorded } from './lib/scraping.js';
 // Background Service Worker
 const messageObserver = new MessageObserver();
@@ -43,7 +43,7 @@ messageObserver.on("SCRAPING", async (request, sender, sendSuccessResponse, send
     return;
   }
   isScraping = true;
-  const records = scraping(tab);
+  const records = await scraping(tab);
   sendSuccessResponse({ records });
 });
 
@@ -56,6 +56,16 @@ messageObserver.on("STOP_SCRAPING", (request, sender, sendSuccessResponse, sendF
   sendSuccessResponse();
 });
 
+messageObserver.on("REDIRECT_SCRAPING", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
+  await redirectToTargetTab(request.target);
+  const _sendSuccessResponse = (...args) => {
+    console.log("Scraping completed.", args);
+    sendSuccessResponse(...args);
+    chrome.tabs.update(sender.tab.id, { active: true });
+  }
+  messageObserver.emit("SCRAPING", request, sender, _sendSuccessResponse, sendFailedResponse);
+});
+
 messageObserver.on("MARK_TWEET_RECORDED", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
   await markTweetRecorded(request.collect_from, request.tweetIDs);
   sendSuccessResponse();
@@ -63,7 +73,7 @@ messageObserver.on("MARK_TWEET_RECORDED", async (request, sender, sendSuccessRes
 
 messageObserver.on("COLLECT_LATEST_TWEETS", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
   let xTab = (await chrome.tabs.query({
-    url: request.collect_from + '*'
+    url: request.collect_from
   }))[0];
   if (!xTab) {
     xTab = await chrome.tabs.create({ url: request.collect_from });
@@ -90,6 +100,7 @@ messageObserver.on("COLLECT_LATEST_TWEETS", async (request, sender, sendSuccessR
   sendSuccessResponse({ records: xScraper.getCacheRecords() });
   await chrome.tabs.update(sender.tab.id, { active: true });
 });
+
 
 
 
