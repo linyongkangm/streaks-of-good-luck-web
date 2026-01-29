@@ -38,9 +38,8 @@ function scraping(tweetRecords) {
       const retweetCount = tweet.querySelector('button[data-testid="retweet"]').textContent;
       const likeCount = tweet.querySelector('button[data-testid="like"]').textContent;
       const viewCount = tweet.querySelector('button[data-testid="like"]')?.parentNode?.nextSibling?.textContent;
-      const tweetUrl = `https://x.com/elonmusk/status/${tweetID}`
       const collectFrom = location.href
-
+      const tweetUrl = `${collectFrom}/status/${tweetID}`
       const isQuote = tweet.querySelector('[data-testid="tweetText"]')?.parentNode?.nextSibling?.textContent.includes("引用") || false;
       const isRetweet = tweet.querySelector('[data-testid="socialContext"]')?.textContent.includes("已转帖") || false;
       const tweetFrom = isRetweet ? "Retweet" : isQuote ? "Quote" : "OriginalPost"
