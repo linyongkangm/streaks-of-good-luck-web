@@ -41,7 +41,7 @@ export default function TweetAnalysis() {
 
   const handleAddCollectFrom = () => {
     const trimmedInput = newCollectFrom.trim()
-    
+
     if (!trimmedInput) {
       alert('请输入有效的推文来源')
       return
@@ -232,105 +232,109 @@ export default function TweetAnalysis() {
               推文来源筛选
             </label>
             <div className="flex flex-wrap gap-2 mb-4">
-              <button
-                onClick={() => {
-                  setSelectedCollectFrom('all')
-                  setPage(1)
-                }}
-                className={`px-4 py-2 rounded-lg transition-all ${selectedCollectFrom === 'all'
-                  ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                  }`}
-              >
-                全部
-              </button>
-              {collectFromList.map((collectFrom) => (
+              <div className="flex gap-2">
                 <button
-                  key={collectFrom}
                   onClick={() => {
-                    setSelectedCollectFrom(collectFrom)
+                    setSelectedCollectFrom('all')
                     setPage(1)
                   }}
-                  className={`px-4 py-2 rounded-lg transition-all ${selectedCollectFrom === collectFrom
+                  className={`px-4 py-2 rounded-lg transition-all ${selectedCollectFrom === 'all'
                     ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                     }`}
                 >
-                  {collectFrom}
+                  全部
                 </button>
-              ))}
+                {collectFromList.map((collectFrom) => (
+                  <button
+                    key={collectFrom}
+                    onClick={() => {
+                      setSelectedCollectFrom(collectFrom)
+                      setPage(1)
+                    }}
+                    className={`px-4 py-2 rounded-lg transition-all ${selectedCollectFrom === collectFrom
+                      ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                  >
+                    {collectFrom}
+                  </button>
+                ))}
+              </div>
+              {
+                /* 获取最新推文按钮 */
+                selectedCollectFrom !== 'all' && (<button
+                  onClick={fetchLatestTweets}
+                  disabled={isFetchingLatest}
+                  className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg hover:from-green-600 hover:to-emerald-600 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+                >
+                  {isFetchingLatest ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      获取中...
+                    </>
+                  ) : (
+                    <>
+                      <span>🔄</span>
+                      获取最新推文
+                    </>
+                  )}
+                </button>)
+              }
             </div>
-
-            {/* 增加 CollectFrom 输入框 */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newCollectFrom}
-                onChange={(e) => setNewCollectFrom(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    handleAddCollectFrom()
-                  }
-                }}
-                placeholder="输入新的推文来源 (如: https://x.com/username)"
-                className="text-slate-900 flex-1 px-4 py-2 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 transition-all text-sm"
-              />
-              <button
-                onClick={handleAddCollectFrom}
-                disabled={isAddingCollectFrom || !newCollectFrom.trim()}
-                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-              >
-                增加来源
-              </button>
-            </div>
-
-            {/* 日期选择和生成分析 */}
-            {selectedCollectFrom !== 'all' && (
-              <div className="flex gap-2 mt-4">
+            <div className="flex flex-wrap gap-2">
+              {/* 增加 CollectFrom 输入框 */}
+              <div className="flex gap-2 mr-16">
                 <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
+                  type="text"
+                  value={newCollectFrom}
+                  onChange={(e) => setNewCollectFrom(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleAddCollectFrom()
+                    }
+                  }}
+                  placeholder="输入新的推文来源 (如: https://x.com/username)"
                   className="text-slate-900 flex-1 px-4 py-2 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 transition-all text-sm"
                 />
                 <button
-                  onClick={generateAnalysisForDate}
-                  disabled={isGeneratingAnalysis || !selectedDate}
-                  className="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  onClick={handleAddCollectFrom}
+                  disabled={isAddingCollectFrom || !newCollectFrom.trim()}
+                  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                 >
-                  {isGeneratingAnalysis ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent inline-block mr-2"></div>
-                      生成中...
-                    </>
-                  ) : (
-                    <>✨ 生成分析</>
-                  )}
+                  增加来源
                 </button>
               </div>
-            )}
-            <div></div>
-          </div>
-          {
-            /* 获取最新推文按钮 */
-            selectedCollectFrom !== 'all' && (<button
-              onClick={fetchLatestTweets}
-              disabled={isFetchingLatest}
-              className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg hover:from-green-600 hover:to-emerald-600 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
-            >
-              {isFetchingLatest ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                  获取中...
-                </>
-              ) : (
-                <>
-                  <span>🔄</span>
-                  获取最新推文
-                </>
+
+              {/* 日期选择和生成分析 */}
+              {selectedCollectFrom !== 'all' && (
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="text-slate-900 flex-1 px-4 py-2 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 transition-all text-sm"
+                  />
+                  <button
+                    onClick={generateAnalysisForDate}
+                    disabled={isGeneratingAnalysis || !selectedDate}
+                    className="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  >
+                    {isGeneratingAnalysis ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent inline-block mr-2"></div>
+                        生成中...
+                      </>
+                    ) : (
+                      <>✨ 生成分析</>
+                    )}
+                  </button>
+                </div>
               )}
-            </button>)
-          }
+            </div>
+          </div>
+
+
 
         </div>
       </div>
