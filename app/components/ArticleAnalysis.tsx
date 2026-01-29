@@ -98,7 +98,15 @@ export default function ArticleAnalysis() {
             onClick={() => {
               const callbackCode = 'CALLBACK_REDIRECT_SCRAPING_' + Math.random().toString(36).substring(2)
               document.addEventListener(callbackCode, (e: any) => {
-                console.log('Redirect scraping completed.', e.detail)
+                // {
+                //   source_url: '原链接',
+                //   title: '标题',
+                //   contributor : '作者',
+                //   publication: "求是",
+                //   issue_date: '2026-01-01',
+                //   source_text: '原文'
+                // }
+                console.log('Redirect scraping completed.', e.detail.records)
               })
               document.dispatchEvent(new CustomEvent('REDIRECT_SCRAPING', {
                 detail: {
