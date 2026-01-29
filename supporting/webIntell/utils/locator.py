@@ -5,8 +5,8 @@ import os
 
 from core.log_config import init_logger
 
-# 加载位于项目根目录的 .env 文件
-load_dotenv(os.path.join(os.path.dirname(__file__), "../../.env"))
+# 加载位于项目根目录的 .env 文件)
+load_dotenv(os.path.join(os.getcwd(), ".env"))
 
 # P：捕获 func 的参数类型（任意参数列表）
 P = ParamSpec("P")

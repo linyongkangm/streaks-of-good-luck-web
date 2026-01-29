@@ -11,10 +11,11 @@ export async function xScraping(tab) {
       const recordedTweets = await getRecordedTweets(tab.url);
       const records = await scraping(tab);
       cacheRecords = records.filter(item => !recordedTweets.includes(item.tweetID));
-      if (records.length - cacheRecords.length >= 20) {
+      const localStorage = await chrome.storage.local.get(["XScrapingInterval", "XScrapingRecordedLimit"]);
+      if (records.length - cacheRecords.length >= (localStorage.XScrapingRecordedLimit || 20)) {
         running = false;
       }
-      const mSecond = Number((await chrome.storage.local.get(["XScrapingInterval"])).XScrapingInterval || 1000);
+      const mSecond = Number(localStorage.XScrapingInterval || 1000);
       await new Promise(resolve => setTimeout(resolve, mSecond));
     }
   })();
