@@ -120,10 +120,10 @@ export default function TweetAnalysis() {
             if (data.success) {
               alert(`成功导入 ${data.successful} 条推文${data.failed > 0 ? `，${data.failed} 条失败` : ''}`)
               // 刷新摘要列表
-              document.dispatchEvent(new CustomEvent('MARK_TWEET_RECORDED', {
+              document.dispatchEvent(new CustomEvent('MARK_RECORDED_SCRAPINGS', {
                 detail: {
-                  tweetIDs: data.successfulTweetIds || [],
-                  collect_from: selectedCollectFrom,
+                  flags: (data.successfulTweetIds || []).concat(data.existingTweetIds || []),
+                  host: selectedCollectFrom,
                 }
               }))
 

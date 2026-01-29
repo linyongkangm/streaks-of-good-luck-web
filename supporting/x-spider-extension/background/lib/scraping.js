@@ -25,7 +25,7 @@ export async function xScraping(tab) {
   let cacheRecords = [];
   (async function scrapeLoop() {
     while (running) {
-      const recordedTweets = await getRecordedTweets(tab.url);
+      const recordedTweets = await getRecordedScrapings(tab.url);
       const records = await scraping(tab);
       cacheRecords = records.filter(item => !recordedTweets.includes(item.tweetID));
       const localStorage = await chrome.storage.local.get(["XScrapingInterval", "XScrapingRecordedLimit"]);
@@ -49,21 +49,4 @@ export async function xScraping(tab) {
       return cacheRecords
     },
   }
-}
-
-export async function getRecordedTweets(url) {
-  const localStorage = await chrome.storage.local.get("RecordedTweets");
-  const recordedTweets = localStorage.RecordedTweets?.[url] || [];
-  return recordedTweets
-}
-
-export async function markTweetRecorded(url, tweetIDs) {
-  const localStorage = await chrome.storage.local.get("RecordedTweets");
-  const recordedTweets = localStorage.RecordedTweets?.[url] || [];
-  await chrome.storage.local.set({
-    RecordedTweets: {
-      ...localStorage.RecordedTweets,
-      [url]: [...new Set([...recordedTweets, ...tweetIDs])].slice(-200)
-    }
-  });
 }

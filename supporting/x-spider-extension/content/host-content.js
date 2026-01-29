@@ -38,12 +38,3 @@ document.addEventListener('GET_LATEST_TWEETS', async function (e) {
   }
 });
 
-document.addEventListener('MARK_TWEET_RECORDED', function (e) {
-  console.log('Custom event received in host-content script to mark tweets recorded:', 'MARK_TWEET_RECORDED', e.detail);
-
-  chrome.runtime.sendMessage({
-    action: "MARK_TWEET_RECORDED",
-    tweetIDs: e.detail.tweetIDs,
-    collect_from: e.detail.collect_from,
-  });
-});

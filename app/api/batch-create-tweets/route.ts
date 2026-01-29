@@ -159,25 +159,19 @@ export async function POST(request: NextRequest) {
       dateSourceMap.set(key, record.collectFrom)
     })
 
-    // 对于每个有新推文的日期和来源，使用该日期/来源的全部推文触发分析
-    const analysisPromises = Array.from(dateSourceMap.entries()).map(
-      async ([key, collectFrom]) => {
-        const [source, date] = key.split('|')
 
-        try {
-          // 只有当该日期/来源有新推文插入时，才触发分析
-          // 分析会自动拉取该日期/来源的全部推文进行分析（update or create summary）
-          await analyzeTweetsForDateAndSource(source, date)
-
-          return { collectFrom: source, date, status: 'success' }
-        } catch (error) {
-          console.error(`Failed to analyze tweets for ${source} on ${date}:`, error)
-          return { collectFrom: source, date, status: 'failed', error: String(error) }
-        }
+    // 串行处理每个有新推文的日期和来源
+    const analysisResults = [];
+    for (const [key, collectFrom] of dateSourceMap.entries()) {
+      const [source, date] = key.split('|');
+      try {
+        await analyzeTweetsForDateAndSource(source, date);
+        analysisResults.push({ status: 'fulfilled', value: { collectFrom: source, date, status: 'success' } });
+      } catch (error) {
+        console.error(`Failed to analyze tweets for ${source} on ${date}:`, error);
+        analysisResults.push({ status: 'rejected', reason: error, value: { collectFrom: source, date, status: 'failed', error: String(error) } });
       }
-    )
-
-    const analysisResults = await Promise.allSettled(analysisPromises)
+    }
     const analysisSuccessful = analysisResults.filter(
       (r) => r.status === 'fulfilled' && (r.value as any).status === 'success'
     ).length
@@ -190,6 +184,7 @@ export async function POST(request: NextRequest) {
       failed,
       analysisCompleted: analysisSuccessful,
       successfulTweetIds,
+      existingTweetIds: Array.from(existingTweetIdSet),
     })
   } catch (error) {
     console.error('Failed to batch create tweets:', error)
