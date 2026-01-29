@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
       successfulSourceUrls: newArticles
         .filter((_, index) => results[index].status === 'fulfilled' && (results[index] as any).value.success)
         .map((a: any) => a.source_url),
+      existingSourceUrls: Array.from(existingUrlSet),
     })
   } catch (error) {
     console.error('Failed to process articles:', error)
@@ -90,6 +91,7 @@ async function generateArticleAnalysis(article: any) {
       body: JSON.stringify({
         source_text: source_text,
       }),
+      signal: AbortSignal.timeout(1000 * 60 * 5) // 5分钟超时，可根据业务调整
     })
 
     if (!response.ok) {

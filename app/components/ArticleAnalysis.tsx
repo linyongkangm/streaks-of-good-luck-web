@@ -68,7 +68,7 @@ export default function ArticleAnalysis() {
         document.dispatchEvent(new CustomEvent('MARK_RECORDED_SCRAPINGS', {
           detail: {
             host: 'https://www.qstheory.cn',
-            flags: data.successfulSourceUrls || []
+            flags: (data.successfulSourceUrls || []).concat(data.existingSourceUrls || [])
           }
         }))
       } else {
