@@ -247,6 +247,8 @@ model summary__article {
   update_time DateTime  @default(now()) @db.DateTime(0)
   publication String?   @db.VarChar(20)
   issue_date  DateTime? @db.Date
+  source_text String?   @db.Text
+  contributor String?   @db.VarChar(255)
 
   @@index([tags], map: "idx_tags")
   @@index([title], map: "idx_title")
