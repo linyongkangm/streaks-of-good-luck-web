@@ -39,12 +39,17 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // 对每篇新文章调用 Python API 生成分析
-    const analysisPromises = newArticles.map((article: any) =>
-      generateArticleAnalysis(article)
-    )
 
-    const results = await Promise.allSettled(analysisPromises)
+    // 串行处理每篇新文章
+    const results: { status: 'fulfilled' | 'rejected'; value?: any; reason?: any }[] = [];
+    for (const article of newArticles) {
+      try {
+        const r = await generateArticleAnalysis(article);
+        results.push({ status: 'fulfilled', value: r });
+      } catch (e) {
+        results.push({ status: 'rejected', reason: e });
+      }
+    }
 
     // 统计成功和失败的数量
     const successful = results.filter((r) => r.status === 'fulfilled' && (r.value as any).success).length

@@ -59,7 +59,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           document.body.appendChild(contentIframe);
         });
       }));
-      const articles = contentArticles.flat();
+      let articles = contentArticles.flat();
       console.log('Final extracted articles:', articles);
 
       await Promise.all(articles.map(article => {
@@ -80,6 +80,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           document.body.appendChild(articleIframe);
         });
       }));
+      articles = articles.filter(article => article.source_text);
       console.log('Articles with source text:', articles);
       sendResponse({ success: true, data: { records: articles } });
       chrome.runtime.sendMessage({ action: "STOP_SCRAPING" });
