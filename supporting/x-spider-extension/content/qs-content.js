@@ -68,7 +68,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         });
       }));
-      let articles = contentArticles.flat().slice(0, 30);
+      let articles = contentArticles.flat().slice(0, 50);
       console.log('Final extracted articles:', articles);
 
       await Promise.all(articles.map((article, index) => {
