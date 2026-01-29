@@ -18,6 +18,8 @@ export default function TweetAnalysis() {
   const [isFetchingLatest, setIsFetchingLatest] = useState(false)
   const [newCollectFrom, setNewCollectFrom] = useState<string>('')
   const [isAddingCollectFrom, setIsAddingCollectFrom] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<string>('')
+  const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false)
 
   useEffect(() => {
     fetchCollectFromList()
@@ -173,6 +175,46 @@ export default function TweetAnalysis() {
     }
   }
 
+  const generateAnalysisForDate = async () => {
+    if (!selectedDate) {
+      alert('请选择一个日期')
+      return
+    }
+
+    if (selectedCollectFrom === 'all') {
+      alert('请先选择一个推文来源')
+      return
+    }
+
+    setIsGeneratingAnalysis(true)
+    try {
+      const response = await fetch('/api/generate-tweet-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          collect_from: selectedCollectFrom,
+          date: selectedDate,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        alert(`成功生成 ${data.count} 条推文的分析`)
+        // 刷新摘要列表
+        setPage(1)
+        fetchSummaries()
+      } else {
+        alert(data.message || '生成分析失败，请稍后重试')
+      }
+    } catch (error) {
+      console.error('Failed to generate analysis:', error)
+      alert('生成分析失败，请稍后重试')
+    } finally {
+      setIsGeneratingAnalysis(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
@@ -241,6 +283,33 @@ export default function TweetAnalysis() {
                 增加来源
               </button>
             </div>
+
+            {/* 日期选择和生成分析 */}
+            {selectedCollectFrom !== 'all' && (
+              <div className="flex gap-2 mt-4">
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="text-slate-900 flex-1 px-4 py-2 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 transition-all text-sm"
+                />
+                <button
+                  onClick={generateAnalysisForDate}
+                  disabled={isGeneratingAnalysis || !selectedDate}
+                  className="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  {isGeneratingAnalysis ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent inline-block mr-2"></div>
+                      生成中...
+                    </>
+                  ) : (
+                    <>✨ 生成分析</>
+                  )}
+                </button>
+              </div>
+            )}
+            <div></div>
           </div>
           {
             /* 获取最新推文按钮 */
