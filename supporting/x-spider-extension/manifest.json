@@ -48,6 +48,14 @@
     },
     {
       "matches": [
+        "https://www.qstheory.cn/*"
+      ],
+      "js": [
+        "content/qs-content.js"
+      ]
+    },
+    {
+      "matches": [
         "http://localhost:3000/*",
         "https://www.google.com.hk/*"
       ],

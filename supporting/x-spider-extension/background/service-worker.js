@@ -37,19 +37,14 @@ messageObserver.on("SET_IS_SCRAPING", (request, sender, sendSuccessResponse, sen
 
 messageObserver.on("SCRAPING", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
   const tab = await getCurrentTab();
-  const tabID = tab?.id;
-  if (!tabID) {
-    sendFailedResponse({}, 'No active tab found');
-    return;
-  }
 
   if (isScraping) {
     sendFailedResponse({}, 'Scraping is already started');
     return;
   }
   isScraping = true;
-  scraping(tabID);
-  sendSuccessResponse({ windowId: tab.windowId });
+  const records = scraping(tab);
+  sendSuccessResponse({ records });
 });
 
 messageObserver.on("STOP_SCRAPING", (request, sender, sendSuccessResponse, sendFailedResponse) => {
