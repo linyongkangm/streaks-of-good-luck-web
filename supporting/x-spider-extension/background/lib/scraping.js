@@ -12,6 +12,7 @@ export async function xScraping(tab) {
       const records = await scraping(tab);
       cacheRecords = records.filter(item => !recordedTweets.includes(item.tweetID));
       const localStorage = await chrome.storage.local.get(["XScrapingInterval", "XScrapingRecordedLimit"]);
+      console.log(`XScraping: 已抓取 ${records.length} 条，去重后 ${cacheRecords.length} 条`);
       if (records.length - cacheRecords.length >= (localStorage.XScrapingRecordedLimit || 20)) {
         running = false;
       }
