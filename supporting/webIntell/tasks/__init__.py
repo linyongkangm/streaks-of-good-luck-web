@@ -3,7 +3,7 @@ import utils
 import asyncio
 
 from .gen_tweet_analysis import gen_tweet_analysis as gen_tweet_analysis
-
+from .gen_article_analysis import gen_article_analysis as gen_article_analysis
 async def test():
     """测试命令
     示例: python main.py test

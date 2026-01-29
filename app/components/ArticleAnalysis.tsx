@@ -10,6 +10,7 @@ export default function ArticleAnalysis() {
   const [totalPages, setTotalPages] = useState(1)
   const [searchTitle, setSearchTitle] = useState('')
   const [searchTags, setSearchTags] = useState('')
+  const [isProcessing, setIsProcessing] = useState(false)
 
   useEffect(() => {
     fetchArticles()
@@ -46,6 +47,32 @@ export default function ArticleAnalysis() {
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleSearch()
+    }
+  }
+
+  const processArticles = async (articleRecords: any[]) => {
+    try {
+      setIsProcessing(true)
+      const response = await fetch('/api/process-articles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ articles: articleRecords }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        alert(`成功处理 ${data.successful} 篇文章${data.failed > 0 ? `，${data.failed} 篇失败` : ''}`)
+        setPage(1)
+        fetchArticles()
+      } else {
+        alert(data.message || '处理文章失败，请稍后重试')
+      }
+    } catch (error) {
+      console.error('Failed to process articles:', error)
+      alert('处理文章失败，请稍后重试')
+    } finally {
+      setIsProcessing(false)
     }
   }
 
@@ -107,7 +134,12 @@ export default function ArticleAnalysis() {
                 //   source_text: '原文'
                 // }
                 console.log('Redirect scraping completed.', e.detail.records)
-              })
+                if (e.detail.records && e.detail.records.length > 0) {
+                  processArticles(e.detail.records)
+                } else {
+                  alert('未获取到文章数据')
+                }
+              }, { once: true })
               document.dispatchEvent(new CustomEvent('REDIRECT_SCRAPING', {
                 detail: {
                   target: 'https://www.qstheory.cn/20251231/2d916da295774130ac2fb223fd208895/c.html',
@@ -115,9 +147,17 @@ export default function ArticleAnalysis() {
                 }
               }))
             }}
-            className="px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg font-medium"
+            disabled={isProcessing}
+            className="px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            获取
+            {isProcessing ? (
+              <>
+                <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                处理中...
+              </>
+            ) : (
+              '获取'
+            )}
           </button>
         </div>
       </div>
