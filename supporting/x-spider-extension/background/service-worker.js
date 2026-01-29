@@ -1,6 +1,6 @@
 import MessageObserver from './lib/MessageObserver.js';
 import { getCurrentTab, redirectToTargetTab } from './lib/utils.js';
-import { scraping, xScraping, markTweetRecorded } from './lib/scraping.js';
+import { scraping, xScraping, markTweetRecorded, markRecordedScrapings, getRecordedScrapings } from './lib/scraping.js';
 // Background Service Worker
 const messageObserver = new MessageObserver();
 
@@ -64,6 +64,16 @@ messageObserver.on("REDIRECT_SCRAPING", async (request, sender, sendSuccessRespo
     chrome.tabs.update(sender.tab.id, { active: true });
   }
   messageObserver.emit("SCRAPING", request, sender, _sendSuccessResponse, sendFailedResponse);
+});
+
+messageObserver.on("MARK_RECORDED_SCRAPINGS", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
+  await markRecordedScrapings(request.host, request.flags);
+  sendSuccessResponse();
+});
+
+messageObserver.on("GET_RECORDED_SCRAPINGS", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
+  const recordedScrapings = await getRecordedScrapings(request.host);
+  sendSuccessResponse({ recordedScrapings });
 });
 
 messageObserver.on("MARK_TWEET_RECORDED", async (request, sender, sendSuccessResponse, sendFailedResponse) => {

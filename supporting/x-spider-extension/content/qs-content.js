@@ -8,6 +8,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('Message received in qs-content script:', request.action, request);
   (async () => {
     if (request.action === "SCRAPING") {
+      const scrapingRecorded = (await chrome.runtime.sendMessage({
+        action: "GET_RECORDED_SCRAPINGS",
+        host: 'https://www.qstheory.cn'
+      }))?.data?.recordedScrapings || [];
       const contents = [...document.querySelectorAll("#detailContent a")];
       contents.pop(); // Remove the last element
       const contentArticles = await Promise.all(contents.map(content => {
@@ -23,7 +27,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             if (aElements) {
               const articles = [];
               aElements.forEach(aElement => {
-                const exitingArticle = articles.find(article => article.source_url === aElement.href);
+                const source_url = aElement.href;
+                if (scrapingRecorded.includes(source_url)) {
+                  return;
+                }
+                const exitingArticle = articles.find(article => article.source_url === source_url);
                 if (exitingArticle) {
                   exitingArticle.title += ` ${aElement.textContent}`;
                 } else {
@@ -33,7 +41,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     contributor = contributor.slice(1, -1);
                   }
                   articles.push({
-                    source_url: aElement.href,
+                    source_url: source_url,
                     title: aElement.textContent,
                     contributor,
                     publication: "求是",

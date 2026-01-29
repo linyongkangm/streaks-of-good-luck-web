@@ -65,6 +65,12 @@ export default function ArticleAnalysis() {
         alert(`成功处理 ${data.successful} 篇文章${data.failed > 0 ? `，${data.failed} 篇失败` : ''}`)
         setPage(1)
         fetchArticles()
+        document.dispatchEvent(new CustomEvent('MARK_RECORDED_SCRAPINGS', {
+          detail: {
+            host: 'https://www.qstheory.cn',
+            flags: data.successfulSourceUrls || []
+          }
+        }))
       } else {
         alert(data.message || '处理文章失败，请稍后重试')
       }

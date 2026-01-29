@@ -14,6 +14,16 @@ document.addEventListener('REDIRECT_SCRAPING', async function (e) {
   }
 });
 
+document.addEventListener('MARK_RECORDED_SCRAPINGS', async function (e) {
+  console.log('Custom event received in host-content script:', 'MARK_RECORDED_SCRAPINGS', e.detail);
+
+  chrome.runtime.sendMessage({
+    action: "MARK_RECORDED_SCRAPINGS",
+    host: e.detail.host,
+    flags: e.detail.flags,
+  });
+});
+
 document.addEventListener('GET_LATEST_TWEETS', async function (e) {
   console.log('Custom event received in host-content script:', 'GET_LATEST_TWEETS', e.detail);
 

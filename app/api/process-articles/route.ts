@@ -56,6 +56,9 @@ export async function POST(request: NextRequest) {
       successful,
       failed,
       total: articles.length,
+      successfulSourceUrls: newArticles
+        .filter((_, index) => results[index].status === 'fulfilled' && (results[index] as any).value.success)
+        .map((a: any) => a.source_url),
     })
   } catch (error) {
     console.error('Failed to process articles:', error)
