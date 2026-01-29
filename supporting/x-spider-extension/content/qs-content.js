@@ -14,70 +14,87 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       }))?.data?.recordedScrapings || [];
       const contents = [...document.querySelectorAll("#detailContent a")];
       contents.pop(); // Remove the last element
-      const contentArticles = await Promise.all(contents.map(content => {
+      const contentArticles = await Promise.all(contents.map((content, index) => {
         return new Promise((resolve) => {
-          const contentIframe = document.createElement("iframe");
-          contentIframe.src = content.href;
-          contentIframe.onload = () => {
-            const contentDocument = contentIframe.contentWindow.document;
-            const issueDate = new Date(contentDocument.querySelector('.pubtime').textContent);
-            const aElements = [...contentDocument.querySelectorAll("#detailContent a")];
-            aElements.pop(); // Remove the last element
-            aElements.shift(); // Remove the first element
-            if (aElements) {
-              const articles = [];
-              aElements.forEach(aElement => {
-                const source_url = aElement.href;
-                if (scrapingRecorded.includes(source_url)) {
-                  return;
-                }
-                const exitingArticle = articles.find(article => article.source_url === source_url);
-                if (exitingArticle) {
-                  exitingArticle.title += ` ${aElement.textContent}`;
-                } else {
-                  const spans = [...aElement.closest('p')?.querySelectorAll('span:last-child')] || [];
-                  let contributor = spans.at(-1)?.textContent || '';
-                  if (contributor.startsWith('/')) {
-                    contributor = contributor.slice(1, -1);
+          setTimeout(() => {
+            const contentIframe = document.createElement("iframe");
+            contentIframe.src = content.href.replace('http://', 'https://');
+            contentIframe.onload = () => {
+              const contentDocument = contentIframe.contentWindow.document;
+              const issueDate = new Date(contentDocument.querySelector('.pubtime').textContent);
+              const aElements = [...contentDocument.querySelectorAll("#detailContent a")];
+              aElements.pop(); // Remove the last element
+              aElements.shift(); // Remove the first element
+              if (aElements) {
+                const articles = [];
+                aElements.forEach(aElement => {
+                  const source_url = aElement.href;
+                  if (scrapingRecorded.includes(source_url)) {
+                    return;
                   }
-                  articles.push({
-                    source_url: source_url,
-                    title: aElement.textContent,
-                    contributor,
-                    publication: "求是",
-                    issue_date: issueDate.toISOString().split('T')[0],
-                  });
-                }
-              });
-              console.log(content.textContent, 'Extracted articles:', articles);
-              resolve(articles);
-            } else {
+                  const exitingArticle = articles.find(article => article.source_url === source_url);
+                  if (exitingArticle) {
+                    exitingArticle.title += ` ${aElement.textContent}`;
+                  } else {
+                    const spans = [...aElement.closest('p')?.querySelectorAll('span:last-child')] || [];
+                    let contributor = spans.at(-1)?.textContent || '';
+                    if (contributor.startsWith('/')) {
+                      contributor = contributor.slice(1, -1);
+                    }
+                    articles.push({
+                      source_url: source_url,
+                      title: aElement.textContent,
+                      contributor,
+                      publication: "求是",
+                      issue_date: issueDate.toISOString().split('T')[0],
+                    });
+                  }
+                });
+                console.log(content.textContent, 'Extracted articles:', articles);
+                resolve(articles);
+              } else {
+                resolve([]);
+              }
+              contentIframe.remove();
+            };
+            setTimeout(() => {
+              if (contentIframe.parentElement == null) return;
+              console.warn('Timeout loading content iframe for URL:', content.href);
               resolve([]);
-            }
-            contentIframe.remove();
-          };
-          document.body.appendChild(contentIframe);
+              contentIframe.remove();
+            }, 30000); // 30 seconds timeout
+            document.body.appendChild(contentIframe);
+          }, Math.floor(index / 5) * 5000); // Stagger requests by 5 seconds
+
         });
       }));
-      let articles = contentArticles.flat();
+      let articles = contentArticles.flat().slice(0, 30);
       console.log('Final extracted articles:', articles);
 
-      await Promise.all(articles.map(article => {
+      await Promise.all(articles.map((article, index) => {
         return new Promise((resolve) => {
-          const articleIframe = document.createElement("iframe");
-          articleIframe.src = article.source_url;
-          articleIframe.onload = () => {
-            const articleDocument = articleIframe.contentWindow.document;
-            const detailElement = articleDocument.querySelector("#detail");
-            if (detailElement) {
-              article.source_text = detailElement.textContent.trim();
-            } else {
-              console.warn('Detail element not found for article:', article.source_url);
-            }
-            resolve();
-            articleIframe.remove();
-          };
-          document.body.appendChild(articleIframe);
+          setTimeout(() => {
+            const articleIframe = document.createElement("iframe");
+            articleIframe.src = article.source_url.replace('http://', 'https://');
+            articleIframe.onload = () => {
+              const articleDocument = articleIframe.contentWindow.document;
+              const detailElement = articleDocument.querySelector("#detail");
+              if (detailElement) {
+                article.source_text = detailElement.textContent.trim();
+              } else {
+                console.warn('Detail element not found for article:', article.source_url);
+              }
+              resolve();
+              articleIframe.remove();
+            };
+            document.body.appendChild(articleIframe);
+            setTimeout(() => {
+              if (articleIframe.parentElement == null) return;
+              console.warn('Timeout loading article iframe for URL:', articleIframe.src);
+              resolve();
+              articleIframe.remove();
+            }, 30000); // 30 seconds timeout
+          }, Math.floor(index / 5) * 5000); // Stagger requests by 5 seconds
         });
       }));
       articles = articles.filter(article => article.source_text);
