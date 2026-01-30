@@ -5,24 +5,93 @@ import IndustryAnalysis from "./components/IndustryAnalysis";
 import TweetAnalysis from "./components/TweetAnalysis";
 import ArticleAnalysis from "./components/ArticleAnalysis";
 
+
+type ArticleProcessResult = {
+  title: string;
+  status: string;
+  source_url: string;
+};
 type TabType = 'industry' | 'tweet' | 'article';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>('industry');
+  const [articleResults, setArticleResults] = useState<ArticleProcessResult[]>([]);
+  const [showArticlePopup, setShowArticlePopup] = useState(false);
+  console.log("articleResults", articleResults);
   useEffect(() => {
-    console.log('Home component mounted, setting up event listeners.');
-    document.addEventListener('STORE_ARTICLE', async (e) => {
+    const handler = async (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      const response = await fetch('/api/process-articles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ articles: detail.records }),
-      })
-      console.log('Articles processed:', await response.json());
-    });
+      setShowArticlePopup(true);
+      // Set initial status to '处理中...'
+      const initialResults: ArticleProcessResult[] = detail.records.map((rec: any) => ({
+        title: rec.title || '无标题',
+        status: '处理中...',
+        source_url: rec.source_url,
+      }));
+      setArticleResults((preResults) => {
+        return preResults.concat(initialResults);
+      });
+      try {
+        const response = await fetch('/api/process-articles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ articles: detail.records }),
+        });
+        const result = await response.json();
+        console.log('Article processing result:', result);
+        initialResults.forEach((item) => {
+          item.status = '处理失败';
+        });
+        const successfulSourceUrls = result.successfulSourceUrls || [];
+        const existingSourceUrls = result.existingSourceUrls || [];
+        initialResults.forEach((item) => {
+          if (successfulSourceUrls.includes(item.source_url)) {
+            item.status = '处理完成';
+          } else if (existingSourceUrls.includes(item.source_url)) {
+            item.status = '已存在，无需处理';
+          }
+        });
+      } catch (err) {
+        initialResults.forEach((item) => {
+          item.status = '处理失败';
+        });
+      }
+      setArticleResults((preResults) => [...preResults]);
+    };
+    document.addEventListener('STORE_ARTICLE', handler);
+    return () => document.removeEventListener('STORE_ARTICLE', handler);
   }, []);
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* 弹窗：文章处理结果 */}
+      {showArticlePopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="bg-white rounded-lg shadow-lg p-6 min-w-[500px] max-w-[90vw]">
+            <h2 className="text-slate-600 text-lg font-bold mb-4">文章处理结果</h2>
+            <ul className="mb-4 max-h-60 overflow-y-auto">
+              {articleResults.map((item, idx) => (
+                <li key={idx} className="flex justify-between items-center py-1 border-b last:border-b-0">
+                  <span className="text-slate-600 max-w-[400px]" title={item.title}>{item.title}</span>
+                  <span className={
+                    item.status === '处理完成'
+                      ? 'text-green-600'
+                      : item.status === '处理失败'
+                        ? 'text-red-600'
+                        : 'text-gray-500'
+                  }>{item.status}</span>
+                </li>
+              ))}
+            </ul>
+            <button
+              className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+              onClick={() => setShowArticlePopup(false)}
+            >
+              确定
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 标签页导航 */}
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-lg sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto">
