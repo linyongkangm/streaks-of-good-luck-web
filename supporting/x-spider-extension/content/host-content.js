@@ -38,3 +38,11 @@ document.addEventListener('GET_LATEST_TWEETS', async function (e) {
   }
 });
 
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log('Message received in host-content script:', request.action, request);
+  if (request.action === "RECEIVE_FROM_EXTENSION") {
+    document.dispatchEvent(new CustomEvent(request.payload.type, {
+      detail: request.payload
+    }));
+  }
+});

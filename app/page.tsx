@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import IndustryAnalysis from "./components/IndustryAnalysis";
 import TweetAnalysis from "./components/TweetAnalysis";
 import ArticleAnalysis from "./components/ArticleAnalysis";
@@ -9,7 +9,18 @@ type TabType = 'industry' | 'tweet' | 'article';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>('industry');
-
+  useEffect(() => {
+    console.log('Home component mounted, setting up event listeners.');
+    document.addEventListener('STORE_ARTICLE', async (e) => {
+      const detail = (e as CustomEvent).detail;
+      const response = await fetch('/api/process-articles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ articles: detail.records }),
+      })
+      console.log('Articles processed:', await response.json());
+    });
+  }, []);
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* 标签页导航 */}
@@ -25,8 +36,8 @@ export default function Home() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-6 py-3 font-medium transition-all relative ${activeTab === tab.id
-                    ? 'text-blue-600'
-                    : 'text-slate-600 hover:text-slate-900'
+                  ? 'text-blue-600'
+                  : 'text-slate-600 hover:text-slate-900'
                   }`}
               >
                 <span className="relative z-10">{tab.icon} {tab.label}</span>

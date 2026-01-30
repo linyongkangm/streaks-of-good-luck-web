@@ -1,5 +1,5 @@
 import MessageObserver from './lib/MessageObserver.js';
-import { getCurrentTab } from './lib/utils.js';
+import { getCurrentTab, getHostTab } from './lib/utils.js';
 import { register as registerXWorker } from './x-worker.js';
 import { register as registerScrapingWorker } from './scraping-worker.js';
 // Background Service Worker
@@ -25,6 +25,15 @@ messageObserver.on("RELOAD_EXTENSION", async (request, sender, sendSuccessRespon
   const tab = await getCurrentTab();
   chrome.tabs.sendMessage(tab?.id, { action: "RELOAD" });
   chrome.runtime.reload();
+});
+
+messageObserver.on("SEND_TO_HOST", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
+  const hostTab = await getHostTab();
+  if (!hostTab) {
+    return sendFailedResponse({}, "Host tab not found");
+  }
+  chrome.tabs.sendMessage(hostTab.id, { action: "RECEIVE_FROM_EXTENSION", payload: request.payload });
+  sendSuccessResponse();
 });
 
 registerXWorker(messageObserver);

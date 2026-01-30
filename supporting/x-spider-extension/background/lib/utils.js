@@ -5,6 +5,15 @@ export async function getCurrentTab() {
   let [tab] = await chrome.tabs.query(queryOptions);
   return tab;
 }
+
+export async function getHostTab() {
+  const hostTab = (await chrome.tabs.query({
+    url: 'http://localhost:3000/*'
+  }))?.[0];
+  return hostTab;
+}
+
+
 export async function redirectToTargetTab(url) {
   let targetTab = (await chrome.tabs.query({
     url: url

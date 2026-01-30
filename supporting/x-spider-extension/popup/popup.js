@@ -14,7 +14,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       await chrome.runtime.sendMessage(messageData);
     } else {
       const messageData = { action: "SCRAPING" };
-      await chrome.runtime.sendMessage(messageData);
+      const resp = await chrome.runtime.sendMessage(messageData);
+      console.log('Scraping started:', resp.data.records);
+      const sendToHostMessage = {
+        action: "SEND_TO_HOST",
+        payload: {
+          type: "STORE_ARTICLE",
+          records: resp.data.records
+        }
+      };
+      await chrome.runtime.sendMessage(sendToHostMessage);
     }
     await updateScrapingButton();
   });
