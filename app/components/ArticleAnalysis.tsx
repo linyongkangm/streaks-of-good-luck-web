@@ -10,6 +10,9 @@ export default function ArticleAnalysis() {
   const [totalPages, setTotalPages] = useState(1)
   const [searchTitle, setSearchTitle] = useState('')
   const [searchTags, setSearchTags] = useState('')
+  const [searchPublication, setSearchPublication] = useState('')
+  const [searchContributor, setSearchContributor] = useState('')
+  const [searchIssueDate, setSearchIssueDate] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
 
   useEffect(() => {
@@ -25,6 +28,9 @@ export default function ArticleAnalysis() {
 
       if (searchTitle) params.append('title', searchTitle)
       if (searchTags) params.append('tags', searchTags)
+      if (searchPublication) params.append('publication', searchPublication)
+      if (searchContributor) params.append('contributor', searchContributor)
+      if (searchIssueDate) params.append('issue_date', searchIssueDate)
 
       const response = await fetch(`/api/article-summaries?${params}`)
       const data = await response.json()
@@ -109,6 +115,39 @@ export default function ArticleAnalysis() {
               className="text-slate-900 w-full px-4 py-3 pl-10 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
             />
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+          </div>
+          <div className="flex-1 min-w-[180px] relative">
+            <input
+              type="text"
+              placeholder="搜索来源/刊物..."
+              value={searchPublication}
+              onChange={(e) => setSearchPublication(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="text-slate-900 w-full px-4 py-3 pl-10 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+            />
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">📰</span>
+          </div>
+          <div className="flex-1 min-w-[180px] relative">
+            <input
+              type="text"
+              placeholder="搜索作者/贡献者..."
+              value={searchContributor}
+              onChange={(e) => setSearchContributor(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="text-slate-900 w-full px-4 py-3 pl-10 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+            />
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">👤</span>
+          </div>
+          <div className="flex-1 min-w-[180px] relative">
+            <input
+              type="date"
+              placeholder="发布日期..."
+              value={searchIssueDate}
+              onChange={(e) => setSearchIssueDate(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="text-slate-900 w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+            />
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">📅</span>
           </div>
           <div className="flex-1 relative">
             <input
