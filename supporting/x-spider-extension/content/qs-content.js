@@ -64,7 +64,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
               contentIframe.remove();
             }, 30000); // 30 seconds timeout
             document.body.appendChild(contentIframe);
-          }, Math.floor(index / 5) * 5000); // Stagger requests by 5 seconds
+          }, Math.floor(index / 8) * 5000); // Stagger requests by 5 seconds
 
         });
       }));
@@ -94,7 +94,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
               resolve();
               articleIframe.remove();
             }, 30000); // 30 seconds timeout
-          }, Math.floor(index / 5) * 5000); // Stagger requests by 5 seconds
+          }, Math.floor(index / 10) * 5000); // Stagger requests by 5 seconds
         });
       }));
       articles = articles.filter(article => article.source_text);
