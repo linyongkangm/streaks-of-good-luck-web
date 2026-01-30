@@ -11,7 +11,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       const publication = 'wsj';
       const issue_date = document?.querySelector?.('.article-container article time')?.getAttribute('datetime')?.split('T')?.[0];
       const contributor = document.querySelector('.article-container article [data-testid="author-link"]').textContent;
-      const source_text = document.querySelector('.article-container article section').textContent;
+      const source_text_element = document.querySelector('.article-container article section')
+      const scriptElements = source_text_element.querySelectorAll('script, style');
+      scriptElements.forEach(el => el.remove());
+      const source_text = source_text_element.textContent;
       const record = { title, source_url, publication, issue_date, contributor, source_text }
       console.log(record);
       window.scrollTo(0, scrollY);
