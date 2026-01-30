@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
         message: '所有文章均已存在',
         successful: 0,
         failed: 0,
+        existingSourceUrls: Array.from(existingUrlSet),
       })
     }
 
