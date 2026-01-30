@@ -1,3 +1,4 @@
+from typing import List, cast
 import click
 import tasks
 from fastapi import FastAPI, HTTPException, Request
@@ -180,6 +181,20 @@ def server(host, port):
     click.echo(f"📚 API 文档: http://{host}:{port}/docs")
     uvicorn.run(app, host=host, port=port)
 
+@cli.command()
+def test():
+    """运行测试任务"""
+    agents = utils.locator.get_agents()
+    messages = [
+        {
+            "role": "user",
+            "content": '请说一句中文问候语。',
+        }
+    ]
+    responseText = agents.think(cast(List, messages))
+    click.echo("运行测试任务...")
+    # 在这里添加测试任务调用
+    click.echo("测试任务完成。")
 
 if __name__ == "__main__":
     cli()

@@ -141,7 +141,7 @@ export default function ArticleAnalysis() {
               document.dispatchEvent(new CustomEvent('REDIRECT_SCRAPING', {
                 detail: {
                   // 一年改一次，当年链接
-                  target: 'https://www.qstheory.cn/20251231/2d916da295774130ac2fb223fd208895/c.html',
+                  target: 'https://www.qstheory.cn/20250101/f1fa7777504340aa8e6609e602eed4d1/c.html',
                   callbackCode
                 }
               }))

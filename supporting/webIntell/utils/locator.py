@@ -28,7 +28,6 @@ def singleton_get(get_func: Callable[P, R]) -> Callable[P, R]:
 
 get_agents = singleton_get(
     lambda: HelloAgentsLLM(
-        model=os.getenv("LLM_MODEL_ID"),
         apiKey=os.getenv("LLM_API_KEY"),
         baseUrl=os.getenv("LLM_BASE_URL"),
         timeout=int(os.getenv("LLM_TIMEOUT", 60)),
