@@ -30,9 +30,10 @@ export async function GET(request: NextRequest) {
         where,
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: {
-          issue_date: 'desc',
-        },
+        orderBy: [
+          { issue_date: "desc" },
+          { update_time: "desc" }
+        ],
       }),
       prisma.summary__article.count({ where }),
     ])

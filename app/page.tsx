@@ -14,7 +14,7 @@ type ArticleProcessResult = {
 type TabType = 'industry' | 'tweet' | 'article';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<TabType>('industry');
+  const [activeTab, setActiveTab] = useState<TabType>('tweet');
   const [articleResults, setArticleResults] = useState<ArticleProcessResult[]>([]);
   const [showArticlePopup, setShowArticlePopup] = useState(false);
   console.log("articleResults", articleResults);
