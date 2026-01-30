@@ -6,7 +6,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     const scrollY = window.scrollY;
     window.scrollTo(0, document.body.scrollHeight);
     setTimeout(() => {
-      const title = document.querySelector('.article-container .article-header h1').textContent;
+      let header = document.querySelector('.article-container .article-header h1')
+      if (!header) {
+        header = document.querySelector('.bigTop h1');
+      }
+      const title = header.textContent;
       const source_url = window.location.href;
       const publication = 'wsj';
       const issue_date = document?.querySelector?.('.article-container article time')?.getAttribute('datetime')?.split('T')?.[0];
