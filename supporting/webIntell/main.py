@@ -1,10 +1,11 @@
-from typing import List, cast
 import click
 import tasks
-from fastapi import FastAPI, HTTPException, Request
 import uvicorn
-from pydantic import BaseModel
 import utils
+from typing import List, cast
+from fastapi import FastAPI, HTTPException, Request
+from pydantic import BaseModel
+
 
 
 # 创建 FastAPI 应用
@@ -31,6 +32,12 @@ class TweetAnalysisRequest(BaseModel):
     collect_from: str
     date: str  # YYYY-MM-DD 格式
     tweet_infos: list  # 推文信息列表
+
+
+class PredictExtractionRequest(BaseModel):
+    """预测提取请求模型"""
+    
+    article_text: str  # 文章文本内容
 
 
 # ==================== 数据库操作 ====================
@@ -159,6 +166,61 @@ async def api_analyze_tweet(request: TweetAnalysisRequest):
         import traceback
 
         logger.error(f"✗ 分析失败: {e}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# /extract-predicts 路由
+@app.post("/extract-predicts")
+async def api_extract_predicts(request: PredictExtractionRequest):
+    """API 接口：从文章中提取预测
+
+    请求体:
+    {
+        "article_text": "文章文本内容"
+    }
+    
+    返回:
+    {
+        "success": true/false,
+        "predicts": [
+            {
+                "interval_start": "YYYY-MM-DD",
+                "interval_end": "YYYY-MM-DD",
+                "content": "预测内容"
+            }
+        ],
+        "count": 提取到的预测数量
+    }
+    """
+    logger = utils.locator.get_project_logger()
+    
+    try:
+        logger.info("=== 开始提取文章预测 ===")
+        
+        article_text = request.article_text
+        if not article_text:
+            return {
+                "success": False,
+                "message": "No article_text provided"
+            }
+        
+        logger.info(f"文章长度：{len(article_text)} 字符")
+        
+        # 调用预测提取函数
+        predicts = await tasks.gen_predicts(article_text)
+        
+        logger.info(f"✓ 提取完成，共 {len(predicts)} 个预测")
+        
+        return {
+            "success": True,
+            "predicts": predicts,
+            "count": len(predicts),
+            "message": f"Successfully extracted {len(predicts)} predictions"
+        }
+    except Exception as e:
+        import traceback
+        logger.error(f"✗ 提取预测失败: {e}")
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
