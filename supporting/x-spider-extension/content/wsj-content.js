@@ -14,7 +14,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       const source_url = window.location.href;
       const publication = 'wsj';
       const issue_date = document?.querySelector?.('.article-container article time')?.getAttribute('datetime')?.split('T')?.[0];
-      const contributor = document.querySelector('.article-container article [data-testid="author-link"]').textContent;
+      const contributor = document.querySelector('.article-container article [data-testid="author-link"]')?.textContent;
       const source_text_element = document.querySelector('.article-container article section')
       const scriptElements = source_text_element.querySelectorAll('script, style');
       scriptElements.forEach(el => el.remove());
