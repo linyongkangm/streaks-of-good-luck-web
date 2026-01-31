@@ -97,7 +97,7 @@ model indicator__company_finance {
   other_receivables_2_to_3_years                 Decimal?            @db.Decimal(20, 2)
   other_receivables_over_3_years                 Decimal?            @db.Decimal(20, 2)
   create_time                                    DateTime?           @default(now()) @db.DateTime(0)
-  update_time                                    DateTime?           @default(now()) @db.DateTime(0)
+  update_time                                    DateTime?           @default(now()) @updatedAt @db.DateTime(0)
   info__stock_company                            info__stock_company @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "indicator__company_finance_ibfk_1")
 
   @@unique([company_id, report_date], map: "uk_company_date")
@@ -114,7 +114,7 @@ model info__industry_analysis {
   original_file                     String?                             @db.VarChar(512)
   ai_model_version                  String?                             @db.VarChar(50)
   create_time                       DateTime?                           @default(now()) @db.DateTime(0)
-  update_time                       DateTime?                           @default(now()) @db.DateTime(0)
+  update_time                       DateTime?                           @default(now()) @updatedAt @db.DateTime(0)
   original_url                      String?                             @db.VarChar(512)
   report_time                       DateTime?                           @db.DateTime(0)
   relation__board_industry_analysis relation__board_industry_analysis[]
@@ -127,7 +127,7 @@ model info__stock_board {
   id                                Int                                 @id @default(autoincrement()) @db.UnsignedInt
   board_name                        String                              @unique(map: "idx_board_name") @db.VarChar(50)
   create_time                       DateTime                            @default(now()) @db.DateTime(0)
-  update_time                       DateTime                            @default(now()) @db.DateTime(0)
+  update_time                       DateTime                            @default(now()) @updatedAt @db.DateTime(0)
   relation__board_industry_analysis relation__board_industry_analysis[]
   relation__stock_board_company     relation__stock_board_company[]
 }
@@ -139,7 +139,7 @@ model info__stock_company {
   company_code                   String                           @unique(map: "idx_company_code") @db.VarChar(20)
   company_akshare_code           String                           @unique(map: "idx_company_akshare_code") @db.VarChar(20)
   create_time                    DateTime                         @default(now()) @db.DateTime(0)
-  update_time                    DateTime                         @default(now()) @db.DateTime(0)
+  update_time                    DateTime                         @default(now()) @updatedAt @db.DateTime(0)
   industry                       String?                          @db.VarChar(20)
   ipo_date                       DateTime?                        @db.Date
   indicator__company_finance     indicator__company_finance[]
@@ -162,7 +162,7 @@ model info__tweet {
   tweet_from    String   @db.VarChar(32)
   collect_from  String   @db.VarChar(512)
   create_time   DateTime @default(now()) @db.DateTime(0)
-  update_time   DateTime @default(now()) @db.DateTime(0)
+  update_time   DateTime @default(now()) @updatedAt @db.DateTime(0)
 
   @@index([tweet_date], map: "idx_tweet_date")
   @@index([user_name], map: "idx_user_name")
@@ -198,7 +198,7 @@ model quote__stock_constituent_daily {
   forward_change_percent  Decimal             @db.Decimal(5, 2)
   forward_price_range     Decimal             @db.Decimal(10, 2)
   create_time             DateTime            @default(now()) @db.DateTime(0)
-  update_time             DateTime            @default(now()) @db.DateTime(0)
+  update_time             DateTime            @default(now()) @updatedAt @db.DateTime(0)
   info__stock_company     info__stock_company @relation(fields: [company_id], references: [id], map: "fk_quote_company_id")
 
   @@unique([company_id, trade_date], map: "uk_company_trade_date")
@@ -210,7 +210,7 @@ model relation__board_industry_analysis {
   id                      Int                     @id @default(autoincrement()) @db.UnsignedInt
   board_id                Int                     @db.UnsignedInt
   industry_analysis_id    Int                     @db.UnsignedInt
-  update_time             DateTime                @default(now()) @db.DateTime(0)
+  update_time             DateTime                @default(now()) @updatedAt @db.DateTime(0)
   create_time             DateTime                @default(now()) @db.DateTime(0)
   info__stock_board       info__stock_board       @relation(fields: [board_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "relation__stock_board_industry_analysis_ibfk_1")
   info__industry_analysis info__industry_analysis @relation(fields: [industry_analysis_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "relation__stock_board_industry_analysis_ibfk_2")
@@ -224,7 +224,7 @@ model relation__board_industry_analysis {
 model relation__stock_board_company {
   id                  Int                 @id @default(autoincrement()) @db.UnsignedInt
   company_id          Int                 @db.UnsignedInt
-  update_time         DateTime            @default(now()) @db.DateTime(0)
+  update_time         DateTime            @default(now()) @updatedAt @db.DateTime(0)
   board_id            Int                 @db.UnsignedInt
   create_time         DateTime            @default(now()) @db.DateTime(0)
   weight              Int                 @default(0) @db.UnsignedInt
@@ -244,7 +244,7 @@ model summary__article {
   source_url  String    @unique(map: "uk_source_url") @db.VarChar(512)
   tags        String?   @db.VarChar(255)
   create_time DateTime  @default(now()) @db.DateTime(0)
-  update_time DateTime  @default(now()) @db.DateTime(0)
+  update_time DateTime  @default(now()) @updatedAt @db.DateTime(0)
   publication String?   @db.VarChar(20)
   issue_date  DateTime? @db.Date
   source_text String?   @db.Text
@@ -260,7 +260,7 @@ model summary__tweet {
   collect_from String   @db.VarChar(128)
   summary      String   @db.Text
   create_time  DateTime @default(now()) @db.DateTime(0)
-  update_time  DateTime @default(now()) @db.DateTime(0)
+  update_time  DateTime @default(now()) @updatedAt @db.DateTime(0)
   date         DateTime @db.Date
 
   @@unique([collect_from, date], map: "collect_from")
