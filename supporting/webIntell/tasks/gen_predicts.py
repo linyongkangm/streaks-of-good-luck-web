@@ -18,11 +18,11 @@ PREDICT_EXTRACTION_PROMPT_TEMPLATE = """
 
 ```json
 [
-  {
+  {{
     "interval_start": "YYYY-MM-DD",
     "interval_end": "YYYY-MM-DD",
     "content": "预测内容描述"
-  }
+  }}
 ]
 ```
 

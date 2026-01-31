@@ -14,6 +14,11 @@ export default function ArticleAnalysis() {
   const [searchContributor, setSearchContributor] = useState('')
   const [searchIssueDate, setSearchIssueDate] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
+  const [extractingPredicts, setExtractingPredicts] = useState<string | null>(null)
+  const [predictPreview, setPredictPreview] = useState<{
+    article: any;
+    predicts: Array<{ interval_start: string; interval_end: string; content: string }>;
+  } | null>(null)
 
   useEffect(() => {
     fetchArticles()
@@ -48,6 +53,33 @@ export default function ArticleAnalysis() {
   const handleSearch = () => {
     setPage(1)
     fetchArticles()
+  }
+
+  const handleExtractPredicts = async (articleId: bigint) => {
+    try {
+      setExtractingPredicts(articleId.toString())
+      const response = await fetch('/api/extract-predicts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ article_id: articleId.toString() }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setPredictPreview({
+          article: data.article,
+          predicts: data.predicts,
+        })
+      } else {
+        alert(data.message || '提取预测失败，请稍后重试')
+      }
+    } catch (error) {
+      console.error('Failed to extract predictions:', error)
+      alert('提取预测失败，请稍后重试')
+    } finally {
+      setExtractingPredicts(null)
+    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -258,6 +290,23 @@ export default function ArticleAnalysis() {
                     查看原文
                     <span className="group-hover:translate-x-1 transition-transform">→</span>
                   </a>
+                  <button
+                    onClick={() => handleExtractPredicts(article.id)}
+                    disabled={extractingPredicts === article.id.toString()}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg hover:from-purple-600 hover:to-pink-700 transition-all shadow-md hover:shadow-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {extractingPredicts === article.id.toString() ? (
+                      <>
+                        <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        提取中...
+                      </>
+                    ) : (
+                      <>
+                        <span>🔮</span>
+                        获取预测
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
@@ -295,6 +344,134 @@ export default function ArticleAnalysis() {
           >
             下一页 →
           </button>
+        </div>
+      )}
+
+      {/* 预测预览弹窗 */}
+      {predictPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            {/* 弹窗头部 */}
+            <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h3 className="text-2xl font-bold mb-2">🔮 预测提取结果</h3>
+                  <p className="text-purple-100 text-sm">{predictPreview.article.title}</p>
+                </div>
+                <button
+                  onClick={() => setPredictPreview(null)}
+                  className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
+                >
+                  <span className="text-2xl">×</span>
+                </button>
+              </div>
+            </div>
+
+            {/* 弹窗内容 */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {/* 文章信息 */}
+              <div className="bg-slate-50 rounded-lg p-4 mb-6">
+                <h4 className="text-lg font-bold text-slate-900 mb-3">📋 文章信息</h4>
+                <div className="space-y-2 text-sm">
+                  {predictPreview.article.publication && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-500">📰 刊物：</span>
+                      <span className="text-slate-900 font-medium">{predictPreview.article.publication}</span>
+                    </div>
+                  )}
+                  {predictPreview.article.issue_date && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-500">📅 日期：</span>
+                      <span className="text-slate-900 font-medium">
+                        {new Date(predictPreview.article.issue_date).toLocaleDateString('zh-CN')}
+                      </span>
+                    </div>
+                  )}
+                  {predictPreview.article.contributor && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-500">👤 贡献者：</span>
+                      <span className="text-slate-900 font-medium">{predictPreview.article.contributor}</span>
+                    </div>
+                  )}
+                  {predictPreview.article.tags && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-slate-500">🏷️ 标签：</span>
+                      <div className="flex flex-wrap gap-2">
+                        {predictPreview.article.tags.split(',').map((tag: string, idx: number) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-0.5 bg-slate-200 text-slate-700 rounded text-xs font-medium"
+                          >
+                            #{tag.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 预测列表 */}
+              <div>
+                <h4 className="text-lg font-bold text-slate-900 mb-4">
+                  🎯 提取到的预测 ({predictPreview.predicts.length})
+                </h4>
+                {predictPreview.predicts.length === 0 ? (
+                  <div className="text-center py-12 bg-slate-50 rounded-lg">
+                    <div className="text-4xl mb-2">🤷</div>
+                    <p className="text-slate-500">未提取到预测</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {predictPreview.predicts.map((predict, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                            {idx + 1}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2 text-sm text-slate-600">
+                              <span className="font-medium">📅 时间区间：</span>
+                              <span className="font-mono bg-white px-2 py-0.5 rounded">
+                                {predict.interval_start}
+                              </span>
+                              <span className="text-slate-400">→</span>
+                              <span className="font-mono bg-white px-2 py-0.5 rounded">
+                                {predict.interval_end}
+                              </span>
+                            </div>
+                            <div className="text-slate-900 leading-relaxed">{predict.content}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 弹窗底部 */}
+            <div className="border-t border-slate-200 p-4 bg-slate-50 flex justify-end gap-3">
+              <button
+                onClick={() => setPredictPreview(null)}
+                className="px-6 py-2.5 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-medium"
+              >
+                关闭
+              </button>
+              <button
+                onClick={() => {
+                  // TODO: 实现保存预测到数据库的逻辑
+                  alert('保存功能待实现')
+                }}
+                className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-md hover:shadow-lg font-medium"
+              >
+                保存预测
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
