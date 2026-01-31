@@ -194,7 +194,7 @@ export default function PredictsList() {
                       <span className="text-green-500">🕐</span>
                       <span className="text-gray-500">提出:</span>
                       <span className="font-medium">
-                        {new Date(p.proposed_at).toISOString().slice(0, 16).replace("T", " ")}
+                        {new Date(p.proposed_at).toISOString().slice(0, 10)}
                       </span>
                     </div>
                     {/* 关联信息 */}
