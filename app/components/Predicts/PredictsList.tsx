@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import PredictsNew from "./PredictsNew";
-import PredictDetail from "./PredictDetail";
 import type { info__predict } from '@/types'
 
 function statusBadge(status: string) {
@@ -117,9 +116,6 @@ export default function PredictsList() {
                 <div className="flex-1 space-y-3">
                   {/* 预测者和内容 */}
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md">
-                      {p.predictor?.[0] || '?'}
-                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm text-gray-600 mb-1 font-medium">{p.predictor || '未知'}</div>
                       <div className="text-gray-900 font-medium text-base leading-relaxed">{p.content}</div>
@@ -179,13 +175,6 @@ export default function PredictsList() {
                 {/* 右侧状态和操作 */}
                 <div className="flex lg:flex-col items-center lg:items-end gap-3 lg:min-w-[140px]">
                   {statusBadge(p.verify_status)}
-                  <button 
-                    className="text-blue-600 hover:text-blue-800 text-sm font-semibold hover:underline whitespace-nowrap transition-colors flex items-center gap-1 group-hover:translate-x-1 duration-200"
-                    onClick={() => setDetailId(String(p.id))}
-                  >
-                    查看详情
-                    <span className="text-xs">→</span>
-                  </button>
                 </div>
               </div>
             </div>
@@ -200,20 +189,6 @@ export default function PredictsList() {
               onSuccess={() => { setShowNew(false); fetchPredicts(); }} 
               onCancel={() => setShowNew(false)} 
             />
-          </div>
-        </div>
-      )}
-      {/* 详情弹窗 */}
-      {detailId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fadeIn">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slideUp">
-            <PredictDetail id={detailId} />
-            <button 
-              className="mt-6 w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium shadow-md hover:shadow-lg"
-              onClick={() => setDetailId(null)}
-            >
-              关闭
-            </button>
           </div>
         </div>
       )}
