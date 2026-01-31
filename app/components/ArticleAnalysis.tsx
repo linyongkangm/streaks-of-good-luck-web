@@ -16,11 +16,16 @@ export default function ArticleAnalysis() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [extractingPredicts, setExtractingPredicts] = useState<string | null>(null)
   const [predictPreview, setPredictPreview] = useState<{
-    article: any;
+    article: summary__article;
     predicts: Array<{ interval_start: string; interval_end: string; content: string }>;
   } | null>(null)
   const [savingPredicts, setSavingPredicts] = useState(false)
-
+  const [predictsSaved, setPredictsSaved] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('PREDICTS_SAVED')?.split(',') || []
+    }
+    return []
+  })
   useEffect(() => {
     fetchArticles()
   }, [page])
@@ -88,7 +93,7 @@ export default function ArticleAnalysis() {
 
     try {
       setSavingPredicts(true)
-      
+
       // 组合数据：将每个预测与文章信息结合
       const predictsToSave = predictPreview.predicts.map(predict => ({
         content: predict.content,
@@ -111,6 +116,10 @@ export default function ArticleAnalysis() {
       if (data.success) {
         alert(`成功保存 ${data.count} 个预测`)
         setPredictPreview(null)
+        const predicts_saved = localStorage.getItem('PREDICTS_SAVED')?.split(',') || []
+        predicts_saved.push(predictPreview.article.id.toString())
+        localStorage.setItem('PREDICTS_SAVED', predicts_saved.join(','))
+        setPredictsSaved(predicts_saved)
       } else {
         alert(data.message || '保存预测失败，请稍后重试')
       }
@@ -330,23 +339,26 @@ export default function ArticleAnalysis() {
                     查看原文
                     <span className="group-hover:translate-x-1 transition-transform">→</span>
                   </a>
-                  <button
-                    onClick={() => handleExtractPredicts(article.id)}
-                    disabled={extractingPredicts === article.id.toString()}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg hover:from-purple-600 hover:to-pink-700 transition-all shadow-md hover:shadow-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {extractingPredicts === article.id.toString() ? (
-                      <>
-                        <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                        提取中...
-                      </>
-                    ) : (
-                      <>
-                        <span>🔮</span>
-                        获取预测
-                      </>
-                    )}
-                  </button>
+                  {
+                    !predictsSaved.includes(article.id.toString()) ? (<button
+                      onClick={() => handleExtractPredicts(article.id)}
+                      disabled={extractingPredicts === article.id.toString()}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg hover:from-purple-600 hover:to-pink-700 transition-all shadow-md hover:shadow-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {extractingPredicts === article.id.toString() ? (
+                        <>
+                          <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                          提取中...
+                        </>
+                      ) : (
+                        <>
+                          <span>🔮</span>
+                          获取预测
+                        </>
+                      )}
+                    </button>) : null
+                  }
+
                 </div>
               </div>
             </div>
