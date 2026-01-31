@@ -165,15 +165,15 @@ export default function PredictsList() {
           {predicts.map((p) => (
             <div
               key={p.id}
-              className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg hover:border-blue-300 transition-all duration-200 group"
+              className="bg-white border border-gray-200 rounded-xl px-6 py-2 hover:shadow-lg hover:border-blue-300 transition-all duration-200 group"
             >
               <div className="flex flex-col lg:flex-row lg:items-start gap-4">
-                <div className="flex-1 space-y-3">
+                <div className="flex-1">
                   {/* 预测者和内容 */}
                   <div className="flex items-start gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="text-sm text-gray-600 mb-1 font-medium">{p.predictor || '未知'}</div>
-                      <div className="text-gray-900 font-medium text-base leading-relaxed">{p.content}</div>
+                      <div className="text-gray-600 font-medium text-base leading-relaxed">{p.content}</div>
                     </div>
                   </div>
 
@@ -197,34 +197,35 @@ export default function PredictsList() {
                         {new Date(p.proposed_at).toISOString().slice(0, 16).replace("T", " ")}
                       </span>
                     </div>
+                    {/* 关联信息 */}
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-purple-500">🔗</span>
+                      <span className="text-gray-500">关联:</span>
+                      {p.assoc_type === "article" && (p as any).summary__article ? (
+                        <button
+                          className="text-blue-600 hover:text-blue-800 font-medium hover:underline flex items-center gap-1"
+                          onClick={() => window.open(`/articles/${p.assoc_article_id}`)}
+                        >
+                          {(p as any).summary__article.title}
+                          <span className="text-xs">↗</span>
+                        </button>
+                      ) : p.assoc_type === "link" && p.assoc_link ? (
+                        <a
+                          href={p.assoc_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 font-medium hover:underline flex items-center gap-1"
+                        >
+                          外部链接
+                          <span className="text-xs">↗</span>
+                        </a>
+                      ) : (
+                        <span className="text-gray-400">无</span>
+                      )}
+                    </div>
                   </div>
 
-                  {/* 关联信息 */}
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-purple-500">🔗</span>
-                    <span className="text-gray-500">关联:</span>
-                    {p.assoc_type === "article" && (p as any).summary__article ? (
-                      <button
-                        className="text-blue-600 hover:text-blue-800 font-medium hover:underline flex items-center gap-1"
-                        onClick={() => window.open(`/articles/${p.assoc_article_id}`)}
-                      >
-                        {(p as any).summary__article.title}
-                        <span className="text-xs">↗</span>
-                      </button>
-                    ) : p.assoc_type === "link" && p.assoc_link ? (
-                      <a
-                        href={p.assoc_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 font-medium hover:underline flex items-center gap-1"
-                      >
-                        外部链接
-                        <span className="text-xs">↗</span>
-                      </a>
-                    ) : (
-                      <span className="text-gray-400">无</span>
-                    )}
-                  </div>
+
                 </div>
 
                 {/* 右侧状态和操作 */}
