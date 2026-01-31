@@ -131,6 +131,15 @@ export default function ArticleAnalysis() {
     }
   }
 
+  const handleRemovePredict = (index: number) => {
+    if (!predictPreview) return
+    const newPredicts = predictPreview.predicts.filter((_, idx) => idx !== index)
+    setPredictPreview({
+      ...predictPreview,
+      predicts: newPredicts,
+    })
+  }
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleSearch()
@@ -481,9 +490,6 @@ export default function ArticleAnalysis() {
                         className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4 hover:shadow-md transition-shadow"
                       >
                         <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                            {idx + 1}
-                          </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2 text-sm text-slate-600">
                               <span className="font-medium">📅 时间区间：</span>
@@ -494,10 +500,18 @@ export default function ArticleAnalysis() {
                               <span className="font-mono bg-white px-2 py-0.5 rounded">
                                 {predict.interval_end}
                               </span>
+                              <button
+                                onClick={() => handleRemovePredict(idx)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-xs font-medium ml-10"
+                              >
+                                <span>✕</span>
+                                移除此预测
+                              </button>
                             </div>
                             <div className="text-slate-900 leading-relaxed">{predict.content}</div>
                           </div>
                         </div>
+
                       </div>
                     ))}
                   </div>
