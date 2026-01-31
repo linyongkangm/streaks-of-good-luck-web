@@ -1,3 +1,4 @@
+import datetime
 import utils
 from typing import cast, List
 import json
@@ -31,7 +32,7 @@ PREDICT_EXTRACTION_PROMPT_TEMPLATE = """
 2. 如果只有一个时间点，interval_start 和 interval_end 可以相同
 3. 内容应该简洁准确，提取预测的核心要点
 4. 如果文章中没有任何预测，返回空数组 []
-
+5. 现在是 {current_date}
 现在，请分析以下文章内容：
 
 {article_text}
@@ -59,7 +60,8 @@ async def gen_predicts(article_text: str):
             {
                 "role": "user",
                 "content": PREDICT_EXTRACTION_PROMPT_TEMPLATE.format(
-                    article_text=article_text
+                    article_text=article_text,
+                    current_date=datetime.date.today().strftime("%Y-%m-%d"),
                 ),
             }
         ]
