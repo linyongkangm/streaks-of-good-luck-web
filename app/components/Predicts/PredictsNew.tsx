@@ -4,7 +4,7 @@ import { useState } from 'react';
 export default function PredictsNew({ onSuccess, onCancel }: { onSuccess?: () => void, onCancel?: () => void }) {
   const [form, setForm] = useState({
     content: '',
-    proposed_at: new Date().toISOString().slice(0, 16),
+    proposed_at: new Date().toISOString().slice(0, 10),
     predictor: '', // 新增字段
     interval_start: '',
     interval_end: '',
@@ -67,7 +67,7 @@ export default function PredictsNew({ onSuccess, onCancel }: { onSuccess?: () =>
       </div>
       <div className="mb-3">
         <label className="text-gray-600 block mb-1 font-medium">预测提出时间 *</label>
-        <input type="datetime-local" name="proposed_at" className="text-gray-600 w-full border rounded p-2" value={form.proposed_at} onChange={handleChange} required />
+        <input type="date" name="proposed_at" className="text-gray-600 w-full border rounded p-2" value={form.proposed_at} onChange={handleChange} required />
       </div>
       <div className="mb-3 flex gap-2">
         <div className="flex-1">

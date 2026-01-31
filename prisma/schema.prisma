@@ -275,7 +275,7 @@ model info__predict {
   create_time      DateTime  @default(now()) @db.DateTime(0)
   update_time      DateTime  @default(now()) @updatedAt @db.DateTime(0)
   content          String    @db.Text
-  proposed_at      DateTime  @db.DateTime(0)
+  proposed_at      DateTime  @db.Date
   interval_start   DateTime  @db.Date
   interval_end     DateTime  @db.Date
   verify_status    VerifyStatus @default(not_due)
