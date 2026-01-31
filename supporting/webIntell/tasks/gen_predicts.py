@@ -1,4 +1,5 @@
 import datetime
+from email import message
 import utils
 from typing import cast, List
 import json
@@ -65,6 +66,7 @@ async def gen_predicts(article_text: str):
                 ),
             }
         ]
+        logger.info("\n\n--- 发送给模型的消息 ---", messages)
         responseText = agents.think(cast(List, messages))
 
         if responseText:
