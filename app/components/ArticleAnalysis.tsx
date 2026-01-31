@@ -3,6 +3,13 @@
 import { useState, useEffect } from 'react'
 import type { summary__article } from '@/types'
 
+function appendPredictsSaved(articleId: string) {
+  const predicts_saved = localStorage.getItem('PREDICTS_SAVED')?.split(',') || []
+  predicts_saved.push(articleId)
+  localStorage.setItem('PREDICTS_SAVED', predicts_saved.join(','))
+  return predicts_saved
+}
+
 export default function ArticleAnalysis() {
   const [articles, setArticles] = useState<summary__article[]>([])
   const [loading, setLoading] = useState(true)
@@ -73,6 +80,9 @@ export default function ArticleAnalysis() {
       const data = await response.json()
 
       if (data.success) {
+        if (data.predicts.length === 0) {
+          appendPredictsSaved(articleId.toString())
+        }
         setPredictPreview({
           article: data.article,
           predicts: data.predicts,
@@ -116,10 +126,9 @@ export default function ArticleAnalysis() {
       if (data.success) {
         alert(`成功保存 ${data.count} 个预测`)
         setPredictPreview(null)
-        const predicts_saved = localStorage.getItem('PREDICTS_SAVED')?.split(',') || []
-        predicts_saved.push(predictPreview.article.id.toString())
-        localStorage.setItem('PREDICTS_SAVED', predicts_saved.join(','))
-        setPredictsSaved(predicts_saved)
+
+
+        setPredictsSaved(appendPredictsSaved(predictPreview.article.id.toString()))
       } else {
         alert(data.message || '保存预测失败，请稍后重试')
       }
