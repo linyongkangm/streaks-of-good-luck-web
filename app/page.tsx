@@ -4,20 +4,19 @@ import { useEffect, useState } from "react";
 import IndustryAnalysis from "./components/IndustryAnalysis";
 import TweetAnalysis from "./components/TweetAnalysis";
 import ArticleAnalysis from "./components/ArticleAnalysis";
-
+import PredictsList from "./components/Predicts/PredictsList";
 
 type ArticleProcessResult = {
   title: string;
   status: string;
   source_url: string;
 };
-type TabType = 'industry' | 'tweet' | 'article';
+type TabType = 'industry' | 'tweet' | 'article' | 'predicts';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>('tweet');
   const [articleResults, setArticleResults] = useState<ArticleProcessResult[]>([]);
   const [showArticlePopup, setShowArticlePopup] = useState(false);
-  console.log("articleResults", articleResults);
   useEffect(() => {
     const handler = async (e: Event) => {
       const detail = (e as CustomEvent).detail;
@@ -96,11 +95,12 @@ export default function Home() {
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-lg sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto">
           <div className="flex px-6">
-            {[
+            {([
               { id: 'industry' as const, icon: '🏢', label: '行业分析' },
               { id: 'tweet' as const, icon: '💬', label: '推文分析' },
-              { id: 'article' as const, icon: '📄', label: '文章分析' }
-            ].map((tab) => (
+              { id: 'article' as const, icon: '📄', label: '文章分析' },
+              { id: 'predicts' as const, icon: '📈', label: '预测记录' }
+            ]).map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -121,11 +121,12 @@ export default function Home() {
 
       {/* 内容区域 */}
       <div>
-        {[
+        {([
           { id: 'industry' as const, component: IndustryAnalysis },
           { id: 'tweet' as const, component: TweetAnalysis },
-          { id: 'article' as const, component: ArticleAnalysis }
-        ].map(({ id, component: Component }) => (
+          { id: 'article' as const, component: ArticleAnalysis },
+          { id: 'predicts' as const, component: PredictsList }
+        ]).map(({ id, component: Component }) => (
           activeTab === id && <Component key={id} />
         ))}
       </div>

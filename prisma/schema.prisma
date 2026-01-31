@@ -239,6 +239,7 @@ model relation__stock_board_company {
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model summary__article {
   id          BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  info__predicts    info__predict[] // 注意：字段名建议用复数，与单向字段对应
   title       String    @db.VarChar(255)
   summary     String    @db.Text
   source_url  String    @unique(map: "uk_source_url") @db.VarChar(512)
@@ -266,4 +267,43 @@ model summary__tweet {
   @@unique([collect_from, date], map: "collect_from")
   @@index([collect_from], map: "idx_collect_from")
   @@index([date], map: "idx_date")
+}
+
+/// 预测记录表
+model info__predict {
+  id               BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  create_time      DateTime  @default(now()) @db.DateTime(0)
+  update_time      DateTime  @default(now()) @updatedAt @db.DateTime(0)
+  content          String    @db.Text
+  proposed_at      DateTime  @db.DateTime(0)
+  interval_start   DateTime  @db.Date
+  interval_end     DateTime  @db.Date
+  verify_status    VerifyStatus @default(not_due)
+  predictor        String?    @db.VarChar(50)
+  delayed_note     String?   @db.Text
+  assoc_type       AssocType?
+  assoc_article_id BigInt?   @db.UnsignedBigInt
+  assoc_link       String?   @db.VarChar(2048)
+
+  // 关联 summary__article（如有）
+  summary__article summary__article? @relation(fields: [assoc_article_id], references: [id])
+
+  @@index([interval_start], map: "idx_interval_start")
+  @@index([interval_end], map: "idx_interval_end")
+  @@index([proposed_at], map: "idx_proposed_at")
+  @@index([verify_status], map: "idx_verify_status")
+  @@index([predictor], map: "idx_predictor")
+}
+
+enum VerifyStatus {
+  implemented
+  not_implemented
+  partial
+  not_due
+  delayed
+}
+
+enum AssocType {
+  article
+  link
 }

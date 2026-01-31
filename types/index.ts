@@ -4,6 +4,7 @@ import {
   info__tweet,
   info__stock_board,
   info__industry_analysis,
+  info__predict,
   relation__stock_board_company,
   relation__board_industry_analysis,
   summary__tweet,
@@ -19,6 +20,7 @@ export {
   type info__tweet,
   type info__stock_board,
   type info__industry_analysis,
+  type info__predict,
   type relation__board_industry_analysis,
   type summary__tweet,
   type summary__article,
@@ -113,3 +115,7 @@ export type TweetSummaryListResponse = ApiResponse<summary__tweet[]>
 
 // 文章摘要相关类型
 export type ArticleSummaryListResponse = ApiResponse<summary__article[]>
+
+export type PredictDetail = info__predict & {
+  summary__article?: summary__article | null
+}
