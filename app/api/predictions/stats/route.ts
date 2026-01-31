@@ -21,6 +21,9 @@ export async function GET(req: NextRequest) {
       const startDate = new Date(predict.interval_start);
       const endDate = new Date(predict.interval_end);
       
+      // 记录涉及的年份（用于确保每个预测在每年只统计一次）
+      const yearsInvolved = new Set<number>();
+      
       // 获取涉及的所有月份
       const currentDate = new Date(startDate);
       while (currentDate <= endDate) {
@@ -28,16 +31,21 @@ export async function GET(req: NextRequest) {
         const month = currentDate.getMonth() + 1;
         const monthKey = `${year}-${String(month).padStart(2, '0')}`;
         
-        // 统计年份
-        yearStats[year] = (yearStats[year] || 0) + 1;
+        // 记录涉及的年份
+        yearsInvolved.add(year);
         
-        // 统计月份
+        // 统计月份（每个月都统计）
         monthStats[monthKey] = (monthStats[monthKey] || 0) + 1;
         
         // 移到下一个月
         currentDate.setMonth(currentDate.getMonth() + 1);
         currentDate.setDate(1);
       }
+      
+      // 对于涉及的每个年份，每个预测只统计一次
+      yearsInvolved.forEach(year => {
+        yearStats[year] = (yearStats[year] || 0) + 1;
+      });
     });
 
     return NextResponse.json({
