@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 
 // PATCH /api/predicts/:id/verify
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id;
+  const id = (await params).id;
   const data = await req.json();
   if (!data.verify_status) {
     return NextResponse.json({ error: '缺少验证状态' }, { status: 400 });

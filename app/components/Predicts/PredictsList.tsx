@@ -19,11 +19,12 @@ export default function PredictsList() {
   const [predicts, setPredicts] = useState<info__predict[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
-  const [detailId, setDetailId] = useState<String | null>(null);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
   const [yearStats, setYearStats] = useState<Record<number, number>>({});
   const [monthStats, setMonthStats] = useState<Record<string, number>>({});
+  const [editingStatus, setEditingStatus] = useState<string | null>(null);
+  const [delayedNote, setDelayedNote] = useState('');
 
   const fetchPredicts = async () => {
     setLoading(true);
@@ -41,6 +42,60 @@ export default function PredictsList() {
       const data = await res.json();
       setYearStats(data.years);
       setMonthStats(data.months);
+    }
+  };
+
+  const handleStatusChange = async (predictId: bigint, newStatus: string) => {
+    if (newStatus === 'delayed') {
+      setEditingStatus(String(predictId));
+      setDelayedNote('');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/predicts/${predictId}/verify`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ verify_status: newStatus }),
+      });
+
+      if (res.ok) {
+        fetchPredicts();
+      } else {
+        const error = await res.json();
+        alert(error.error || '更新失败');
+      }
+    } catch (error) {
+      alert('更新失败');
+    }
+  };
+
+  const handleDelayedSubmit = async (predictId: bigint) => {
+    if (!delayedNote.trim()) {
+      alert('请填写延期说明');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/predicts/${predictId}/verify`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          verify_status: 'delayed',
+          delayed_note: delayedNote,
+        }),
+      });
+
+      if (res.ok) {
+        setEditingStatus(null);
+        setDelayedNote('');
+        fetchPredicts();
+      } else {
+        const error = await res.json();
+        alert(error.error || '更新失败');
+      }
+    } catch (error) {
+      alert('更新失败');
     }
   };
 
@@ -173,8 +228,53 @@ export default function PredictsList() {
                 </div>
 
                 {/* 右侧状态和操作 */}
-                <div className="flex lg:flex-col items-center lg:items-end gap-3 lg:min-w-[140px]">
-                  {statusBadge(p.verify_status)}
+                <div className="flex lg:flex-col items-center lg:items-end gap-3 lg:min-w-[180px]">
+                  {editingStatus === String(p.id) ? (
+                    <div className="flex flex-col gap-2 w-full">
+                      <textarea
+                        value={delayedNote}
+                        onChange={(e) => setDelayedNote(e.target.value)}
+                        placeholder="请填写延期说明..."
+                        className="text-gray-500 w-full px-3 py-2 border border-orange-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                        rows={3}
+                        autoFocus
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleDelayedSubmit(p.id)}
+                          className="flex-1 px-3 py-1.5 bg-orange-600 text-white rounded-lg text-xs font-medium hover:bg-orange-700 transition-colors"
+                        >
+                          确认
+                        </button>
+                        <button
+                          onClick={() => setEditingStatus(null)}
+                          className="flex-1 px-3 py-1.5 bg-gray-300 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-400 transition-colors"
+                        >
+                          取消
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2 w-full">
+                      <select
+                        value={p.verify_status}
+                        onChange={(e) => handleStatusChange(p.id, e.target.value)}
+                        className="text-gray-500 px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer hover:border-blue-400"
+                      >
+                        <option value="not_due">⏳ 未到时间</option>
+                        <option value="implemented">✓ 实现</option>
+                        <option value="not_implemented">✗ 无实现</option>
+                        <option value="partial">⚡ 部分实现</option>
+                        <option value="delayed">⏰ 延期</option>
+                      </select>
+                      {p.verify_status === 'delayed' && p.delayed_note && (
+                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-2 text-xs text-gray-700">
+                          <div className="font-medium text-orange-800 mb-1">延期说明：</div>
+                          <div className="text-gray-600">{p.delayed_note}</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
