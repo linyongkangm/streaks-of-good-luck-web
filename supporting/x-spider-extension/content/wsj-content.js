@@ -13,9 +13,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       const title = header.textContent;
       const source_url = window.location.href;
       const publication = 'wsj';
-      const issue_date = document?.querySelector?.('.article-container article time')?.getAttribute('datetime')?.split('T')?.[0];
-      const contributor = document.querySelector('.article-container article [data-testid="author-link"]')?.textContent;
-      const source_text_element = document.querySelector('.article-container article section')
+      const articleContainer = document.querySelector('.article-container') || document.querySelector('#__next main');
+      if (!articleContainer) {
+        sendResponse({ success: false, error: 'Article container not found' });
+        chrome.runtime.sendMessage({ action: "STOP_SCRAPING" });
+        return;
+      }
+      let issue_date = articleContainer?.querySelector('article time')?.getAttribute('datetime')?.split('T')?.[0];
+      if (!issue_date) {
+        const now = new Date();
+        issue_date = now.toISOString().split('T')[0];
+      }
+      const contributor = articleContainer?.querySelector('article [data-testid="author-link"]')?.textContent;
+      const source_text_element = articleContainer?.querySelector('article section')
       const scriptElements = source_text_element.querySelectorAll('script, style');
       scriptElements.forEach(el => el.remove());
       const source_text = source_text_element.textContent;
