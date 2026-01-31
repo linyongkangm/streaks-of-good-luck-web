@@ -56,32 +56,32 @@ export default function PredictsNew({ onSuccess, onCancel }: { onSuccess?: () =>
 
   return (
     <form className="max-w-xl mx-auto" onSubmit={handleSubmit}>
-      <h2 className="text-gray-900 text-xl font-bold mb-4">新建预测</h2>
+      <h2 className="text-gray-600 text-xl font-bold mb-4">新建预测</h2>
       <div className="mb-3">
-        <label className="text-gray-900 block mb-1 font-medium">预测者 *</label>
-        <input type="text" name="predictor" className="text-gray-900 w-full border rounded p-2" value={form.predictor} onChange={handleChange} required />
+        <label className="text-gray-600 block mb-1 font-medium">预测者 *</label>
+        <input type="text" name="predictor" className="text-gray-600 w-full border rounded p-2" value={form.predictor} onChange={handleChange} required />
       </div>
       <div className="mb-3">
-        <label className="text-gray-900 block mb-1 font-medium">预测内容 *</label>
-        <textarea name="content" className="text-gray-900 w-full border rounded p-2" rows={3} value={form.content} onChange={handleChange} required />
+        <label className="text-gray-600 block mb-1 font-medium">预测内容 *</label>
+        <textarea name="content" className="text-gray-600 w-full border rounded p-2" rows={3} value={form.content} onChange={handleChange} required />
       </div>
       <div className="mb-3">
-        <label className="text-gray-900 block mb-1 font-medium">预测提出时间 *</label>
-        <input type="datetime-local" name="proposed_at" className="text-gray-900 w-full border rounded p-2" value={form.proposed_at} onChange={handleChange} required />
+        <label className="text-gray-600 block mb-1 font-medium">预测提出时间 *</label>
+        <input type="datetime-local" name="proposed_at" className="text-gray-600 w-full border rounded p-2" value={form.proposed_at} onChange={handleChange} required />
       </div>
       <div className="mb-3 flex gap-2">
         <div className="flex-1">
-          <label className="text-gray-900 block mb-1 font-medium">区间开始 *</label>
-          <input type="date" name="interval_start" className="text-gray-900 w-full border rounded p-2" value={form.interval_start} onChange={handleChange} required />
+          <label className="text-gray-600 block mb-1 font-medium">区间开始 *</label>
+          <input type="date" name="interval_start" className="text-gray-600 w-full border rounded p-2" value={form.interval_start} onChange={handleChange} required />
         </div>
         <div className="flex-1">
-          <label className="text-gray-900 block mb-1 font-medium">区间结束 *</label>
-          <input type="date" name="interval_end" className="text-gray-900 w-full border rounded p-2" value={form.interval_end} onChange={handleChange} required />
+          <label className="text-gray-600 block mb-1 font-medium">区间结束 *</label>
+          <input type="date" name="interval_end" className="text-gray-600 w-full border rounded p-2" value={form.interval_end} onChange={handleChange} required />
         </div>
       </div>
       <div className="mb-3">
-        <label className="text-gray-900 block mb-1 font-medium">关联类型</label>
-        <select name="assoc_type" className="text-gray-900 w-full border rounded p-2" value={form.assoc_type} onChange={handleChange}>
+        <label className="text-gray-600 block mb-1 font-medium">关联类型</label>
+        <select name="assoc_type" className="text-gray-600 w-full border rounded p-2" value={form.assoc_type} onChange={handleChange}>
           <option value="">无</option>
           <option value="article">文章</option>
           <option value="link">链接</option>

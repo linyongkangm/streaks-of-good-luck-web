@@ -110,9 +110,8 @@ export default function PredictsList() {
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1">
-          <h1 className="text-2xl font-bold text-gray-900">📊 预测管理</h1>
           <div className="flex items-center gap-2">
-            <select 
+            <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
@@ -123,7 +122,7 @@ export default function PredictsList() {
                 </option>
               ))}
             </select>
-            <select 
+            <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
@@ -138,15 +137,16 @@ export default function PredictsList() {
                 );
               })}
             </select>
+            <button
+              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white-700 px-3 py-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium flex items-center gap-2 whitespace-nowrap"
+              onClick={() => setShowNew(true)}
+            >
+              <span className="text-lg">+</span>
+              新增预测
+            </button>
           </div>
         </div>
-        <button 
-          className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium flex items-center gap-2 whitespace-nowrap"
-          onClick={() => setShowNew(true)}
-        >
-          <span className="text-lg">+</span>
-          新增预测
-        </button>
+
       </div>
 
       {loading ? (
@@ -163,8 +163,8 @@ export default function PredictsList() {
       ) : (
         <div className="space-y-4">
           {predicts.map((p) => (
-            <div 
-              key={p.id} 
+            <div
+              key={p.id}
               className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg hover:border-blue-300 transition-all duration-200 group"
             >
               <div className="flex flex-col lg:flex-row lg:items-start gap-4">
@@ -212,10 +212,10 @@ export default function PredictsList() {
                         <span className="text-xs">↗</span>
                       </button>
                     ) : p.assoc_type === "link" && p.assoc_link ? (
-                      <a 
-                        href={p.assoc_link} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
+                      <a
+                        href={p.assoc_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-800 font-medium hover:underline flex items-center gap-1"
                       >
                         外部链接
@@ -285,9 +285,9 @@ export default function PredictsList() {
       {showNew && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fadeIn">
           <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slideUp">
-            <PredictsNew 
-              onSuccess={() => { setShowNew(false); fetchPredicts(); }} 
-              onCancel={() => setShowNew(false)} 
+            <PredictsNew
+              onSuccess={() => { setShowNew(false); fetchPredicts(); }}
+              onCancel={() => setShowNew(false)}
             />
           </div>
         </div>
