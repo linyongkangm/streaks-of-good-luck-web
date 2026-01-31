@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import PredictsNew from "./PredictsNew";
-import type { info__predict } from '@/types'
+import type { PredictDetail } from '@/types'
 
 function statusBadge(status: string) {
   const map: Record<string, { label: string; className: string }> = {
@@ -16,7 +16,7 @@ function statusBadge(status: string) {
 }
 
 export default function PredictsList() {
-  const [predicts, setPredicts] = useState<info__predict[]>([]);
+  const [predicts, setPredicts] = useState<PredictDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
@@ -201,12 +201,12 @@ export default function PredictsList() {
                     <div className="flex items-center gap-2 text-sm">
                       <span className="text-purple-500">🔗</span>
                       <span className="text-gray-500">关联:</span>
-                      {p.assoc_type === "article" && (p as any).summary__article ? (
+                      {p.assoc_type === "article" && p.summary__article ? (
                         <button
                           className="text-blue-600 hover:text-blue-800 font-medium hover:underline flex items-center gap-1"
-                          onClick={() => window.open(`/articles/${p.assoc_article_id}`)}
+                          onClick={() => window.open(p?.summary__article?.source_url, '_blank')}
                         >
-                          {(p as any).summary__article.title}
+                          {p.summary__article.title}
                           <span className="text-xs">↗</span>
                         </button>
                       ) : p.assoc_type === "link" && p.assoc_link ? (

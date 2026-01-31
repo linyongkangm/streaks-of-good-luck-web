@@ -19,6 +19,7 @@ export default function ArticleAnalysis() {
     article: any;
     predicts: Array<{ interval_start: string; interval_end: string; content: string }>;
   } | null>(null)
+  const [savingPredicts, setSavingPredicts] = useState(false)
 
   useEffect(() => {
     fetchArticles()
@@ -79,6 +80,45 @@ export default function ArticleAnalysis() {
       alert('提取预测失败，请稍后重试')
     } finally {
       setExtractingPredicts(null)
+    }
+  }
+
+  const handleSavePredicts = async () => {
+    if (!predictPreview) return
+
+    try {
+      setSavingPredicts(true)
+      
+      // 组合数据：将每个预测与文章信息结合
+      const predictsToSave = predictPreview.predicts.map(predict => ({
+        content: predict.content,
+        proposed_at: predictPreview.article.issue_date || new Date().toISOString().split('T')[0],
+        interval_start: predict.interval_start,
+        interval_end: predict.interval_end,
+        predictor: predictPreview.article.contributor || '未知',
+        assoc_type: 'article',
+        assoc_article_id: predictPreview.article.id,
+      }))
+
+      const response = await fetch('/api/batch-create-predicts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ predicts: predictsToSave }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        alert(`成功保存 ${data.count} 个预测`)
+        setPredictPreview(null)
+      } else {
+        alert(data.message || '保存预测失败，请稍后重试')
+      }
+    } catch (error) {
+      console.error('Failed to save predictions:', error)
+      alert('保存预测失败，请稍后重试')
+    } finally {
+      setSavingPredicts(false)
     }
   }
 
@@ -462,13 +502,18 @@ export default function ArticleAnalysis() {
                 关闭
               </button>
               <button
-                onClick={() => {
-                  // TODO: 实现保存预测到数据库的逻辑
-                  alert('保存功能待实现')
-                }}
-                className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-md hover:shadow-lg font-medium"
+                onClick={handleSavePredicts}
+                disabled={savingPredicts || predictPreview.predicts.length === 0}
+                className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-md hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                保存预测
+                {savingPredicts ? (
+                  <>
+                    <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                    保存中...
+                  </>
+                ) : (
+                  '保存预测'
+                )}
               </button>
             </div>
           </div>
