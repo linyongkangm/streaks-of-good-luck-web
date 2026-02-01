@@ -19,10 +19,7 @@ export async function postMessage(content: string) {
       const webhookUrl = process.env.WEIXIN_WEBHOOK;
 
       if (!webhookUrl) {
-        return NextResponse.json(
-          { error: 'Webhook not configured' },
-          { status: 500 }
-        );
+        throw new Error('Webhook not configured');
       }
       const payload = {
         msgtype: 'text',
@@ -38,24 +35,13 @@ export async function postMessage(content: string) {
         body: JSON.stringify(payload),
       });
       const result = await response.json();
-
       if (!response.ok) {
-        return NextResponse.json(
-          { error: 'Failed to send message', details: result },
-          { status: response.status }
-        );
+        throw new Error(`Failed to send message: ${JSON.stringify(result)}`);
       }
-
-      return NextResponse.json({
-        success: true,
-        data: result
-      });
+      return result;
     } catch (error) {
       console.error('Error sending webhook message:', error);
-      return NextResponse.json(
-        { error: 'Internal server error', message: error instanceof Error ? error.message : 'Unknown error' },
-        { status: 500 }
-      );
+      throw error;
     }
   }
   return fetch('/api/msg-push', {

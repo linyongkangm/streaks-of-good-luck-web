@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-
+import * as tools from '@/app/tools'
+import { summary__article } from '@/types'
 const PYTHON_API_URL = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'
 
 // POST /api/process-articles - 处理文章，生成摘要和标签
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
     const existingUrls = await prisma.summary__article.findMany({
       where: {
         source_url: {
-          in: articles.map((a: any) => a.source_url),
+          in: articles.map((a: summary__article) => a.source_url),
         },
       },
       select: { source_url: true },
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
     const existingUrlSet = new Set(existingUrls.map((a) => a.source_url))
 
     // 分离新文章和已存在的文章
-    const newArticles = articles.filter((a: any) => !existingUrlSet.has(a.source_url))
+    const newArticles = articles.filter((a: summary__article) => !existingUrlSet.has(a.source_url))
 
     if (newArticles.length === 0) {
       return NextResponse.json({
@@ -47,6 +48,10 @@ export async function POST(request: NextRequest) {
       try {
         const r = await generateArticleAnalysis(article);
         results.push({ status: 'fulfilled', value: r });
+        if (r.success && r.data) {
+          tools.postMessage(`New article processed: ${r.data.title} (${r.data.summary})`);
+          console.log(`✓ Article processed: ${r.data.title} (${r.data.source_url})`);
+        }
       } catch (e) {
         results.push({ status: 'rejected', reason: e });
       }
@@ -113,7 +118,7 @@ async function generateArticleAnalysis(article: any) {
     if (result.success && result.analysis) {
       const { tags, summary } = result.analysis
 
-      const data: any = {
+      const data: Partial<summary__article> = {
         source_url,
         title,
         tags: tags || '',
@@ -126,11 +131,11 @@ async function generateArticleAnalysis(article: any) {
       if (contributor) data.contributor = contributor
 
       await prisma.summary__article.create({
-        data,
+        data: data as any,
       })
 
       console.log(`✓ Article "${title}" saved to database`)
-      return { success: true }
+      return { success: true, data: data }
     }
 
     return { success: false, reason: 'no analysis result' }
