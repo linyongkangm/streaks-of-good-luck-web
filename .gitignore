@@ -48,3 +48,4 @@ prisma/migrations
 *logs/
 *__pycache__/
 temp/
+.date.config.json
