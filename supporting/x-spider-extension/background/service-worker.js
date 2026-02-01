@@ -30,6 +30,7 @@ messageObserver.on("RELOAD_EXTENSION", async (request, sender, sendSuccessRespon
 messageObserver.on("SEND_TO_HOST", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
   const hostTab = await getHostTab();
   if (!hostTab) {
+    console.error("Host tab not found");
     return sendFailedResponse({}, "Host tab not found");
   }
   chrome.tabs.sendMessage(hostTab.id, { action: "RECEIVE_FROM_EXTENSION", payload: request.payload });

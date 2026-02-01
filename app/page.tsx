@@ -18,7 +18,9 @@ export default function Home() {
   const [articleResults, setArticleResults] = useState<ArticleProcessResult[]>([]);
   const [showArticlePopup, setShowArticlePopup] = useState(false);
   useEffect(() => {
+    console.log('Setting up spider event listener');
     const handler = async (e: Event) => {
+      console.log('spider event received:', e);
       const detail = (e as CustomEvent).detail;
       setShowArticlePopup(true);
       // Set initial status to '处理中...'
