@@ -49,7 +49,8 @@ export async function POST(request: NextRequest) {
         const r = await generateArticleAnalysis(article);
         results.push({ status: 'fulfilled', value: r });
         if (r.success && r.data) {
-          tools.postArticleMessage(`[${r.data.publication}] ${r.data.title}`, r.data.summary, r.data.source_url);
+          const issue_date = r.data.issue_date ? r.data.issue_date.toISOString().split('T')[0] : '未知日期';
+          tools.postArticleMessage(r.data.title, `${r.data.summary} [${r.data.publication} ${issue_date}]`, r.data.source_url);
           console.log(`✓ Article processed: ${r.data.title} (${r.data.source_url})`);
         }
       } catch (e) {
