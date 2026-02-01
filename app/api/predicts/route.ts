@@ -9,8 +9,8 @@ export async function GET(req: NextRequest) {
   if (month) {
     // 计算本月起止
     const [year, m] = month.split('-').map(Number);
-    const monthStart = new Date(year, m - 1, 1);
-    const monthEnd = new Date(year, m, 0, 23, 59, 59, 999);
+    const monthStart = new Date(Date.UTC(year, m - 1, 1));
+    const monthEnd = new Date(Date.UTC(year, m, 0, 23, 59, 59, 999));
     where = {
       interval_start: { lte: monthEnd },
       interval_end: { gte: monthStart },

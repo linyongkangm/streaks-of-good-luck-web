@@ -38,8 +38,8 @@ export async function GET(req: NextRequest) {
         monthStats[monthKey] = (monthStats[monthKey] || 0) + 1;
         
         // 移到下一个月
-        currentDate.setMonth(currentDate.getMonth() + 1);
         currentDate.setDate(1);
+        currentDate.setMonth(currentDate.getMonth() + 1);
       }
       
       // 对于涉及的每个年份，每个预测只统计一次
