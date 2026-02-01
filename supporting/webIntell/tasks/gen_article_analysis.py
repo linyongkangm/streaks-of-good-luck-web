@@ -15,11 +15,12 @@ Summary:文章总结
 
 
 现在，请开始总结文章的主要内容:
+IssueDate: {issue_date}
 Article: {article}
 """
 
 
-async def gen_article_analysis(source_text: str):
+async def gen_article_analysis(source_text: str, issue_date: str):
     """
     文章分析。
     Args:
@@ -34,7 +35,7 @@ async def gen_article_analysis(source_text: str):
         messages = [
             {
                 "role": "user",
-                "content": ARTICLE_SUMMARY_PROMPT_TEMPLATE.format(article=source_text),
+                "content": ARTICLE_SUMMARY_PROMPT_TEMPLATE.format(article=source_text, issue_date=issue_date),
             }
         ]
         responseText = llmClient.think(cast(List, messages))

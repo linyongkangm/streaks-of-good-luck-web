@@ -96,6 +96,7 @@ async function generateArticleAnalysis(article: any) {
       },
       body: JSON.stringify({
         source_text: source_text,
+        issue_date: issue_date,
       }),
       signal: AbortSignal.timeout(1000 * 60 * 5) // 5分钟超时，可根据业务调整
     })

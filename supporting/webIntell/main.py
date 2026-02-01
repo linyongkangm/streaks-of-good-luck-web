@@ -67,10 +67,11 @@ async def api_analyze_article(request: Request):
     try:
         data = await request.json()
         source_text = data.get("source_text")
+        issue_date = data.get("issue_date")
         if not source_text:
             return {"success": False, "message": "No source_text provided"}
         logger.info("开始分析文章 ...")
-        result = await tasks.gen_article_analysis(source_text)
+        result = await tasks.gen_article_analysis(source_text, issue_date)
         if not result:
             logger.warning("分析未返回结果")
             return {"success": False, "message": "Analysis returned no result"}
