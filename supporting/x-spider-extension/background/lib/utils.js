@@ -7,9 +7,14 @@ export async function getCurrentTab() {
 }
 
 export async function getHostTab() {
-  const hostTab = (await chrome.tabs.query({
-    url: 'http://localhost:3000/*'
+  let hostTab = (await chrome.tabs.query({
+    url: 'http://localhost:3001/*'
   }))?.[0];
+  if (!hostTab) {
+    hostTab = (await chrome.tabs.query({
+      url: 'http://localhost:3000/*'
+    }))?.[0];
+  }
   return hostTab;
 }
 
