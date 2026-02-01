@@ -37,9 +37,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     exitingArticle.title += ` ${aElement.textContent}`;
                   } else {
                     const spans = [...aElement.closest('p')?.querySelectorAll('span:last-child')] || [];
-                    let contributor = spans.at(-1)?.textContent || '';
+                    let contributor = (spans.at(-1)?.textContent || '').trim();
                     if (contributor.startsWith('/')) {
-                      contributor = contributor.slice(1, -1);
+                      contributor = contributor.slice(1);
                     }
                     articles.push({
                       source_url: source_url,
