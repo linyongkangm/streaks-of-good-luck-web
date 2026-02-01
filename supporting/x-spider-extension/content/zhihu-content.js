@@ -42,6 +42,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 function cleaningAD(element) {
-  const scriptElements = element.querySelectorAll('script, style');
+  const scriptElements = element.querySelectorAll('script, style, audio, video');
   scriptElements.forEach(el => el.remove());
 }

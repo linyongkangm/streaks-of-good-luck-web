@@ -71,6 +71,14 @@
       "js": [
         "content/zhihu-content.js"
       ]
+    },
+    {
+      "matches": [
+        "https://www.economist.com/*"
+      ],
+      "js": [
+        "content/economist-content.js"
+      ]
     }
   ],
   "side_panel": {
