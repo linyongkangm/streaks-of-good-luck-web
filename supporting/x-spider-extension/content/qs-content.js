@@ -23,8 +23,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
               const contentDocument = contentIframe.contentWindow.document;
               const issueDate = new Date(contentDocument.querySelector('.pubtime').textContent);
               const aElements = [...contentDocument.querySelectorAll("#detailContent a")];
-              aElements.pop(); // Remove the last element
               aElements.shift(); // Remove the first element
+              if (aElements[0].textContent.includes('本期导读')) {
+                aElements.shift(); // Remove '本期导读' link if present
+              }
+              aElements.pop(); // Remove '查看往期' link if present
+
               if (aElements) {
                 const articles = [];
                 aElements.forEach(aElement => {
