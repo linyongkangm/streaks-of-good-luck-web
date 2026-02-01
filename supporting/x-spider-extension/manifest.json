@@ -32,6 +32,15 @@
     },
     {
       "matches": [
+        "http://localhost:3000/*",
+        "https://www.google.com.hk/*"
+      ],
+      "js": [
+        "content/host-content.js"
+      ]
+    },
+    {
+      "matches": [
         "https://x.com/*"
       ],
       "js": [
@@ -56,11 +65,11 @@
     },
     {
       "matches": [
-        "http://localhost:3000/*",
-        "https://www.google.com.hk/*"
+        "https://zhuanlan.zhihu.com/*",
+        "https://www.zhihu.com/question/*"
       ],
       "js": [
-        "content/host-content.js"
+        "content/zhihu-content.js"
       ]
     }
   ],
