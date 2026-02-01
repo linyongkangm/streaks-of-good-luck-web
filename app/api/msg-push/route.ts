@@ -7,8 +7,8 @@ export async function POST(request: NextRequest) {
   try {
     // 获取请求体
     const body = await request.json();
-    const { content } = body;
-    const result = await tools.postMessage(content);
+    const { msgtype, detail } = body;
+    const result = await tools.postMessage(msgtype, detail);
     return NextResponse.json({
       success: true,
       data: result

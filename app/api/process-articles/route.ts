@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
         const r = await generateArticleAnalysis(article);
         results.push({ status: 'fulfilled', value: r });
         if (r.success && r.data) {
-          tools.postMessage(`New article processed: ${r.data.title} (${r.data.summary})`);
+          tools.postArticleMessage(`[${r.data.publication}] ${r.data.title}`, r.data.summary, r.data.source_url);
           console.log(`✓ Article processed: ${r.data.title} (${r.data.source_url})`);
         }
       } catch (e) {
@@ -118,20 +118,20 @@ async function generateArticleAnalysis(article: any) {
     if (result.success && result.analysis) {
       const { tags, summary } = result.analysis
 
-      const data: Partial<summary__article> = {
+      const data = {
         source_url,
         title,
         tags: tags || '',
         summary: summary || '',
         source_text: source_text,
-      }
+      } as summary__article
 
       if (publication) data.publication = publication
       if (issue_date) data.issue_date = new Date(issue_date)
       if (contributor) data.contributor = contributor
 
       await prisma.summary__article.create({
-        data: data as any,
+        data,
       })
 
       console.log(`✓ Article "${title}" saved to database`)
