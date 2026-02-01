@@ -6,7 +6,7 @@
     "dev": "next dev",
     "webIntell": "python supporting/webIntell/main.py server",
     "build": "next build",
-    "start": "concurrently --raw  \"next start\" \"npm run webIntell\"",
+    "start": "concurrently --raw  \"next start -p 3001\" \"python supporting/webIntell/main.py server --port 8001\"",
     "lint": "eslint"
   },
   "dependencies": {
