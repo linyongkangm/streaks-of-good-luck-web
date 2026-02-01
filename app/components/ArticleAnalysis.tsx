@@ -316,6 +316,14 @@ export default function ArticleAnalysis() {
                 </h3>
 
                 <div className="flex flex-wrap gap-3 mb-3">
+                  {
+                    article.contributor && (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                        <span>👤</span>
+                        {article.contributor}
+                      </span>
+                    )
+                  }
                   {article.publication && (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
                       <span>📰</span>
