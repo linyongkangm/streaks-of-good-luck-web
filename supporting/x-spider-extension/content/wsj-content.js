@@ -11,7 +11,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         header = document.querySelector('.bigTop h1');
       }
       const title = header.textContent;
-      const source_url = window.location.href;
+      const source_url = window.location.origin + window.location.pathname;
       const publication = 'wsj';
       const articleContainer = document.querySelector('.article-container') || document.querySelector('#__next main');
       if (!articleContainer) {
