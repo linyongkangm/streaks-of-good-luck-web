@@ -33,14 +33,14 @@ PREDICT_EXTRACTION_PROMPT_TEMPLATE = """
 2. 如果只有一个时间点，interval_start 和 interval_end 可以相同
 3. 内容应该简洁准确，提取预测的核心要点
 4. 如果文章中没有任何预测，返回空数组 []
-5. 现在是 {current_date}
+5. 文章发表日期是 {issue_date}，请根据文章发表日期合理判断预测的时间区间
 现在，请分析以下文章内容：
 
 {article_text}
 """
 
 
-async def gen_predicts(article_text: str):
+async def gen_predicts(article_text: str, issue_date: str) -> list:
     """
     从文章中提取预测信息。
     Args:
@@ -62,11 +62,11 @@ async def gen_predicts(article_text: str):
                 "role": "user",
                 "content": PREDICT_EXTRACTION_PROMPT_TEMPLATE.format(
                     article_text=article_text,
-                    current_date=datetime.date.today().strftime("%Y-%m-%d"),
+                    issue_date=issue_date,
                 ),
             }
         ]
-        logger.info("\n\n--- 发送给模型的消息 ---", messages)
+        # logger.info("\n\n--- 发送给模型的消息 ---", messages)
         responseText = agents.think(cast(List, messages))
 
         if responseText:

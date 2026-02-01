@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        issue_date: article.issue_date,
         article_text: article.source_text,
       }),
     });

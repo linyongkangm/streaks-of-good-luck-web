@@ -38,7 +38,7 @@ class PredictExtractionRequest(BaseModel):
     """预测提取请求模型"""
     
     article_text: str  # 文章文本内容
-
+    issue_date: str   # 文章发布日期
 
 # ==================== 数据库操作 ====================
 
@@ -177,7 +177,8 @@ async def api_extract_predicts(request: PredictExtractionRequest):
 
     请求体:
     {
-        "article_text": "文章文本内容"
+        "article_text": "文章文本内容",
+        "issue_date": "文章发布日期"
     }
     
     返回:
@@ -208,7 +209,7 @@ async def api_extract_predicts(request: PredictExtractionRequest):
         logger.info(f"文章长度：{len(article_text)} 字符")
         
         # 调用预测提取函数
-        predicts = await tasks.gen_predicts(article_text)
+        predicts = await tasks.gen_predicts(article_text, request.issue_date)
         
         logger.info(f"✓ 提取完成，共 {len(predicts)} 个预测")
         
