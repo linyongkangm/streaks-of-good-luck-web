@@ -20,6 +20,7 @@ export default function ArticleAnalysis() {
   const [searchPublication, setSearchPublication] = useState('')
   const [searchContributor, setSearchContributor] = useState('')
   const [searchIssueDate, setSearchIssueDate] = useState('')
+  const [publications, setPublications] = useState<string[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [extractingPredicts, setExtractingPredicts] = useState<string | null>(null)
   const [predictPreview, setPredictPreview] = useState<{
@@ -36,6 +37,22 @@ export default function ArticleAnalysis() {
   useEffect(() => {
     fetchArticles()
   }, [page])
+
+  useEffect(() => {
+    fetchPublications()
+  }, [])
+
+  const fetchPublications = async () => {
+    try {
+      const response = await fetch('/api/publications')
+      const result = await response.json()
+      if (result.data) {
+        setPublications(result.data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch publications:', error)
+    }
+  }
 
   const fetchArticles = async () => {
     try {
@@ -216,15 +233,20 @@ export default function ArticleAnalysis() {
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
           </div>
           <div className="flex-1 min-w-[180px] relative">
-            <input
-              type="text"
-              placeholder="搜索来源/刊物..."
+            <select
               value={searchPublication}
               onChange={(e) => setSearchPublication(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="text-slate-900 w-full px-4 py-3 pl-10 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
-            />
+              className="text-slate-900 w-full px-4 py-3 pl-10 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all appearance-none bg-white cursor-pointer"
+            >
+              <option value="">全部刊物</option>
+              {publications.map((pub) => (
+                <option key={pub} value={pub}>
+                  {pub}
+                </option>
+              ))}
+            </select>
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">📰</span>
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">▼</span>
           </div>
           <div className="flex-1 min-w-[180px] relative">
             <input
