@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 // GET /api/stock-boards/[id] - 获取行业板块详情（包含公司和分析报告）
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const boardId = parseInt((await params).id)
@@ -52,7 +52,7 @@ export async function GET(
 // PUT /api/stock-boards/[id] - 更新板块名称
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const boardId = parseInt((await params).id)
@@ -86,7 +86,7 @@ export async function PUT(
 // DELETE /api/stock-boards/[id] - 删除板块
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const boardId = parseInt((await params).id)

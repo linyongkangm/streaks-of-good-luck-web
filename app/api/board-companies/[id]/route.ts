@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 // PUT /api/board-companies/[id] - 更新公司权重
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const relationId = parseInt((await params).id)
@@ -41,7 +41,7 @@ export async function PUT(
 // DELETE /api/board-companies/[id] - 从板块移除公司
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const relationId = parseInt((await params).id)

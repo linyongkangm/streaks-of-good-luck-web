@@ -5,10 +5,10 @@ import type { TweetDetailResponse, ApiError } from '@/types'
 // GET /api/info-tweets/[id] - 获取单个推文信息
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<TweetDetailResponse | ApiError>> {
   try {
-    const id = BigInt(params.id)
+    const id = BigInt((await params).id)
 
     const tweet = await prisma.info__tweet.findUnique({
       where: { id },
@@ -34,10 +34,10 @@ export async function GET(
 // PUT /api/info-tweets/[id] - 更新推文信息
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<TweetDetailResponse | ApiError>> {
   try {
-    const id = BigInt(params.id)
+    const id = BigInt((await params).id)
     const body = await request.json()
 
     // 检查推文是否存在
@@ -96,7 +96,7 @@ export async function PUT(
 // PATCH /api/info-tweets/[id] - 部分更新推文信息（与 PUT 相同）
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return PUT(request, { params })
 }
@@ -104,10 +104,10 @@ export async function PATCH(
 // DELETE /api/info-tweets/[id] - 删除推文
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<{ message: string } | ApiError>> {
   try {
-    const id = BigInt(params.id)
+    const id = BigInt((await params).id)
 
     // 检查推文是否存在
     const existingTweet = await prisma.info__tweet.findUnique({

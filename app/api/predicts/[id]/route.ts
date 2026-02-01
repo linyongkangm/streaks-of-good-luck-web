@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
 // GET /api/predicts/:id
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const id = (await params).id;
   const predict = await prisma.info__predict.findUnique({
     where: { id: BigInt(id) },
@@ -15,8 +18,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 }
 
 // PUT /api/predicts/:id
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id;
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const id = (await params).id;
   const data = await req.json();
   try {
     const predict = await prisma.info__predict.update({
@@ -30,8 +36,11 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 }
 
 // DELETE /api/predicts/:id
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id;
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const id = (await params).id;
   try {
     await prisma.info__predict.delete({ where: { id: BigInt(id) } });
     return NextResponse.json({ success: true });

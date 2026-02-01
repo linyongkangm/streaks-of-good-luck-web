@@ -5,10 +5,10 @@ import type { StockCompanyDetailResponse, ApiError } from '@/types'
 // GET /api/stock-companies/[id] - 获取单个股票公司信息
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<StockCompanyDetailResponse | ApiError>> {
   try {
-    const id = parseInt(params.id)
+    const id = parseInt((await params).id)
 
     if (isNaN(id)) {
       return NextResponse.json(

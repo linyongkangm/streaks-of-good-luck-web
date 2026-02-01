@@ -3,7 +3,10 @@ import { VerifyStatus } from '@prisma/client';
 import { prisma } from '@/lib/db'
 
 // PATCH /api/predicts/:id/verify
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const id = (await params).id;
   const data = await req.json();
   if (!data.verify_status) {
