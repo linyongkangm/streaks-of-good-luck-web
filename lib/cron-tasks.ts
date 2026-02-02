@@ -3,10 +3,11 @@ import { prisma } from '@/lib/db';
 import * as stools from '@/app/tools/stools';
 import * as tools from '@/app/tools';
 
+const SEND_HOUR = 8; // 发送摘要的小时（24小时制）
 // 定时任务：每天采集推文数据
 // 每天早上8点执行
 export function startDataCollectionTask() {
-  cron.schedule('50 7 * * *', async () => {
+  cron.schedule(`50 ${SEND_HOUR - 1} * * *`, async () => {
     console.log('Starting data collection task...');
     try {
       // 从数据库获取所有唯一的collect_from
@@ -61,7 +62,7 @@ export function startDataCollectionTask() {
 // 定时任务：每天发送前一日的推文摘要
 // 每天早上9点执行
 export function startSummarySendTask() {
-  cron.schedule('0 8 * * *', async () => {
+  cron.schedule(`0 ${SEND_HOUR} * * *`, async () => {
     console.log('Starting summary send task...');
     try {
       // 获取前一天的日期
