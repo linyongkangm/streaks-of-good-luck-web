@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import PredictsNew from "./PredictsNew";
 import type { PredictDetail } from '@/types'
-
+import * as tools from '@/app/tools'
 function statusBadge(status: string) {
   const map: Record<string, { label: string; className: string }> = {
     implemented: { label: "✓ 实现", className: "bg-green-100 text-green-800" },
@@ -183,18 +183,18 @@ export default function PredictsList() {
                       <span className="text-blue-500">📅</span>
                       <span className="text-gray-500">区间:</span>
                       <span className="font-medium">
-                        {new Date(p.interval_start).toISOString().slice(0, 10)}
+                        {tools.toUTC(p.interval_start).toFormat(tools.DATE_FORMAT)}
                       </span>
                       <span className="text-gray-400">→</span>
                       <span className="font-medium">
-                        {new Date(p.interval_end).toISOString().slice(0, 10)}
+                        {tools.toUTC(p.interval_end).toFormat(tools.DATE_FORMAT)}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
                       <span className="text-green-500">🕐</span>
                       <span className="text-gray-500">提出:</span>
                       <span className="font-medium">
-                        {new Date(p.proposed_at).toISOString().slice(0, 10)}
+                        {tools.toUTC(p.proposed_at).toFormat(tools.DATE_FORMAT)}
                       </span>
                     </div>
                     {/* 关联信息 */}
