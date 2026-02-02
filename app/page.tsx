@@ -1,67 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import IndustryAnalysis from "./components/IndustryAnalysis";
 import TweetAnalysis from "./components/TweetAnalysis";
 import ArticleAnalysis from "./components/ArticleAnalysis";
 import PredictsList from "./components/Predicts/PredictsList";
+import useStoreArticle from "@/app/hooks/useStoreArticle";
 
-type ArticleProcessResult = {
-  title: string;
-  status: string;
-  source_url: string;
-};
 type TabType = 'industry' | 'tweet' | 'article' | 'predicts';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>('tweet');
-  const [articleResults, setArticleResults] = useState<ArticleProcessResult[]>([]);
-  const [showArticlePopup, setShowArticlePopup] = useState(false);
-  useEffect(() => {
-    console.log('Setting up spider event listener');
-    const handler = async (e: Event) => {
-      console.log('spider event received:', e);
-      const detail = (e as CustomEvent).detail;
-      setShowArticlePopup(true);
-      // Set initial status to '处理中...'
-      const initialResults: ArticleProcessResult[] = detail.records.map((rec: any) => ({
-        title: rec.title || '无标题',
-        status: '处理中...',
-        source_url: rec.source_url,
-      }));
-      setArticleResults((preResults) => {
-        return preResults.concat(initialResults);
-      });
-      try {
-        const response = await fetch('/api/process-articles', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ articles: detail.records }),
-        });
-        const result = await response.json();
-        console.log('Article processing result:', result);
-        initialResults.forEach((item) => {
-          item.status = '处理失败';
-        });
-        const successfulSourceUrls = result.successfulSourceUrls || [];
-        const existingSourceUrls = result.existingSourceUrls || [];
-        initialResults.forEach((item) => {
-          if (successfulSourceUrls.includes(item.source_url)) {
-            item.status = '处理完成';
-          } else if (existingSourceUrls.includes(item.source_url)) {
-            item.status = '已存在，无需处理';
-          }
-        });
-      } catch (err) {
-        initialResults.forEach((item) => {
-          item.status = '处理失败';
-        });
-      }
-      setArticleResults((preResults) => [...preResults]);
-    };
-    document.addEventListener('STORE_ARTICLE', handler);
-    return () => document.removeEventListener('STORE_ARTICLE', handler);
-  }, []);
+  const { articleResults, showArticlePopup, setShowArticlePopup } = useStoreArticle();
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* 弹窗：文章处理结果 */}
