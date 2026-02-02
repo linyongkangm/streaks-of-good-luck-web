@@ -6,7 +6,7 @@ import * as tools from '@/app/tools';
 // 定时任务：每天采集推文数据
 // 每天早上8点执行
 export function startDataCollectionTask() {
-  cron.schedule('0 8 * * *', async () => {
+  cron.schedule('50 7 * * *', async () => {
     console.log('Starting data collection task...');
     try {
       // 从数据库获取所有唯一的collect_from
@@ -61,7 +61,7 @@ export function startDataCollectionTask() {
 // 定时任务：每天发送前一日的推文摘要
 // 每天早上9点执行
 export function startSummarySendTask() {
-  cron.schedule('0 9 * * *', async () => {
+  cron.schedule('0 8 * * *', async () => {
     console.log('Starting summary send task...');
     try {
       // 获取前一天的日期
