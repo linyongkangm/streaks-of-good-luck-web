@@ -1,15 +1,18 @@
 import cron from 'node-cron';
 import { prisma } from '@/lib/db';
-import * as stools from '@/app/tools/stools';
 import * as tools from '@/app/tools';
 
 const SEND_HOUR = 8; // 发送摘要的小时（24小时制）
+
 // 定时任务：每天采集推文数据
 // 每天早上8点执行
 export function startDataCollectionTask() {
   cron.schedule(`50 ${SEND_HOUR - 1} * * *`, async () => {
     console.log('Starting data collection task...');
     try {
+      // 动态导入 stools 以避免 playwright 模块解析问题
+      const stools = await import('@/app/tools/stools');
+      
       // 从数据库获取所有唯一的collect_from
       const summaries = await prisma.summary__tweet.findMany({
         select: {
@@ -56,7 +59,7 @@ export function startDataCollectionTask() {
     }
   });
 
-  console.log('Data collection task scheduled: every day at 8:00 AM');
+  console.log(`Data collection task scheduled: every day at ${SEND_HOUR - 1}:50 AM`);
 }
 
 // 定时任务：每天发送前一日的推文摘要
@@ -119,7 +122,7 @@ export function startSummarySendTask() {
     }
   });
 
-  console.log('Summary send task scheduled: every day at 9:00 AM');
+  console.log(`Summary send task scheduled: every day at ${SEND_HOUR}:00 AM`);
 }
 
 // 启动所有定时任务
