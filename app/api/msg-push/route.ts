@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import * as tools from '@/app/tools';
+import * as stools from '@/app/tools/stools';
 // POST /api/msg-push - 发送消息到微信企业微信机器人
 export async function POST(request: NextRequest) {
   try {
@@ -22,3 +23,23 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// GET /api/msg-push - 测试使用playwright启动Chromium并加载插件
+export async function GET(request: NextRequest) {
+  try {
+    await stools.launchBrowser();
+
+    return NextResponse.json({
+      success: true,
+      message: 'Chromium浏览器已启动（已加载插件）',
+      data: {
+        info: '浏览器将保持打开状态，插件已加载，请访问 chrome://extensions/ 查看'
+      }
+    });
+  } catch (error) {
+    console.error('Error launching Chrome:', error);
+    return NextResponse.json(
+      { error: 'Failed to launch Chrome', message: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}

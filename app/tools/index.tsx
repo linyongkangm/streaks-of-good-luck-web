@@ -1,5 +1,3 @@
-import { NextResponse } from 'next/server';
-
 
 // 通用判断函数（推荐）
 export function isClientSide() {
