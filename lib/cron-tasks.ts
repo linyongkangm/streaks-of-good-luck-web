@@ -7,7 +7,7 @@ const SEND_HOUR = 8; // 发送摘要的小时（24小时制）
 // 定时任务：每天采集推文数据
 // 每天早上8点执行
 export function startDataCollectionTask() {
-  cron.schedule(`50 ${SEND_HOUR - 1} * * *`, async () => {
+  cron.schedule(`50 ${SEND_HOUR - 1},${SEND_HOUR - 1 + 4},${SEND_HOUR - 1 + 8} * * *`, async () => {
     console.log('Starting data collection task...');
     try {
       // 动态导入 stools 以避免 playwright 模块解析问题
@@ -59,13 +59,13 @@ export function startDataCollectionTask() {
     }
   });
 
-  console.log(`Data collection task scheduled: every day at ${SEND_HOUR - 1}:50 AM`);
+  console.log(`Data collection task scheduled: every day at ${SEND_HOUR - 1}:50,${SEND_HOUR - 1 + 4}:50,${SEND_HOUR - 1 + 8}:50 AM`);
 }
 
 // 定时任务：每天发送前一日的推文摘要
 // 每天早上9点执行
 export function startSummarySendTask() {
-  cron.schedule(`0 ${SEND_HOUR} * * *`, async () => {
+  cron.schedule(`0 ${SEND_HOUR},${SEND_HOUR + 4},${SEND_HOUR + 8} * * *`, async () => {
     console.log('Starting summary send task...');
     try {
       // 获取前一天的日期
@@ -122,7 +122,7 @@ export function startSummarySendTask() {
     }
   });
 
-  console.log(`Summary send task scheduled: every day at ${SEND_HOUR}:00 AM`);
+  console.log(`Summary send task scheduled: every day at ${SEND_HOUR}:00,${SEND_HOUR + 4}:00,${SEND_HOUR + 8}:00 AM`);
 }
 
 // 启动所有定时任务
