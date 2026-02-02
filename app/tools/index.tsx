@@ -122,13 +122,25 @@ export function toBeijing(dataTime: luxon.DateTime | Date | string): luxon.DateT
   return dataTime.setZone(CommonTimeZones.Shanghai);
 }
 
+/** 将ISO格式的日期时间字符串（无时区）解析为美国东部时间（ET）
+ * @param {string} dateTime ISO格式的日期时间字符串
+ * @returns {luxon.DateTime} 解析后的美国东部时间
+ */
 export function fromISOUseEastern(dateTime: string): luxon.DateTime {
   return luxon.DateTime.fromISO(dateTime, { zone: CommonTimeZones.NewYork });
 }
 
+/** 将ISO格式的日期时间字符串（无时区）解析为UTC时间（UTC）
+ * @param {string} dateTime ISO格式的日期时间字符串
+ * @returns {luxon.DateTime} 解析后的UTC时间
+ */
 export function fromISOUseUTC(dateTime: string): luxon.DateTime {
   return luxon.DateTime.fromISO(dateTime, { zone: CommonTimeZones.UTC })
 }
+/** 将ISO格式的日期时间字符串（无时区）解析为北京时间（CST）
+ * @param {string} dateTime ISO格式的日期时间字符串
+ * @returns {luxon.DateTime} 解析后的北京时间
+ */
 export function fromISOUseBeijing(dateTime: string): luxon.DateTime {
   return luxon.DateTime.fromISO(dateTime, { zone: CommonTimeZones.Shanghai })
 }
