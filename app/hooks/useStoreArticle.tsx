@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+import * as ctools from "@/app/tools/ctools";
 export type ArticleProcessResult = {
   title: string;
   status: string;
@@ -25,12 +25,7 @@ export default function useStoreArticle() {
         return preResults.concat(initialResults);
       });
       try {
-        const response = await fetch('/api/process-articles', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ articles: detail.records }),
-        });
-        const result = await response.json();
+        const result = await ctools.processArticles(detail.records);
         console.log('Article processing result:', result);
         initialResults.forEach((item) => {
           item.status = '处理失败';
