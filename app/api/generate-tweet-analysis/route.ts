@@ -53,12 +53,11 @@ export async function POST(request: NextRequest) {
 
     // 转换为 API 需要的格式
     const tweetInfos = tweets.map((tweet) => ({
-      tweet_date: tweet.tweet_date.toISOString().split('T')[0],
+      tweet_date: tools.toEastern(tweet.tweet_date).toFormat(tools.DATE_TIME_FORMAT),
       user_name: tweet.user_name,
       tweet_from: tweet.tweet_from,
       tweet_text: tweet.tweet_text,
     }))
-
     // 调用 Python API 生成分析
     console.log(`Calling Python API: ${PYTHON_API_URL}/analyze-tweet`)
     const response = await fetch(`${PYTHON_API_URL}/analyze-tweet`, {

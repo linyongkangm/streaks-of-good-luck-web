@@ -81,6 +81,8 @@ class HelloAgentsLLM:
             collected_content = []
             for chunk in response:
                 content = chunk.choices[0].delta.content or ""
+                if content == "":
+                    continue
                 logger.info(content)
                 collected_content.append(content)
             return "".join(collected_content)

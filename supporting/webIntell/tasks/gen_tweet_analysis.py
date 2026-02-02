@@ -32,10 +32,6 @@ async def gen_tweet_analysis(tweet_infos: list):
     if len(tweet_infos) == 0:
         return
 
-    # 确保所有推文都是同一天
-    first_date = tweet_infos[0].tweet_date
-    tweet_infos = [tweet for tweet in tweet_infos if tweet.tweet_date == first_date]
-
     tweets = "\n".join(
         [
             f"[{tweet.tweet_date} {tweet.user_name} {tweet.tweet_from} {tweet.tweet_text}]"
