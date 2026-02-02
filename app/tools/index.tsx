@@ -77,7 +77,7 @@ export function test() {
 
 
 export function toLuxon(date: Date | string): luxon.DateTime {
-  return luxon.DateTime.fromJSDate(new Date(date));
+  return luxon.DateTime.fromJSDate(new Date(date)).toUTC();
 }
 
 /**
