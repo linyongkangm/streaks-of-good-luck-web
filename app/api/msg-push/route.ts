@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as tools from '@/app/tools';
 import * as stools from '@/app/tools/stools';
+import { prisma } from '@/lib/db';
 // POST /api/msg-push - 发送消息到微信企业微信机器人
 export async function POST(request: NextRequest) {
   try {
@@ -26,10 +27,29 @@ export async function POST(request: NextRequest) {
 // GET /api/msg-push - 测试使用playwright启动Chromium并加载插件
 export async function GET(request: NextRequest) {
   try {
+    // 从数据库获取所有唯一的collect_from
+    const summaries = await prisma.summary__tweet.findMany({
+      select: {
+        collect_from: true
+      },
+      distinct: ['collect_from']
+    });
+    
+    const collectFroms = summaries.map(s => s.collect_from);
+    
     const context = await stools.launchBrowser();
     if (context) {
       const page = context.pages()[0]
-      
+
+      // 触发EXTERNAL_EVENT事件
+      await page.evaluate((collectFroms) => {
+        const event = new CustomEvent('EXTERNAL_EVENT', {
+          detail: {
+            collectFroms
+          }
+        });
+        document.dispatchEvent(event);
+      }, collectFroms);
     }
     return NextResponse.json({
       success: true,

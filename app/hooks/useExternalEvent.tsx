@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 export default function useExternalEvent() {
   useEffect(() => {
     const handle = async (event: any) => {
+      console.log('Received EXTERNAL_EVENT with detail:', event.detail);
       event.detail.collectFroms.forEach((collectFrom: string) => {
         ctools.collectLatestTweets(collectFrom).then((data) => {
           console.log('Tweets collected successfully:', data);
