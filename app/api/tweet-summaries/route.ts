@@ -6,8 +6,6 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const collectFrom = searchParams.get('collect_from')
-    const startDate = searchParams.get('start_date')
-    const endDate = searchParams.get('end_date')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '50')
     const collectFromOnly = searchParams.get('collect_from_only')
@@ -41,16 +39,6 @@ export async function GET(request: NextRequest) {
 
     if (collectFrom) {
       where.collect_from = { contains: collectFrom }
-    }
-
-    if (startDate || endDate) {
-      where.date = {}
-      if (startDate) {
-        where.date.gte = new Date(startDate)
-      }
-      if (endDate) {
-        where.date.lte = new Date(endDate)
-      }
     }
 
     const [summaries, total] = await Promise.all([

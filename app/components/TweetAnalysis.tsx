@@ -320,7 +320,7 @@ export default function TweetAnalysis() {
                       </div>
                       <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                         <span>📅</span>
-                        {toLuxon(summary.date).toFormat(DATE_TIME_FORMAT)}
+                        {toLuxon(summary.date).startOf('day').toISODate()}
                       </div>
                     </div>
                   </div>

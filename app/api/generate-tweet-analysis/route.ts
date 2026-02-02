@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-
+import * as tools from '@/app/tools'
 const PYTHON_API_URL = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'
 
 // POST /api/generate-tweet-analysis - 为特定日期和来源生成推文分析
@@ -28,16 +28,15 @@ export async function POST(request: NextRequest) {
     console.log(`Fetching tweets for ${collect_from} on ${date}...`)
 
     // 获取指定日期和来源的所有推文
-    const targetDate = new Date(date)
-    const nextDate = new Date(targetDate)
-    nextDate.setDate(nextDate.getDate() + 1)
-
+    // date 是美东时间的日期，需要转换为 UTC 时间范围查询
+    // tweet_date 存储的是 UTC 时间
+    const startET = tools.fromISOUseEastern(date).startOf('day')
     const tweets = await prisma.info__tweet.findMany({
       where: {
         collect_from: collect_from,
         tweet_date: {
-          gte: targetDate,
-          lt: nextDate,
+          gte: startET.toJSDate(),
+          lt: startET.plus({ days: 1 }).toJSDate(),
         },
       },
       orderBy: { tweet_date: 'asc' },
@@ -88,6 +87,7 @@ export async function POST(request: NextRequest) {
 
       const summary = result.analysis.summary || ''
 
+      const targetDate = tools.fromISOUseUTC(date).toJSDate()
       // 使用 upsert 来插入或更新记录
       await prisma.summary__tweet.upsert({
         where: {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-
+import * as tools from '@/app/tools'
 // GET /api/tweets-by-summary - 根据 collect_from 和 date 获取相关推文
 export async function GET(request: NextRequest) {
   try {
@@ -15,16 +15,13 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const targetDate = new Date(date)
-    const nextDate = new Date(targetDate)
-    nextDate.setDate(nextDate.getDate() + 1)
-
+    const startET = tools.fromISOUseEastern(date).startOf('day')
     const tweets = await prisma.info__tweet.findMany({
       where: {
         collect_from: collectFrom,
         tweet_date: {
-          gte: targetDate,
-          lt: nextDate,
+          gte: startET.toJSDate(),
+          lt: startET.plus({ days: 1 }).toJSDate(),
         },
       },
       orderBy: {

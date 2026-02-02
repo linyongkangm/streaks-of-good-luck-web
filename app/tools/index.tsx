@@ -2,6 +2,12 @@ import * as luxon from 'luxon';
 
 export const DATE_TIME_FORMAT = 'yyyy-MM-dd HH:mm z';
 export const DATE_FORMAT = 'yyyy-MM-dd z';
+export enum CommonTimeZones {
+  UTC = 'UTC',
+  Shanghai = 'Asia/Shanghai',
+  NewYork = 'America/New_York',
+  London = 'Europe/London'
+}
 
 // 通用判断函数（推荐）
 export function isClientSide() {
@@ -89,7 +95,7 @@ export function toEastern(dataTime: luxon.DateTime | Date | string): luxon.DateT
   if (!(dataTime instanceof luxon.DateTime)) {
     dataTime = toLuxon(dataTime);
   }
-  return dataTime.setZone('America/New_York');
+  return dataTime.setZone(CommonTimeZones.NewYork);
 }
 
 /**
@@ -101,7 +107,7 @@ export function toUTC(dataTime: luxon.DateTime | Date | string): luxon.DateTime 
   if (!(dataTime instanceof luxon.DateTime)) {
     dataTime = toLuxon(dataTime);
   }
-  return dataTime.setZone('UTC');
+  return dataTime.setZone(CommonTimeZones.UTC);
 }
 
 /**
@@ -113,7 +119,16 @@ export function toBeijing(dataTime: luxon.DateTime | Date | string): luxon.DateT
   if (!(dataTime instanceof luxon.DateTime)) {
     dataTime = toLuxon(dataTime);
   }
-  return dataTime.setZone('Asia/Shanghai');
+  return dataTime.setZone(CommonTimeZones.Shanghai);
 }
 
+export function fromISOUseEastern(dateTime: string): luxon.DateTime {
+  return luxon.DateTime.fromISO(dateTime, { zone: CommonTimeZones.NewYork });
+}
 
+export function fromISOUseUTC(dateTime: string): luxon.DateTime {
+  return luxon.DateTime.fromISO(dateTime, { zone: CommonTimeZones.UTC })
+}
+export function fromISOUseBeijing(dateTime: string): luxon.DateTime {
+  return luxon.DateTime.fromISO(dateTime, { zone: CommonTimeZones.Shanghai })
+}
