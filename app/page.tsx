@@ -6,12 +6,14 @@ import TweetAnalysis from "./components/TweetAnalysis";
 import ArticleAnalysis from "./components/ArticleAnalysis";
 import PredictsList from "./components/Predicts/PredictsList";
 import useStoreArticle from "@/app/hooks/useStoreArticle";
+import useExternalEvent from "@/app/hooks/useExternalEvent";
 
 type TabType = 'industry' | 'tweet' | 'article' | 'predicts';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>('tweet');
   const { articleResults, showArticlePopup, setShowArticlePopup } = useStoreArticle();
+  useExternalEvent();
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* 弹窗：文章处理结果 */}

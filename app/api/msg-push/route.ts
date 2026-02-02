@@ -26,8 +26,11 @@ export async function POST(request: NextRequest) {
 // GET /api/msg-push - 测试使用playwright启动Chromium并加载插件
 export async function GET(request: NextRequest) {
   try {
-    await stools.launchBrowser();
-
+    const context = await stools.launchBrowser();
+    if (context) {
+      const page = context.pages()[0]
+      
+    }
     return NextResponse.json({
       success: true,
       message: 'Chromium浏览器已启动（已加载插件）',
