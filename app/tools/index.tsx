@@ -1,3 +1,7 @@
+import * as luxon from 'luxon';
+
+export const DATE_TIME_FORMAT = 'yyyy-MM-dd HH:mm z';
+export const DATE_FORMAT = 'yyyy-MM-dd z';
 
 // 通用判断函数（推荐）
 export function isClientSide() {
@@ -70,4 +74,46 @@ export function test() {
     console.log('Running on server, window is not available');
   }
 }
+
+
+export function toLuxon(date: Date | string): luxon.DateTime {
+  return luxon.DateTime.fromJSDate(new Date(date));
+}
+
+/**
+ * 将给定的其他时区时间转换为美国东部时间（ET）
+ * @param {luxon.DateTime} dataTime
+ * @returns {luxon.DateTime} 转换后的美国东部时间
+ */
+export function toEastern(dataTime: luxon.DateTime | Date | string): luxon.DateTime {
+  if (!(dataTime instanceof luxon.DateTime)) {
+    dataTime = toLuxon(dataTime);
+  }
+  return dataTime.setZone('America/New_York');
+}
+
+/**
+ * 将给定的其他时区时间转换为utc时间（UTC）
+ * @param {luxon.DateTime} dataTime
+ * @returns {luxon.DateTime} 转换后的utc时间
+ */
+export function toUTC(dataTime: luxon.DateTime | Date | string): luxon.DateTime {
+  if (!(dataTime instanceof luxon.DateTime)) {
+    dataTime = toLuxon(dataTime);
+  }
+  return dataTime.setZone('UTC');
+}
+
+/**
+ * 将给定的其他时区时间转换为北京时间（CST）
+ * @param {luxon.DateTime} dataTime
+ * @returns {luxon.DateTime} 转换后的北京时间
+ */
+export function toBeijing(dataTime: luxon.DateTime | Date | string): luxon.DateTime {
+  if (!(dataTime instanceof luxon.DateTime)) {
+    dataTime = toLuxon(dataTime);
+  }
+  return dataTime.setZone('Asia/Shanghai');
+}
+
 

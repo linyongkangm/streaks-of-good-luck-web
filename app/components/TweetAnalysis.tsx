@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react'
 import type { summary__tweet, info__tweet } from '@/types'
 import * as ctools from '@/app/tools/ctools';
+import { DATE_TIME_FORMAT, toBeijing, toEastern, toLuxon } from '../tools';
+import * as luxon from 'luxon';
+
 export default function TweetAnalysis() {
   const [summaries, setSummaries] = useState<summary__tweet[]>([])
   const [selectedSummary, setSelectedSummary] = useState<summary__tweet | null>(null)
@@ -392,8 +395,15 @@ export default function TweetAnalysis() {
                           <div>
                             <div className="font-semibold text-slate-900">{tweet.user_name}</div>
                             <div className="text-xs text-slate-500 flex items-center gap-1">
-                              <span>🕐UTC 协调世界时</span>
-                              {new Date(tweet.tweet_date).toISOString().replace('T', ' ').split('.')[0]}
+                              <time dateTime={toLuxon(tweet.tweet_date).toUTC().toISO() as string} >
+                                🕐
+                                <span className='mr-4'>
+                                  {toEastern(tweet.tweet_date).toFormat(DATE_TIME_FORMAT)}
+                                </span>
+                                <span>
+                                  {toBeijing(tweet.tweet_date).toFormat(DATE_TIME_FORMAT)}
+                                </span>
+                              </time>
                             </div>
                           </div>
                         </div>
