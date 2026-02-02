@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { summary__tweet, info__tweet } from '@/types'
-
+import * as ctools from '@/app/tools/ctools';
 export default function TweetAnalysis() {
   const [summaries, setSummaries] = useState<summary__tweet[]>([])
   const [selectedSummary, setSelectedSummary] = useState<summary__tweet | null>(null)
@@ -89,73 +89,21 @@ export default function TweetAnalysis() {
   const fetchLatestTweets = async () => {
     setIsFetchingLatest(true)
     try {
-      const callbackCode = 'CALLBACK_GET_LATEST_TWEETS_' + Math.random().toString(36).substring(2)
-      document.addEventListener(callbackCode, async (event: any) => {
-        // tweetRecords结构示例
-        // [{
-        //     "tweetID": "2015568895512629468",
-        //     "userName": "@XFreeze",
-        //     "tweetDate": "2026-01-25T23:34:06.000Z",
-        //     "tweetText": "ELON MUSK: MAKE LIFE MULTI-PLANETARY WITH THE KEY THRESHOLD TO SUSTAIN EVEN WITHOUT SUPPLY SHIPS FROM EARTH\n\n\"The goal is to make life multi-planetary. The key threshold for that is if the supply ships from Earth stop coming for any reason, Mars does not die out\n\nThat is the",
-        //     "replyCount": "549",
-        //     "retweetCount": "785",
-        //     "likeCount": "3,704",
-        //     "viewCount": "61万",
-        //     "tweetUrl": "https://x.com/elonmusk/status/2015568895512629468",
-        //     "tweetFrom": "Retweet",
-        //     "collectFrom": "https://x.com/elonmusk"
-        // }]
-        console.log('Latest tweets fetched:', event.detail.records);
-        const records = event.detail.records;
-        // 批量创建推文
-        if (records && records.length > 0) {
-          try {
-            const response = await fetch('/api/batch-create-tweets', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ tweetRecords: records }),
-            })
-            const data = await response.json()
-
-            if (data.success) {
-              alert(`成功导入 ${data.successful} 条推文${data.failed > 0 ? `，${data.failed} 条失败` : ''}`)
-              // 刷新摘要列表
-              document.dispatchEvent(new CustomEvent('MARK_RECORDED_SCRAPINGS', {
-                detail: {
-                  flags: (data.successfulTweetIds || []).concat(data.existingTweetIds || []),
-                  host: selectedCollectFrom,
-                }
-              }))
-
-              setTimeout(() => {
-                fetchSummaries()
-                fetchCollectFromList()
-              }, 1000)
-            } else {
-              alert('导入失败，请查看控制台')
-            }
-          } catch (error) {
-            console.error('Failed to batch create tweets:', error)
-            alert('导入失败，请稍后重试')
-          } finally {
-            setIsFetchingLatest(false)
-          }
-        } else {
-          alert('未获取到推文数据')
-          setIsFetchingLatest(false)
-        }
-      }, { once: true });
-      document.dispatchEvent(new CustomEvent('GET_LATEST_TWEETS', {
-        detail: {
-          collect_from: selectedCollectFrom,
-          callbackCode
-        }
-      }))
+      const data = await ctools.collectLatestTweets(selectedCollectFrom)
+      if (data.success) {
+        alert(`成功导入 ${data.successful} 条推文${data.failed > 0 ? `，${data.failed} 条失败` : ''}`)
+        setTimeout(() => {
+          fetchSummaries()
+          fetchCollectFromList()
+        }, 1000)
+      } else {
+        alert('导入失败，请查看控制台')
+      }
     } catch (error) {
       console.error('Failed to fetch latest tweets:', error)
       alert('获取失败，请稍后重试')
-      setIsFetchingLatest(false)
     }
+    setIsFetchingLatest(false)
   }
 
   const fetchRelatedTweets = async (summary: summary__tweet) => {
