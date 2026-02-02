@@ -31,7 +31,7 @@ export function startDataCollectionTask() {
       console.log(`Found ${collectFroms.length} sources to collect from:`, collectFroms);
 
       // 启动浏览器并触发EXTERNAL_EVENT事件
-      const context = await stools.launchBrowser();
+      const context = await stools.launchBrowser(process.env.HOST_URL);
       if (context) {
         const page = context.pages()[0];
 
