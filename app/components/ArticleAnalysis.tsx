@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { summary__article } from '@/types'
-
+import * as tools from '@/app/tools'
 function appendPredictsSaved(articleId: string) {
   const predicts_saved = localStorage.getItem('PREDICTS_SAVED')?.split(',') || []
   predicts_saved.push(articleId)
@@ -355,7 +355,9 @@ export default function ArticleAnalysis() {
                   {article.issue_date && (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
                       <span>📅</span>
-                      {new Date(article.issue_date).toLocaleDateString('zh-CN')}
+                      {
+                        tools.toUTC(article.issue_date).toFormat(tools.DATE_FORMAT)
+                      }
                     </span>
                   )}
                 </div>

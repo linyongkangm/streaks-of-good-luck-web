@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-
+import * as tools from '@/app/tools'
 // GET /api/article-summaries - 获取文章摘要列表
 export async function GET(request: NextRequest) {
   try {
@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
     const title = searchParams.get('title')
     const tags = searchParams.get('tags')
     const publication = searchParams.get('publication')
+    const issue_date = searchParams.get('issue_date')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '50')
 
@@ -24,7 +25,14 @@ export async function GET(request: NextRequest) {
     if (publication) {
       where.publication = publication
     }
-
+    if (issue_date) {
+      // 仅匹配日期部分
+      const startET = tools.fromISOUseUTC(issue_date).startOf('day')
+      where.issue_date = {
+        gte: startET.toJSDate(),
+        lt: startET.plus({ days: 1 }).toJSDate(),
+      }
+    }
     const [articles, total] = await Promise.all([
       prisma.summary__article.findMany({
         where,
