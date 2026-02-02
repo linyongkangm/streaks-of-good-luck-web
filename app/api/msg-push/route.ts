@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     
     const collectFroms = summaries.map(s => s.collect_from);
     
-    const context = await stools.launchBrowser();
+    const context = await stools.launchBrowser(process.env.HOST_URL);
     if (context) {
       const page = context.pages()[0]
 
