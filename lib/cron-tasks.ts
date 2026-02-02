@@ -65,9 +65,9 @@ export function startSummarySendTask() {
     console.log('Starting summary send task...');
     try {
       // 获取前一天的日期
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      yesterday.setHours(0, 0, 0, 0);
+
+      const now = new Date();
+      const yesterday = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0));
 
       // 查询前一日的所有summary，按collect_from分组
       const summaries = await prisma.summary__tweet.findMany({
@@ -78,7 +78,7 @@ export function startSummarySendTask() {
           create_time: 'desc'
         }
       });
-
+      console.log(summaries)
       if (summaries.length === 0) {
         console.log('No summaries found for yesterday');
         await tools.postTextMessage('昨日暂无推文摘要');
@@ -100,8 +100,9 @@ export function startSummarySendTask() {
         const formattedDate = yesterday.toISOString().split('T')[0];
 
         await tools.postArticleMessage(
-          `${collectFrom} - ${formattedDate}`,
+          `推总结 - ${formattedDate}`,
           latestSummary.summary,
+          collectFrom
         );
 
         console.log(`Sent summary for ${collectFrom}`);
@@ -122,6 +123,7 @@ export function startSummarySendTask() {
 
 // 启动所有定时任务
 export function startAllCronTasks() {
+  console.log('Starting all cron tasks...');
   startDataCollectionTask();
   startSummarySendTask();
   console.log('All cron tasks started successfully');
