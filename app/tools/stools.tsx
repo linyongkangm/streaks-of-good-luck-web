@@ -61,6 +61,10 @@ params: AKShare 方法参数
 -- 返回公司信息
 method=stock_individual_info_em params={"symbol":"600519"}
 return=[{'item': '最新', 'value': 10.83}, {'item': '股票代码', 'value': '000001'}, {'item': '股票简称', 'value': '平安银行'}, {'item': '总股本', 'value': 19405918198.0}, {'item': '流通股', 'value': 19405600653.0}, {'item': '总市值', 'value': 210166094084.34}, {'item': '流通市值', 'value': 210162655071.99}, {'item': '行业', 'value': '银行'}, {'item': '上市时间', 'value': 19910403}]
+
+-- 返回历史行情
+method=stock_zh_a_hist params={"symbol":"600519","period":"daily","start_date":"20220101","end_date":"20221231","adjust":"qfq"|"hfq"|null}
+return=[{'日期': '2022-01-03', '开盘': 1796.0, '收盘': 1783.0, '最高': 1798.0, '最低': 1770.0, '成交量': 123456, '成交额': 12345, '振幅': 1.5, '涨跌幅': 2, '涨跌额': 13, '换手率': 1.2}, {...}, ...]
  */
 export async function fetchWebIntellCallAKShare(method: string, params: Record<string, any>) {
   return fetchWebIntell('call-akshare', {
