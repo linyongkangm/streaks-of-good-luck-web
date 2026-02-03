@@ -47,7 +47,6 @@ model info__stock_company {
   ipo_date                       DateTime?                        @db.Date
   total_shares                   Decimal?                         @db.Decimal(20, 2)
   circulating_shares             Decimal?                         @db.Decimal(20, 2)
-  indicator__company_finance     indicator__company_finance[]
   quote__stock_constituent_daily quote__stock_constituent_daily[]
   relation__stock_board_company  relation__stock_board_company[]
 }
