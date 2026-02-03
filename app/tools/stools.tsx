@@ -65,6 +65,24 @@ return=[{'item': '最新', 'value': 10.83}, {'item': '股票代码', 'value': '0
 -- 返回历史行情
 method=stock_zh_a_hist params={"symbol":"600519","period":"daily","start_date":"20220101","end_date":"20221231","adjust":"qfq"|"hfq"|null}
 return=[{'日期': '2022-01-03', '开盘': 1796.0, '收盘': 1783.0, '最高': 1798.0, '最低': 1770.0, '成交量': 123456, '成交额': 12345, '振幅': 1.5, '涨跌幅': 2, '涨跌额': 13, '换手率': 1.2}, {...}, ...]
+
+-- 资产负债表
+REPORT_DATE: 报告期,TOTAL_PARENT_EQUITY: 归属母公司股东权益
+-- 资产负债表-按报告期
+method=stock_balance_sheet_by_report_em params={"symbol":"sh600519"}
+return=[{'REPORT_DATE': '2000-06-30 00:00:00', 'TOTAL_PARENT_EQUITY': 1234567890.0, '流动资产': 123456789.0, ...}, {...}, ...]
+
+-- 利润表
+REPORT_DATE: 报告期,BASIC_EPS: 基本每股收益,BASIC_EPS: 稀释每股收益,OPERATE_INCOME: 营业总收入,PARENT_NETPROFIT: 归属母公司净利润,
+-- 利润表-按单季度
+method=stock_profit_sheet_by_quarterly_em params={"symbol":"sh600519"}
+return=[{'REPORT_DATE': '2000-06-30 00:00:00', 'BASIC_EPS': 1.18, 'DILUTED_EPS': 1.18, 'OPERATE_INCOME': 100668000000, 'PARENT_NETPROFIT': 38339000000...}, {...}, ...]
+
+-- 现金流量表
+-- 现金流量表-按单季度
+method=stock_cash_flow_sheet_by_quarterly_em params={"symbol":"sh600519"}
+REPORT_DATE: 报告期,NETCASH_OPERATE: 经营活动产生的现金流量净额,NETCASH_INVEST: 投资活动产生的现金流量净额,NETCASH_FINANCE:筹资活动产生的现金流量净额,RATE_CHANGE_EFFECT: 汇率变动对现金的影响
+return=[{'REPORT_DATE': '2000-06-30 00:00:00', 'NETCASH_OPERATE': 123456789.0, 'NETCASH_INVEST': 12345678.0, 'NETCASH_FINANCE': 12345678.0, 'RATE_CHANGE_EFFECT': 1234567.0}, {...}, ...]
  */
 export async function fetchWebIntellCallAKShare(method: string, params: Record<string, any>) {
   return fetchWebIntell('call-akshare', {
