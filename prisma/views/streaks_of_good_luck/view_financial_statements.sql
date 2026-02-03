@@ -3,6 +3,7 @@ WITH `profit_rolling` AS (
     `p`.`company_id` AS `company_id`,
     `p`.`report_date` AS `report_date`,
     `c`.`company_code` AS `company_code`,
+    year(`p`.`report_date`) AS `current_year`,
     `p`.`basic_eps` AS `basic_eps`,
     `p`.`diluted_eps` AS `diluted_eps`,
     `p`.`parent_netprofit` AS `parent_netprofit`,
@@ -27,15 +28,31 @@ WITH `profit_rolling` AS (
       ORDER BY
         `p`.`report_date` ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
     ) AS `operate_income_ttm`,
-    sum(`p`.`parent_netprofit`) OVER (
-      PARTITION BY `p`.`company_id`
-      ORDER BY
-        `p`.`report_date` ROWS BETWEEN 7 PRECEDING AND 4 PRECEDING
+(
+      SELECT
+        sum(`p2`.`parent_netprofit`)
+      FROM
+        `streaks_of_good_luck`.`quote__profit_sheet` `p2`
+      WHERE
+        (
+          (`p2`.`company_id` = `p`.`company_id`)
+          AND (
+            year(`p2`.`report_date`) = (year(`p`.`report_date`) - 1)
+          )
+        )
     ) AS `parent_netprofit_last_year`,
-    sum(`p`.`operate_income`) OVER (
-      PARTITION BY `p`.`company_id`
-      ORDER BY
-        `p`.`report_date` ROWS BETWEEN 7 PRECEDING AND 4 PRECEDING
+(
+      SELECT
+        sum(`p2`.`operate_income`)
+      FROM
+        `streaks_of_good_luck`.`quote__profit_sheet` `p2`
+      WHERE
+        (
+          (`p2`.`company_id` = `p`.`company_id`)
+          AND (
+            year(`p2`.`report_date`) = (year(`p`.`report_date`) - 1)
+          )
+        )
     ) AS `operate_income_last_year`,
     row_number() OVER (
       PARTITION BY `p`.`company_id`
@@ -76,25 +93,57 @@ WITH `profit_rolling` AS (
       ORDER BY
         `cf`.`report_date` ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
     ) AS `rate_change_effect_ttm`,
-    sum(`cf`.`netcash_operate`) OVER (
-      PARTITION BY `cf`.`company_id`
-      ORDER BY
-        `cf`.`report_date` ROWS BETWEEN 7 PRECEDING AND 4 PRECEDING
+(
+      SELECT
+        sum(`cf2`.`netcash_operate`)
+      FROM
+        `streaks_of_good_luck`.`quote__cash_flow_sheet` `cf2`
+      WHERE
+        (
+          (`cf2`.`company_id` = `cf`.`company_id`)
+          AND (
+            year(`cf2`.`report_date`) = (year(`cf`.`report_date`) - 1)
+          )
+        )
     ) AS `netcash_operate_last_year`,
-    sum(`cf`.`netcash_invest`) OVER (
-      PARTITION BY `cf`.`company_id`
-      ORDER BY
-        `cf`.`report_date` ROWS BETWEEN 7 PRECEDING AND 4 PRECEDING
+(
+      SELECT
+        sum(`cf2`.`netcash_invest`)
+      FROM
+        `streaks_of_good_luck`.`quote__cash_flow_sheet` `cf2`
+      WHERE
+        (
+          (`cf2`.`company_id` = `cf`.`company_id`)
+          AND (
+            year(`cf2`.`report_date`) = (year(`cf`.`report_date`) - 1)
+          )
+        )
     ) AS `netcash_invest_last_year`,
-    sum(`cf`.`netcash_finance`) OVER (
-      PARTITION BY `cf`.`company_id`
-      ORDER BY
-        `cf`.`report_date` ROWS BETWEEN 7 PRECEDING AND 4 PRECEDING
+(
+      SELECT
+        sum(`cf2`.`netcash_finance`)
+      FROM
+        `streaks_of_good_luck`.`quote__cash_flow_sheet` `cf2`
+      WHERE
+        (
+          (`cf2`.`company_id` = `cf`.`company_id`)
+          AND (
+            year(`cf2`.`report_date`) = (year(`cf`.`report_date`) - 1)
+          )
+        )
     ) AS `netcash_finance_last_year`,
-    sum(`cf`.`rate_change_effect`) OVER (
-      PARTITION BY `cf`.`company_id`
-      ORDER BY
-        `cf`.`report_date` ROWS BETWEEN 7 PRECEDING AND 4 PRECEDING
+(
+      SELECT
+        sum(`cf2`.`rate_change_effect`)
+      FROM
+        `streaks_of_good_luck`.`quote__cash_flow_sheet` `cf2`
+      WHERE
+        (
+          (`cf2`.`company_id` = `cf`.`company_id`)
+          AND (
+            year(`cf2`.`report_date`) = (year(`cf`.`report_date`) - 1)
+          )
+        )
     ) AS `rate_change_effect_last_year`
   FROM
     `streaks_of_good_luck`.`quote__cash_flow_sheet` `cf`

@@ -263,24 +263,24 @@ model quote__cash_flow_sheet {
 }
 
 view view_financial_statements {
-  stock_code                   String   @db.VarChar(20)
-  report_date                  DateTime @db.Date
-  total_parent_equity          Decimal? @db.Decimal(20, 2)
-  basic_eps_ttm                Decimal? @db.Decimal(32, 4)
-  diluted_eps_ttm              Decimal? @db.Decimal(32, 4)
-  parent_netprofit_ttm         Decimal? @db.Decimal(42, 2)
-  parent_netprofit_last_year   Decimal? @db.Decimal(42, 2)
-  weighted_average_shares      Decimal? @db.Decimal(50, 6)
-  operate_income_ttm           Decimal? @db.Decimal(42, 2)
-  operate_income_last_year     Decimal? @db.Decimal(42, 2)
-  netcash_operate_ttm          Decimal? @db.Decimal(42, 2)
-  netcash_operate_last_year    Decimal? @db.Decimal(42, 2)
-  netcash_invest_ttm           Decimal? @db.Decimal(42, 2)
-  netcash_invest_last_year     Decimal? @db.Decimal(42, 2)
-  netcash_finance_ttm          Decimal? @db.Decimal(42, 2)
-  netcash_finance_last_year    Decimal? @db.Decimal(42, 2)
-  rate_change_effect_ttm       Decimal? @db.Decimal(42, 2)
-  rate_change_effect_last_year Decimal? @db.Decimal(42, 2)
+  stock_code                   String    @db.VarChar(20)
+  report_date                  DateTime? @db.Date
+  total_parent_equity          Decimal?  @db.Decimal(20, 2)
+  basic_eps_ttm                Decimal?  @db.Decimal(32, 4)
+  diluted_eps_ttm              Decimal?  @db.Decimal(32, 4)
+  parent_netprofit_ttm         Decimal?  @db.Decimal(42, 2)
+  parent_netprofit_last_year   Decimal?  @db.Decimal(42, 2)
+  weighted_average_shares      Decimal?  @db.Decimal(50, 6)
+  operate_income_ttm           Decimal?  @db.Decimal(42, 2)
+  operate_income_last_year     Decimal?  @db.Decimal(42, 2)
+  netcash_operate_ttm          Decimal?  @db.Decimal(42, 2)
+  netcash_operate_last_year    Decimal?  @db.Decimal(42, 2)
+  netcash_invest_ttm           Decimal?  @db.Decimal(42, 2)
+  netcash_invest_last_year     Decimal?  @db.Decimal(42, 2)
+  netcash_finance_ttm          Decimal?  @db.Decimal(42, 2)
+  netcash_finance_last_year    Decimal?  @db.Decimal(42, 2)
+  rate_change_effect_ttm       Decimal?  @db.Decimal(42, 2)
+  rate_change_effect_last_year Decimal?  @db.Decimal(42, 2)
 }
 
 enum VerifyStatus {
