@@ -18,11 +18,31 @@ export async function GET(req: NextRequest) {
   }
   const predicts = await prisma.info__predict.findMany({
     where,
-    orderBy: { interval_start: 'asc' },
     include: {
       summary__article: true,
     },
   });
+  
+  // 自定义排序：先按 VerifyStatus 排序，再按 interval_start 排序
+  const statusOrder: Record<string, number> = {
+    'not_due': 1,
+    'partial': 2,
+    'not_implemented': 3,
+    'delayed': 4,
+    'implemented': 5
+  };
+  
+  predicts.sort((a, b) => {
+    // 先按 verify_status 排序
+    const statusA = statusOrder[a.verify_status] || 999;
+    const statusB = statusOrder[b.verify_status] || 999;
+    if (statusA !== statusB) {
+      return statusA - statusB;
+    }
+    // 再按 interval_start 排序
+    return new Date(a.interval_start).getTime() - new Date(b.interval_start).getTime();
+  });
+  
   return NextResponse.json(predicts);
 }
 
