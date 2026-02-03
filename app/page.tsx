@@ -5,10 +5,11 @@ import IndustryAnalysis from "./components/IndustryAnalysis";
 import TweetAnalysis from "./components/TweetAnalysis";
 import ArticleAnalysis from "./components/ArticleAnalysis";
 import PredictsList from "./components/Predicts/PredictsList";
+import SecuritiesMetadata from "./components/SecuritiesMetadata";
 import useStoreArticle from "@/app/hooks/useStoreArticle";
 import useExternalEvent from "@/app/hooks/useExternalEvent";
 
-type TabType = 'industry' | 'tweet' | 'article' | 'predicts';
+type TabType = 'industry' | 'tweet' | 'article' | 'predicts' | 'securities';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>('tweet');
@@ -53,7 +54,8 @@ export default function Home() {
               { id: 'industry' as const, icon: '🏢', label: '行业分析' },
               { id: 'tweet' as const, icon: '💬', label: '推文分析' },
               { id: 'article' as const, icon: '📄', label: '文章分析' },
-              { id: 'predicts' as const, icon: '📈', label: '预测记录' }
+              { id: 'predicts' as const, icon: '📈', label: '预测记录' },
+              { id: 'securities' as const, icon: '💼', label: '证券元数据' }
             ]).map((tab) => (
               <button
                 key={tab.id}
@@ -79,7 +81,8 @@ export default function Home() {
           { id: 'industry' as const, component: IndustryAnalysis },
           { id: 'tweet' as const, component: TweetAnalysis },
           { id: 'article' as const, component: ArticleAnalysis },
-          { id: 'predicts' as const, component: PredictsList }
+          { id: 'predicts' as const, component: PredictsList },
+          { id: 'securities' as const, component: SecuritiesMetadata }
         ]).map(({ id, component: Component }) => (
           activeTab === id && <Component key={id} />
         ))}

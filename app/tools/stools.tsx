@@ -53,6 +53,15 @@ export async function fetchWebIntell(api: string, params: Record<string, any>) {
   return response;
 }
 
+/**
+调用 WebIntell 的 Call AKShare 接口
+method: AKShare 方法名
+params: AKShare 方法参数
+示例：
+-- 返回公司信息
+method=stock_individual_info_em params={"symbol":"600519"}
+return=[{'item': '最新', 'value': 10.83}, {'item': '股票代码', 'value': '000001'}, {'item': '股票简称', 'value': '平安银行'}, {'item': '总股本', 'value': 19405918198.0}, {'item': '流通股', 'value': 19405600653.0}, {'item': '总市值', 'value': 210166094084.34}, {'item': '流通市值', 'value': 210162655071.99}, {'item': '行业', 'value': '银行'}, {'item': '上市时间', 'value': 19910403}]
+ */
 export async function fetchWebIntellCallAKShare(method: string, params: Record<string, any>) {
   return fetchWebIntell('call-akshare', {
     method,
