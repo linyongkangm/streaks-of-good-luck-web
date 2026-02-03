@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     }
 
     const startET = tools.fromISOUseEastern(date).startOf('day')
+    console.log('Fetching tweets for', collectFrom, 'on', startET.toJSDate())  
     const tweets = await prisma.info__tweet.findMany({
       where: {
         collect_from: collectFrom,
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
         tweet_date: 'desc',
       },
     })
-
+    console.log(`Found ${tweets.length} tweets for ${collectFrom} on ${date}`)
     return NextResponse.json({
       data: tweets,
     })

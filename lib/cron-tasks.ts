@@ -104,7 +104,7 @@ export function startSummarySendTask() {
         const formattedDate = yesterday.toISOString().split('T')[0];
 
         await tools.postArticleMessage(
-          `推总结 - ${formattedDate}`,
+          `${collectFrom.replace("https://x.com/", "")} - ${formattedDate}`,
           latestSummary.summary,
           collectFrom
         );

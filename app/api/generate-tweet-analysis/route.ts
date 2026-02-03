@@ -25,12 +25,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log(`Fetching tweets for ${collect_from} on ${date}...`)
-
     // 获取指定日期和来源的所有推文
     // date 是美东时间的日期，需要转换为 UTC 时间范围查询
     // tweet_date 存储的是 UTC 时间
     const startET = tools.fromISOUseEastern(date).startOf('day')
+    console.log('Fetching tweets for', collect_from, 'on', startET.toJSDate())  
     const tweets = await prisma.info__tweet.findMany({
       where: {
         collect_from: collect_from,
@@ -41,7 +40,7 @@ export async function POST(request: NextRequest) {
       },
       orderBy: { tweet_date: 'asc' },
     })
-
+    console.log(`Found ${tweets.length} tweets for ${collect_from} on ${date}`)
     if (tweets.length === 0) {
       return NextResponse.json(
         { success: false, message: `在 ${date} 未找到来自 ${collect_from} 的推文` },
