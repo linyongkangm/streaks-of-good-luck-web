@@ -18,8 +18,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       const contributor = articleContainer?.querySelector('.AuthorInfo meta[itemprop="name"]')?.getAttribute('content');
       if (source_url.includes('www.zhihu.com/question')) {
         const title = articleContainer?.querySelector('meta[itemprop="name"]')?.getAttribute('content');
-        const issue_date = articleContainer?.querySelector('meta[itemprop="dateCreated"]')?.getAttribute('content')?.split('T')?.[0];
-        const source_text_element = articleContainer?.querySelector('.RichContent #content');
+        const issue_date = articleContainer?.querySelector('.AnswerCard meta[itemprop="dateCreated"]')?.getAttribute('content')?.split('T')?.[0];
+        const source_text_element = articleContainer?.querySelector('.AnswerCard .RichContent #content');
         cleaningAD(source_text_element);
         const source_text = source_text_element.textContent;
         record = { title, source_url, publication, issue_date, contributor, source_text }
