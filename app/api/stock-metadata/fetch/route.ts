@@ -9,9 +9,12 @@ export async function POST(req: NextRequest) {
     if (!symbol) {
       return NextResponse.json({ error: '缺少股票代码' }, { status: 400 });
     }
-
+    // const response1 = await stools.fetchWebIntellCallAKShare('stock_cash_flow_sheet_by_quarterly_em', { symbol: 'sz000001' });
+    // const result1 = await response1.json();
+    // console.log('balance sheet result:', result1.data.slice(0, 2));
+    // return NextResponse.json({ error: '测试中断' }, { status: 500 });
     // 调用 AKShare API 获取公司信息
-    const response = await stools.fetchWebIntellCallAKShare('stock_individual_info_em', { symbol });
+    const response = await stools.fetchWebIntellCallAKShare('stock_individual_info_em', { symbol: symbol.slice(-6) });
 
     if (!response.ok) {
       const error = await response.json();
@@ -19,7 +22,6 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await response.json();
-
     if (!result.success || !result.data) {
       return NextResponse.json({ error: '获取元数据失败' }, { status: 500 });
     }
