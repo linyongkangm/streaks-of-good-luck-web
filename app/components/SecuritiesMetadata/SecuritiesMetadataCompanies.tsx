@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import type { info__stock_company } from '@/types'
-import * as tools from '@/app/tools'
 
-export default function SecuritiesMetadata() {
+export default function SecuritiesMetadataCompanies() {
   const [companies, setCompanies] = useState<info__stock_company[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -214,12 +213,8 @@ export default function SecuritiesMetadata() {
   }
 
   return (
-    <div className="p-6 max-w-[1600px] mx-auto">
-      <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-        <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-          📊 证券元数据管理
-        </h2>
-
+    <div className="mx-auto">
+      <div className="w-full">
         {/* 搜索和操作栏 */}
         <div className="flex gap-4 mb-6">
           <input

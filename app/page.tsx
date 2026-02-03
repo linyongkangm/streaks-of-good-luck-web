@@ -5,7 +5,7 @@ import IndustryAnalysis from "./components/IndustryAnalysis";
 import TweetAnalysis from "./components/TweetAnalysis";
 import ArticleAnalysis from "./components/ArticleAnalysis";
 import PredictsList from "./components/Predicts/PredictsList";
-import SecuritiesMetadata from "./components/SecuritiesMetadata";
+import SecuritiesMetadata from "./components/SecuritiesMetadata/SecuritiesMetadata";
 import useStoreArticle from "@/app/hooks/useStoreArticle";
 import useExternalEvent from "@/app/hooks/useExternalEvent";
 
