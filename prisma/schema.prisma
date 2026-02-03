@@ -172,36 +172,41 @@ model info__tweet {
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model quote__stock_constituent_daily {
-  id                      BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
-  company_id              Int                 @db.UnsignedInt
-  trade_date              DateTime            @db.Date
-  volume                  BigInt
-  turnover                Decimal             @db.Decimal(18, 2)
-  turnover_rate           Decimal             @db.Decimal(6, 3)
-  open_price              Decimal             @db.Decimal(10, 2)
-  close_price             Decimal             @db.Decimal(10, 2)
-  high_price              Decimal             @db.Decimal(10, 2)
-  low_price               Decimal             @db.Decimal(10, 2)
-  change_amt              Decimal             @db.Decimal(10, 2)
-  change_percent          Decimal             @db.Decimal(5, 2)
-  price_range             Decimal             @db.Decimal(10, 2)
-  backward_open_price     Decimal             @db.Decimal(10, 2)
-  backward_close_price    Decimal             @db.Decimal(10, 2)
-  backward_high_price     Decimal             @db.Decimal(10, 2)
-  backward_low_price      Decimal             @db.Decimal(10, 2)
-  backward_change_amt     Decimal             @db.Decimal(10, 2)
-  backward_change_percent Decimal             @db.Decimal(5, 2)
-  backward_price_range    Decimal             @db.Decimal(10, 2)
-  forward_open_price      Decimal             @db.Decimal(10, 2)
-  forward_close_price     Decimal             @db.Decimal(10, 2)
-  forward_high_price      Decimal             @db.Decimal(10, 2)
-  forward_low_price       Decimal             @db.Decimal(10, 2)
-  forward_change_amt      Decimal             @db.Decimal(10, 2)
-  forward_change_percent  Decimal             @db.Decimal(5, 2)
-  forward_price_range     Decimal             @db.Decimal(10, 2)
-  create_time             DateTime            @default(now()) @db.DateTime(0)
-  update_time             DateTime            @default(now()) @updatedAt @db.DateTime(0)
-  info__stock_company     info__stock_company @relation(fields: [company_id], references: [id], map: "fk_quote_company_id")
+  id                 BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
+  company_id         Int                 @db.UnsignedInt
+  trade_date         DateTime            @db.Date
+  volume             BigInt              // 成交量（不受复权影响）
+  turnover_rate      Decimal             @db.Decimal(6, 3) // 换手率（不受复权影响）
+  price_range        Decimal             @db.Decimal(10, 2) // 振幅（不受复权影响）
+  change_percent     Decimal             @db.Decimal(5, 2) // 涨跌幅（不受复权影响）
+  
+  // 不复权数据 (adjust=null)
+  none_open_price    Decimal             @db.Decimal(10, 2)
+  none_close_price   Decimal             @db.Decimal(10, 2)
+  none_high_price    Decimal             @db.Decimal(10, 2)
+  none_low_price     Decimal             @db.Decimal(10, 2)
+  none_turnover      Decimal             @db.Decimal(18, 2) // 成交额
+  none_change_amt    Decimal             @db.Decimal(10, 2) // 涨跌额
+  
+  // 前复权数据 (adjust=qfq)
+  qfq_open_price     Decimal             @db.Decimal(10, 2)
+  qfq_close_price    Decimal             @db.Decimal(10, 2)
+  qfq_high_price     Decimal             @db.Decimal(10, 2)
+  qfq_low_price      Decimal             @db.Decimal(10, 2)
+  qfq_turnover       Decimal             @db.Decimal(18, 2)
+  qfq_change_amt     Decimal             @db.Decimal(10, 2)
+  
+  // 后复权数据 (adjust=hfq)
+  hfq_open_price     Decimal             @db.Decimal(10, 2)
+  hfq_close_price    Decimal             @db.Decimal(10, 2)
+  hfq_high_price     Decimal             @db.Decimal(10, 2)
+  hfq_low_price      Decimal             @db.Decimal(10, 2)
+  hfq_turnover       Decimal             @db.Decimal(18, 2)
+  hfq_change_amt     Decimal             @db.Decimal(10, 2)
+  
+  create_time        DateTime            @default(now()) @db.DateTime(0)
+  update_time        DateTime            @default(now()) @updatedAt @db.DateTime(0)
+  info__stock_company info__stock_company @relation(fields: [company_id], references: [id], map: "fk_quote_company_id")
 
   @@unique([company_id, trade_date], map: "uk_company_trade_date")
   @@index([trade_date], map: "idx_trade_date")

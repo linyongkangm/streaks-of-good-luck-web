@@ -22,6 +22,13 @@ export default function SecuritiesMetadata() {
     circulating_shares: '',
   })
   const [fetchingMetadata, setFetchingMetadata] = useState(false)
+  const [showQuoteForm, setShowQuoteForm] = useState(false)
+  const [selectedCompany, setSelectedCompany] = useState<info__stock_company | null>(null)
+  const [quoteParams, setQuoteParams] = useState({
+    start_date: '',
+    end_date: '',
+  })
+  const [fetchingQuotes, setFetchingQuotes] = useState(false)
 
   useEffect(() => {
     fetchCompanies()
@@ -157,7 +164,43 @@ export default function SecuritiesMetadata() {
       alert('删除失败')
     }
   }
+  const handleFetchQuotes = async () => {
+    if (!selectedCompany) return
 
+    if (!quoteParams.start_date || !quoteParams.end_date) {
+      alert('请选择开始和结束日期')
+      return
+    }
+
+    setFetchingQuotes(true)
+    try {
+      const res = await fetch('/api/stock-quotes/fetch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          symbol: selectedCompany.company_akshare_code,
+          start_date: quoteParams.start_date,
+          end_date: quoteParams.end_date,
+        }),
+      })
+
+      if (res.ok) {
+        const result = await res.json()
+        alert(result.message || '行情数据获取成功')
+        setShowQuoteForm(false)
+        setSelectedCompany(null)
+        setQuoteParams({ start_date: '', end_date: '' })
+      } else {
+        const error = await res.json()
+        alert(error.error || '获取行情数据失败')
+      }
+    } catch (error) {
+      console.error('获取行情数据失败:', error)
+      alert('获取行情数据失败')
+    } finally {
+      setFetchingQuotes(false)
+    }
+  }
   const resetForm = () => {
     setFormData({
       company_name: '',
@@ -239,6 +282,19 @@ export default function SecuritiesMetadata() {
                         className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-xs font-medium mr-2"
                       >
                         编辑
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedCompany(company)
+                          setQuoteParams({
+                            start_date: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                            end_date: new Date().toISOString().split('T')[0],
+                          })
+                          setShowQuoteForm(true)
+                        }}
+                        className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors text-xs font-medium mr-2"
+                      >
+                        获取行情
                       </button>
                       <button
                         onClick={() => handleDelete(company.id)}
@@ -394,6 +450,76 @@ export default function SecuritiesMetadata() {
                 className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg font-medium"
               >
                 {editingCompany ? '更新' : '创建'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 行情获取弹窗 */}
+      {showQuoteForm && selectedCompany && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="bg-gradient-to-r from-green-600 to-teal-600 p-6 text-white">
+              <h3 className="text-2xl font-bold">获取历史行情</h3>
+              <p className="text-sm text-green-100 mt-1">{selectedCompany.company_name} ({selectedCompany.company_code})</p>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  开始日期 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={quoteParams.start_date}
+                  onChange={(e) => setQuoteParams({ ...quoteParams, start_date: e.target.value })}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  结束日期 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={quoteParams.end_date}
+                  onChange={(e) => setQuoteParams({ ...quoteParams, end_date: e.target.value })}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-slate-900"
+                />
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+                <p className="font-medium mb-1">💡 说明</p>
+                <p>将获取该时间段内的历史行情数据，包含不复权、前复权、后复权三种数据。</p>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-200 p-4 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowQuoteForm(false)
+                  setSelectedCompany(null)
+                }}
+                className="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-medium"
+                disabled={fetchingQuotes}
+              >
+                取消
+              </button>
+              <button
+                onClick={handleFetchQuotes}
+                disabled={fetchingQuotes}
+                className="px-6 py-2 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-lg hover:from-green-700 hover:to-teal-700 transition-all shadow-md hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {fetchingQuotes ? (
+                  <>
+                    <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                    获取中...
+                  </>
+                ) : (
+                  '开始获取'
+                )}
               </button>
             </div>
           </div>
