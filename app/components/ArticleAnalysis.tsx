@@ -22,6 +22,7 @@ export default function ArticleAnalysis() {
   const [searchIssueDate, setSearchIssueDate] = useState('')
   const [publications, setPublications] = useState<string[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
+  const [reanalyzing, setReanalyzing] = useState<string | null>(null)
   const [extractingPredicts, setExtractingPredicts] = useState<string | null>(null)
   const [predictPreview, setPredictPreview] = useState<{
     article: summary__article;
@@ -169,6 +170,48 @@ export default function ArticleAnalysis() {
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleSearch()
+    }
+  }
+
+  const handleReanalyze = async (article: summary__article) => {
+    if (!article.source_text) {
+      alert('该文章没有原文内容，无法重新分析')
+      return
+    }
+
+    const confirmResult = confirm(`确定要重新分析文章 "${article.title}" 吗？这将覆盖现有的分析结果。`)
+    if (!confirmResult) return
+
+    try {
+      setReanalyzing(article.id.toString())
+      const response = await fetch('/api/process-articles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          articles: [{
+            source_url: article.source_url,
+            title: article.title,
+            contributor: article.contributor,
+            publication: article.publication,
+            issue_date: article.issue_date,
+            source_text: article.source_text,
+          }]
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success && data.successful > 0) {
+        alert('重新分析成功！')
+        await fetchArticles()
+      } else {
+        alert('重新分析失败，请稍后重试')
+      }
+    } catch (error) {
+      console.error('Failed to reanalyze article:', error)
+      alert('重新分析失败，请稍后重试')
+    } finally {
+      setReanalyzing(null)
     }
   }
 
@@ -389,26 +432,44 @@ export default function ArticleAnalysis() {
                     查看原文
                     <span className="group-hover:translate-x-1 transition-transform">→</span>
                   </a>
-                  {
-                    !predictsSaved.includes(article.id.toString()) ? (<button
-                      onClick={() => handleExtractPredicts(article.id)}
-                      disabled={extractingPredicts === article.id.toString()}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg hover:from-purple-600 hover:to-pink-700 transition-all shadow-md hover:shadow-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => handleReanalyze(article)}
+                      disabled={reanalyzing === article.id.toString()}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg hover:from-orange-600 hover:to-red-700 transition-all shadow-md hover:shadow-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {extractingPredicts === article.id.toString() ? (
+                      {reanalyzing === article.id.toString() ? (
                         <>
                           <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                          提取中...
+                          分析中...
                         </>
                       ) : (
                         <>
-                          <span>🔮</span>
-                          获取预测
+                          <span>🔄</span>
+                          重新分析
                         </>
                       )}
-                    </button>) : null
-                  }
-
+                    </button>
+                    {
+                      !predictsSaved.includes(article.id.toString()) ? (<button
+                        onClick={() => handleExtractPredicts(article.id)}
+                        disabled={extractingPredicts === article.id.toString()}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg hover:from-purple-600 hover:to-pink-700 transition-all shadow-md hover:shadow-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {extractingPredicts === article.id.toString() ? (
+                          <>
+                            <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                            提取中...
+                          </>
+                        ) : (
+                          <>
+                            <span>🔮</span>
+                            获取预测
+                          </>
+                        )}
+                      </button>) : null
+                    }
+                  </div>
                 </div>
               </div>
             </div>

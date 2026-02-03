@@ -18,40 +18,44 @@ export async function POST(request: NextRequest) {
     }
 
     // 检查是否已存在相同的文章（基于source_url）
-    const existingUrls = await prisma.summary__article.findMany({
+    const existingArticles = await prisma.summary__article.findMany({
       where: {
         source_url: {
           in: articles.map((a: summary__article) => a.source_url),
         },
       },
-      select: { source_url: true },
+      select: { source_url: true, source_text: true },
     })
-    const existingUrlSet = new Set(existingUrls.map((a) => a.source_url))
+    const existingUrlMap = new Map(existingArticles.map((a) => [a.source_url, a.source_text]))
 
-    // 分离新文章和已存在的文章
-    const newArticles = articles.filter((a: summary__article) => !existingUrlSet.has(a.source_url))
+    // 分离新文章和需要更新的文章
+    const newArticles = articles.filter((a: summary__article) => !existingUrlMap.has(a.source_url))
+    const updateArticles = articles.filter((a: summary__article) => existingUrlMap.has(a.source_url) && a.source_text)
 
-    if (newArticles.length === 0) {
+    if (newArticles.length === 0 && updateArticles.length === 0) {
       return NextResponse.json({
         success: true,
-        message: '所有文章均已存在',
+        message: '所有文章均已存在且无需更新',
         successful: 0,
         failed: 0,
-        existingSourceUrls: Array.from(existingUrlSet),
+        existingSourceUrls: Array.from(existingUrlMap.keys()),
       })
     }
 
 
-    // 串行处理每篇新文章
+    // 串行处理每篇新文章和需要更新的文章
     const results: { status: 'fulfilled' | 'rejected'; value?: any; reason?: any }[] = [];
-    for (const article of newArticles) {
+    const allArticles = [...newArticles, ...updateArticles];
+    const isUpdate = new Map(updateArticles.map(a => [a.source_url, true]));
+    
+    for (const article of allArticles) {
       try {
-        const r = await generateArticleAnalysis(article);
+        const r = await generateArticleAnalysis(article, isUpdate.has(article.source_url));
         results.push({ status: 'fulfilled', value: r });
         if (r.success && r.data) {
           const issue_date = r.data.issue_date ? r.data.issue_date.toISOString().split('T')[0] : '未知日期';
           tools.postArticleMessage(r.data.title, `${r.data.summary} [${r.data.publication} ${issue_date}]`, r.data.source_url);
-          console.log(`✓ Article processed: ${r.data.title} (${r.data.source_url})`);
+          console.log(`✓ Article ${isUpdate.has(article.source_url) ? 'updated' : 'processed'}: ${r.data.title} (${r.data.source_url})`);
         }
       } catch (e) {
         results.push({ status: 'rejected', reason: e });
@@ -68,10 +72,10 @@ export async function POST(request: NextRequest) {
       successful,
       failed,
       total: articles.length,
-      successfulSourceUrls: newArticles
+      successfulSourceUrls: allArticles
         .filter((_, index) => results[index].status === 'fulfilled' && (results[index] as any).value.success)
         .map((a: any) => a.source_url),
-      existingSourceUrls: Array.from(existingUrlSet),
+      existingSourceUrls: Array.from(existingUrlMap.keys()).filter(url => !isUpdate.has(url)),
     })
   } catch (error) {
     console.error('Failed to process articles:', error)
@@ -82,7 +86,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function generateArticleAnalysis(article: any) {
+async function generateArticleAnalysis(article: summary__article, isUpdate: boolean = false) {
   try {
     const { source_url, title, contributor, publication, issue_date, source_text } = article
 
@@ -91,7 +95,7 @@ async function generateArticleAnalysis(article: any) {
       return { success: false, reason: 'no source_text' }
     }
 
-    console.log(`Analyzing article: ${title}`)
+    console.log(`${isUpdate ? 'Reanalyzing' : 'Analyzing'} article: ${title}`)
 
     // 调用 Python API 生成分析
     console.log(`Calling Python API: ${PYTHON_API_URL}/analyze-article`)
@@ -131,11 +135,21 @@ async function generateArticleAnalysis(article: any) {
       if (issue_date) data.issue_date = new Date(issue_date)
       if (contributor) data.contributor = contributor
 
-      await prisma.summary__article.create({
-        data,
-      })
+      if (isUpdate) {
+        // 更新现有文章
+        await prisma.summary__article.update({
+          where: { source_url },
+          data,
+        })
+        console.log(`✓ Article "${title}" updated in database`)
+      } else {
+        // 创建新文章
+        await prisma.summary__article.create({
+          data,
+        })
+        console.log(`✓ Article "${title}" saved to database`)
+      }
 
-      console.log(`✓ Article "${title}" saved to database`)
       return { success: true, data: data }
     }
 
