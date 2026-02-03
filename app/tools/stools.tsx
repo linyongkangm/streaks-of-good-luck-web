@@ -37,3 +37,25 @@ export async function launchBrowser(hostUrl: string = 'http://localhost:3000/') 
     console.error('Error launching browser with extensions:', error);
   }
 }
+
+const PYTHON_API_URL = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'
+export async function fetchWebIntell(api: string, params: Record<string, any>) {
+  const url = `${PYTHON_API_URL}/${api}`;
+  console.log(`Calling Python API: ${url}`)
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(params),
+  })
+  console.log(`Received response from Python API: ${url} - Status: ${response.status}`)
+  return response;
+}
+
+export async function fetchWebIntellCallAKShare(method: string, params: Record<string, any>) {
+  return fetchWebIntell('call-akshare', {
+    method,
+    params,
+  });
+}
