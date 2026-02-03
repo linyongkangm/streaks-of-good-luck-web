@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import type { info__stock_company, quote__stock_constituent_daily } from '@/types'
 import { formatNumber, formatVolume } from '@/app/tools'
+import Table from '@/app/widget/Table'
 
 interface Props {
   selectedCompany: info__stock_company
@@ -68,6 +69,124 @@ export default function SecuritiesMetadataQuotes({ selectedCompany }: Props) {
     }
   }
 
+  const columns = [
+    {
+      title: '交易日期',
+      dataIndex: 'trade_date',
+      key: 'trade_date',
+      render: (value: any) => new Date(value).toLocaleDateString('zh-CN'),
+    },
+    {
+      title: '开盘',
+      dataIndex: 'open',
+      key: 'open',
+      align: 'right' as const,
+      className: 'font-mono',
+      render: (_: any, record: any) => {
+        const data = getDisplayData(record)
+        return formatNumber(data.open)
+      },
+    },
+    {
+      title: '收盘',
+      dataIndex: 'close',
+      key: 'close',
+      align: 'right' as const,
+      className: 'font-mono font-semibold',
+      render: (_: any, record: any) => {
+        const data = getDisplayData(record)
+        const isPositive = Number(record.change_percent) > 0
+        const isNegative = Number(record.change_percent) < 0
+        const colorClass = isPositive ? 'text-red-600' : isNegative ? 'text-green-600' : 'text-slate-900'
+        return <span className={colorClass}>{formatNumber(data.close)}</span>
+      },
+    },
+    {
+      title: '最高',
+      dataIndex: 'high',
+      key: 'high',
+      align: 'right' as const,
+      className: 'font-mono text-red-600',
+      render: (_: any, record: any) => {
+        const data = getDisplayData(record)
+        return formatNumber(data.high)
+      },
+    },
+    {
+      title: '最低',
+      dataIndex: 'low',
+      key: 'low',
+      align: 'right' as const,
+      className: 'font-mono text-green-600',
+      render: (_: any, record: any) => {
+        const data = getDisplayData(record)
+        return formatNumber(data.low)
+      },
+    },
+    {
+      title: '成交量',
+      dataIndex: 'volume',
+      key: 'volume',
+      align: 'right' as const,
+      className: 'font-mono',
+      render: (value: any) => formatVolume(value),
+    },
+    {
+      title: '成交额',
+      dataIndex: 'turnover',
+      key: 'turnover',
+      align: 'right' as const,
+      className: 'font-mono',
+      render: (_: any, record: any) => {
+        const data = getDisplayData(record)
+        return formatVolume(data.turnover)
+      },
+    },
+    {
+      title: '涨跌额',
+      dataIndex: 'change_amt',
+      key: 'change_amt',
+      align: 'right' as const,
+      className: 'font-mono',
+      render: (_: any, record: any) => {
+        const data = getDisplayData(record)
+        const isPositive = Number(record.change_percent) > 0
+        const isNegative = Number(record.change_percent) < 0
+        const colorClass = isPositive ? 'text-red-600' : isNegative ? 'text-green-600' : 'text-slate-900'
+        return <span className={colorClass}>{formatNumber(data.change_amt)}</span>
+      },
+    },
+    {
+      title: '涨跌幅',
+      dataIndex: 'change_percent',
+      key: 'change_percent',
+      align: 'right' as const,
+      className: 'font-mono font-semibold',
+      render: (value: any, record: any) => {
+        const isPositive = Number(value) > 0
+        const isNegative = Number(value) < 0
+        const colorClass = isPositive ? 'text-red-600' : isNegative ? 'text-green-600' : 'text-slate-900'
+        return <span className={colorClass}>{isPositive ? '+' : ''}{formatNumber(value)}%</span>
+      },
+    },
+    {
+      title: '振幅',
+      dataIndex: 'price_range',
+      key: 'price_range',
+      align: 'right' as const,
+      className: 'font-mono',
+      render: (value: any) => `${formatNumber(value)}%`,
+    },
+    {
+      title: '换手率',
+      dataIndex: 'turnover_rate',
+      key: 'turnover_rate',
+      align: 'right' as const,
+      className: 'font-mono',
+      render: (value: any) => `${formatNumber(value, 3)}%`,
+    },
+  ]
+
   return (
     <div className="w-full">
       {/* 筛选栏 */}
@@ -111,84 +230,12 @@ export default function SecuritiesMetadataQuotes({ selectedCompany }: Props) {
       </div>
 
       {/* 行情数据表格 */}
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600"></div>
-        </div>
-      ) : quotes.length === 0 ? (
-        <div className="text-center py-12 text-slate-500">暂无行情数据</div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-slate-50 border-b-2 border-slate-200">
-                <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">交易日期</th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">开盘</th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">收盘</th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">最高</th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">最低</th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">成交量</th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">成交额</th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">涨跌额</th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">涨跌幅</th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">振幅</th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">换手率</th>
-              </tr>
-            </thead>
-            <tbody>
-              {quotes.map((quote) => {
-                const data = getDisplayData(quote)
-                const isPositive = Number(quote.change_percent) > 0
-                const isNegative = Number(quote.change_percent) < 0
-                
-                return (
-                  <tr key={quote.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-3 text-sm text-slate-900 font-medium">
-                      {new Date(quote.trade_date).toLocaleDateString('zh-CN')}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-900 text-right font-mono">
-                      {formatNumber(data.open)}
-                    </td>
-                    <td className={`px-4 py-3 text-sm text-right font-mono font-semibold ${
-                      isPositive ? 'text-red-600' : isNegative ? 'text-green-600' : 'text-slate-900'
-                    }`}>
-                      {formatNumber(data.close)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-red-600 text-right font-mono">
-                      {formatNumber(data.high)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-green-600 text-right font-mono">
-                      {formatNumber(data.low)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-900 text-right font-mono">
-                      {formatVolume(quote.volume)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-900 text-right font-mono">
-                      {formatVolume(data.turnover)}
-                    </td>
-                    <td className={`px-4 py-3 text-sm text-right font-mono ${
-                      isPositive ? 'text-red-600' : isNegative ? 'text-green-600' : 'text-slate-900'
-                    }`}>
-                      {formatNumber(data.change_amt)}
-                    </td>
-                    <td className={`px-4 py-3 text-sm text-right font-mono font-semibold ${
-                      isPositive ? 'text-red-600' : isNegative ? 'text-green-600' : 'text-slate-900'
-                    }`}>
-                      {isPositive ? '+' : ''}{formatNumber(quote.change_percent)}%
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-900 text-right font-mono">
-                      {formatNumber(quote.price_range)}%
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-900 text-right font-mono">
-                      {formatNumber(quote.turnover_rate, 3)}%
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <Table
+        columns={columns}
+        dataSource={quotes}
+        loading={loading}
+        emptyText="暂无行情数据"
+      />
 
       {/* 分页 */}
       {totalPages > 1 && (
