@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { info__stock_company } from '@/types'
+import Table, { Column } from '@/app/widget/Table'
 
 interface Props {
   selectedCompany: info__stock_company | null
@@ -243,7 +244,74 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
       circulating_shares: '',
     })
   }
-
+  const columns: Column<info__stock_company>[] = [
+    {
+      title: '股票代码',
+      dataIndex: 'company_code',
+    },
+    {
+      title: '公司名称',
+      dataIndex: 'company_name',
+    },
+    {
+      title: '行业',
+      dataIndex: 'industry',
+    },
+    {
+      title: '上市日期',
+      dataIndex: 'ipo_date',
+    },
+    {
+      title: '操作',
+      dataIndex: 'operations',
+      render(_, company) {
+        return <>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              handleEdit(company)
+            }}
+            className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-xs font-medium mr-2"
+          >
+            编辑
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onSelectCompany(company)
+              setQuoteParams({
+                start_date: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                end_date: new Date().toISOString().split('T')[0],
+              })
+              setShowQuoteForm(true)
+            }}
+            className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors text-xs font-medium mr-2"
+          >
+            获取行情
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              handleFetchFinancials(company)
+            }}
+            disabled={fetchingFinancials}
+            className="px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors text-xs font-medium mr-2 disabled:opacity-50"
+          >
+            {fetchingFinancials ? '获取中...' : '获取财报'}
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              handleDelete(company.id)
+            }}
+            className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-xs font-medium"
+          >
+            删除
+          </button>
+        </>
+      }
+    }
+  ]
   return (
     <div className="mx-auto">
       <div className="w-full">
@@ -283,81 +351,20 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
         ) : companies.length === 0 ? (
           <div className="text-center py-12 text-slate-500">暂无数据</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-slate-50 border-b-2 border-slate-200">
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">股票代码</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">公司名称</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">行业</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">上市日期</th>
-                  <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {companies.map((company) => (
-                  <tr 
-                    key={company.id} 
-                    className={`border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer ${
-                      selectedCompany?.id === company.id ? 'bg-blue-50' : ''
-                    }`}
-                    onClick={() => onSelectCompany(company)}
-                  >
-                    <td className="px-4 py-3 text-sm text-slate-900 font-mono">{company.company_code}</td>
-                    <td className="px-4 py-3 text-sm text-slate-900 font-medium">{company.company_name}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{company.industry || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">
-                      {company.ipo_date ? new Date(company.ipo_date).toLocaleDateString('zh-CN') : '-'}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleEdit(company)
-                        }}
-                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-xs font-medium mr-2"
-                      >
-                        编辑
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onSelectCompany(company)
-                          setQuoteParams({
-                            start_date: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                            end_date: new Date().toISOString().split('T')[0],
-                          })
-                          setShowQuoteForm(true)
-                        }}
-                        className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors text-xs font-medium mr-2"
-                      >
-                        获取行情
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleFetchFinancials(company)
-                        }}
-                        disabled={fetchingFinancials}
-                        className="px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors text-xs font-medium mr-2 disabled:opacity-50"
-                      >
-                        {fetchingFinancials ? '获取中...' : '获取财报'}
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDelete(company.id)
-                        }}
-                        className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-xs font-medium"
-                      >
-                        删除
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table
+            columns={columns}
+            dataSource={companies}
+            loading={loading}
+            emptyText="暂无现金流量表数据"
+            onRow={(company) => {
+              return {
+                onClick: () => {
+                  onSelectCompany(company)
+                }
+              }
+            }}
+          >
+          </Table>
         )}
 
         {/* 分页 */}

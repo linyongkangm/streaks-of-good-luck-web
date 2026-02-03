@@ -1,9 +1,9 @@
 'use client'
 
-interface Column<T> {
+export interface Column<T> {
   title: string
-  dataIndex: keyof T
-  key: string
+  dataIndex: keyof T | string
+  key?: string
   align?: 'left' | 'right' | 'center'
   width?: string
   sticky?: boolean
@@ -52,7 +52,7 @@ export default function Table<T>({
           <tr className="bg-slate-50 border-b-2 border-slate-200">
             {columns.map((column) => (
               <th
-                key={column.key}
+                key={String(column.dataIndex) || column.key}
                 className={`px-4 py-3 text-${column.align || 'left'} text-sm font-semibold text-slate-700 ${
                   column.sticky ? 'sticky left-0 bg-slate-50 z-10' : ''
                 } ${column.className || ''}`}
@@ -75,10 +75,10 @@ export default function Table<T>({
                 {...rowProps}
               >
                 {columns.map((column) => {
-                  const value = record[column.dataIndex]
+                  const value = record[column.dataIndex as keyof T];
                   return (
                     <td
-                      key={column.key}
+                      key={String(column.dataIndex) || column.key}
                       className={`px-4 py-3 text-sm text-slate-900 text-${column.align || 'left'} ${
                         column.sticky ? 'sticky left-0 bg-white hover:bg-slate-50' : ''
                       } ${column.className || ''}`}
