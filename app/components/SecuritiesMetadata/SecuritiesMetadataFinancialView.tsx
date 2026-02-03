@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import type { info__stock_company } from '@/types'
+import Table from '@/app/widget/Table'
+import { formatNumber } from '@/app/tools'
 
 interface Props {
   selectedCompany: info__stock_company
@@ -44,14 +46,6 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
     }
   }
 
-  const formatNumber = (value: any, decimals: number = 2) => {
-    if (value === null || value === undefined) return '-'
-    const num = Number(value)
-    if (num >= 100000000) return `${(num / 100000000).toFixed(2)}亿`
-    if (num >= 10000) return `${(num / 10000).toFixed(2)}万`
-    return num.toFixed(decimals)
-  }
-
   const formatPercent = (current: any, last: any) => {
     if (!current || !last || last === 0) return '-'
     const change = ((Number(current) - Number(last)) / Number(last)) * 100
@@ -63,120 +57,183 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
     )
   }
 
+  const columns = [
+    {
+      title: '报告期',
+      dataIndex: 'report_date',
+      key: 'report_date',
+      sticky: true,
+      className: 'text-xs',
+      render: (value: any) => (
+        <span className="font-medium">{new Date(value).toLocaleDateString('zh-CN')}</span>
+      )
+    },
+    {
+      title: '归母权益',
+      dataIndex: 'total_parent_equity',
+      key: 'total_parent_equity',
+      align: 'right' as const,
+      className: 'text-xs',
+      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
+    },
+    {
+      title: '基本EPS(TTM)',
+      dataIndex: 'basic_eps_ttm',
+      key: 'basic_eps_ttm',
+      align: 'right' as const,
+      className: 'text-xs',
+      render: (value: any) => <span className="font-mono">{formatNumber(value, 4)}</span>
+    },
+    {
+      title: '稀释EPS(TTM)',
+      dataIndex: 'diluted_eps_ttm',
+      key: 'diluted_eps_ttm',
+      align: 'right' as const,
+      className: 'text-xs',
+      render: (value: any) => <span className="font-mono">{formatNumber(value, 4)}</span>
+    },
+    {
+      title: '加权平均股本',
+      dataIndex: 'weighted_average_shares',
+      key: 'weighted_average_shares',
+      align: 'right' as const,
+      className: 'text-xs',
+      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
+    },
+    {
+      title: '归母净利(TTM)',
+      dataIndex: 'parent_netprofit_ttm',
+      key: 'parent_netprofit_ttm',
+      align: 'right' as const,
+      className: 'text-xs',
+      render: (value: any) => <span className="font-mono font-semibold">{formatNumber(value)}</span>
+    },
+    {
+      title: '归母净利(去年)',
+      dataIndex: 'parent_netprofit_last_year',
+      key: 'parent_netprofit_last_year',
+      align: 'right' as const,
+      className: 'text-xs text-slate-600',
+      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
+    },
+    {
+      title: '同比',
+      dataIndex: 'parent_netprofit_yoy',
+      key: 'parent_netprofit_yoy',
+      align: 'center' as const,
+      className: 'text-xs',
+      render: (_: any, record: any) => (
+        <span className="font-mono font-semibold">
+          {formatPercent(record.parent_netprofit_ttm, record.parent_netprofit_last_year)}
+        </span>
+      )
+    },
+    {
+      title: '营收(TTM)',
+      dataIndex: 'operate_income_ttm',
+      key: 'operate_income_ttm',
+      align: 'right' as const,
+      className: 'text-xs',
+      render: (value: any) => <span className="font-mono font-semibold">{formatNumber(value)}</span>
+    },
+    {
+      title: '营收(去年)',
+      dataIndex: 'operate_income_last_year',
+      key: 'operate_income_last_year',
+      align: 'right' as const,
+      className: 'text-xs text-slate-600',
+      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
+    },
+    {
+      title: '同比',
+      dataIndex: 'operate_income_yoy',
+      key: 'operate_income_yoy',
+      align: 'center' as const,
+      className: 'text-xs',
+      render: (_: any, record: any) => (
+        <span className="font-mono font-semibold">
+          {formatPercent(record.operate_income_ttm, record.operate_income_last_year)}
+        </span>
+      )
+    },
+    {
+      title: '经营现金流(TTM)',
+      dataIndex: 'netcash_operate_ttm',
+      key: 'netcash_operate_ttm',
+      align: 'right' as const,
+      className: 'text-xs',
+      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
+    },
+    {
+      title: '经营现金流(去年)',
+      dataIndex: 'netcash_operate_last_year',
+      key: 'netcash_operate_last_year',
+      align: 'right' as const,
+      className: 'text-xs text-slate-600',
+      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
+    },
+    {
+      title: '同比',
+      dataIndex: 'netcash_operate_yoy',
+      key: 'netcash_operate_yoy',
+      align: 'center' as const,
+      className: 'text-xs',
+      render: (_: any, record: any) => (
+        <span className="font-mono">
+          {formatPercent(record.netcash_operate_ttm, record.netcash_operate_last_year)}
+        </span>
+      )
+    },
+    {
+      title: '投资现金流(TTM)',
+      dataIndex: 'netcash_invest_ttm',
+      key: 'netcash_invest_ttm',
+      align: 'right' as const,
+      className: 'text-xs',
+      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
+    },
+    {
+      title: '筹资现金流(TTM)',
+      dataIndex: 'netcash_finance_ttm',
+      key: 'netcash_finance_ttm',
+      align: 'right' as const,
+      className: 'text-xs',
+      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
+    }
+  ]
+
   return (
     <div className="w-full">
       <h3 className="text-xl font-semibold mb-4 text-slate-800">📊 财务报表综合视图（滚动四季度）</h3>
       
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-200 border-t-indigo-600"></div>
-        </div>
-      ) : data.length === 0 ? (
-        <div className="text-center py-12 text-slate-500">暂无综合财务数据</div>
-      ) : (
-        <>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-slate-50 border-b-2 border-slate-200">
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-700 sticky left-0 bg-slate-50">报告期</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-700">归母权益</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-700">基本每股收益(TTM)</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-700">稀释每股收益(TTM)</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-700">加权平均股本</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-700">归母净利(TTM)</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-700">归母净利(去年)</th>
-                  <th className="px-3 py-2 text-center text-xs font-semibold text-slate-700">同比</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-700">营收(TTM)</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-700">营收(去年)</th>
-                  <th className="px-3 py-2 text-center text-xs font-semibold text-slate-700">同比</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-700">经营现金流(TTM)</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-700">经营现金流(去年)</th>
-                  <th className="px-3 py-2 text-center text-xs font-semibold text-slate-700">同比</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-700">投资现金流(TTM)</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-700">筹资现金流(TTM)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((item, idx) => (
-                  <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                    <td className="px-3 py-2 text-xs text-slate-900 font-medium sticky left-0 bg-white hover:bg-slate-50">
-                      {new Date(item.report_date).toLocaleDateString('zh-CN')}
-                    </td>
-                    <td className="px-3 py-2 text-xs text-slate-900 text-right font-mono">
-                      {formatNumber(item.total_parent_equity)}
-                    </td>
-                    <td className="px-3 py-2 text-xs text-slate-900 text-right font-mono">
-                      {formatNumber(item.basic_eps_ttm, 4)}
-                    </td>
-                    <td className="px-3 py-2 text-xs text-slate-900 text-right font-mono">
-                      {formatNumber(item.diluted_eps_ttm, 4)}
-                    </td>
-                    <td className="px-3 py-2 text-xs text-slate-900 text-right font-mono">
-                      {formatNumber(item.weighted_average_shares)}
-                    </td>
-                    <td className="px-3 py-2 text-xs text-slate-900 text-right font-mono font-semibold">
-                      {formatNumber(item.parent_netprofit_ttm)}
-                    </td>
-                    <td className="px-3 py-2 text-xs text-slate-600 text-right font-mono">
-                      {formatNumber(item.parent_netprofit_last_year)}
-                    </td>
-                    <td className="px-3 py-2 text-xs text-center font-mono font-semibold">
-                      {formatPercent(item.parent_netprofit_ttm, item.parent_netprofit_last_year)}
-                    </td>
-                    <td className="px-3 py-2 text-xs text-slate-900 text-right font-mono font-semibold">
-                      {formatNumber(item.operate_income_ttm)}
-                    </td>
-                    <td className="px-3 py-2 text-xs text-slate-600 text-right font-mono">
-                      {formatNumber(item.operate_income_last_year)}
-                    </td>
-                    <td className="px-3 py-2 text-xs text-center font-mono font-semibold">
-                      {formatPercent(item.operate_income_ttm, item.operate_income_last_year)}
-                    </td>
-                    <td className="px-3 py-2 text-xs text-slate-900 text-right font-mono">
-                      {formatNumber(item.netcash_operate_ttm)}
-                    </td>
-                    <td className="px-3 py-2 text-xs text-slate-600 text-right font-mono">
-                      {formatNumber(item.netcash_operate_last_year)}
-                    </td>
-                    <td className="px-3 py-2 text-xs text-center font-mono">
-                      {formatPercent(item.netcash_operate_ttm, item.netcash_operate_last_year)}
-                    </td>
-                    <td className="px-3 py-2 text-xs text-slate-900 text-right font-mono">
-                      {formatNumber(item.netcash_invest_ttm)}
-                    </td>
-                    <td className="px-3 py-2 text-xs text-slate-900 text-right font-mono">
-                      {formatNumber(item.netcash_finance_ttm)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      <Table 
+        columns={columns} 
+        dataSource={data} 
+        loading={loading}
+        emptyText="暂无综合财务数据"
+      />
 
-          {/* 分页 */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-6">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="px-4 py-2 rounded-lg border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-all font-medium text-slate-900"
-              >
-                ← 上一页
-              </button>
-              <span className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg font-medium shadow-md">
-                {page} / {totalPages}
-              </span>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="px-4 py-2 rounded-lg border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-all font-medium text-slate-900"
-              >
-                下一页 →
-              </button>
-            </div>
-          )}
-        </>
+      {/* 分页 */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-6">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-4 py-2 rounded-lg border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-all font-medium text-slate-900"
+          >
+            ← 上一页
+          </button>
+          <span className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg font-medium shadow-md">
+            {page} / {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="px-4 py-2 rounded-lg border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-all font-medium text-slate-900"
+          >
+            下一页 →
+          </button>
+        </div>
       )}
     </div>
   )

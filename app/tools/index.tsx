@@ -144,3 +144,30 @@ export function fromISOUseUTC(dateTime: string): luxon.DateTime {
 export function fromISOUseBeijing(dateTime: string): luxon.DateTime {
   return luxon.DateTime.fromISO(dateTime, { zone: CommonTimeZones.Shanghai })
 }
+
+/**
+ * 格式化数字，自动转换为亿/万单位
+ * @param {any} value 数值
+ * @param {number} decimals 小数位数，默认2位
+ * @returns {string} 格式化后的字符串
+ */
+export function formatNumber(value: any, decimals: number = 2): string {
+  if (value === null || value === undefined) return '-'
+  const num = Number(value)
+  if (num >= 100000000) return `${(num / 100000000).toFixed(2)}亿`
+  if (num >= 10000) return `${(num / 10000).toFixed(2)}万`
+  return num.toFixed(decimals)
+}
+
+/**
+ * 格式化成交量，自动转换为亿/万单位
+ * @param {any} value 数值
+ * @returns {string} 格式化后的字符串
+ */
+export function formatVolume(value: any): string {
+  if (value === null || value === undefined) return '-'
+  const num = Number(value)
+  if (num >= 100000000) return `${(num / 100000000).toFixed(2)}亿`
+  if (num >= 10000) return `${(num / 10000).toFixed(2)}万`
+  return num.toString()
+}

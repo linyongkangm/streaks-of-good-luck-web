@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import type { info__stock_company } from '@/types'
+import Table from '@/app/widget/Table'
+import { formatNumber } from '@/app/tools'
 
 interface Props {
   selectedCompany: info__stock_company
@@ -34,60 +36,54 @@ export default function SecuritiesMetadataProfitSheet({ selectedCompany }: Props
     }
   }
 
-  const formatNumber = (value: any, decimals: number = 2) => {
-    if (value === null || value === undefined) return '-'
-    const num = Number(value)
-    if (num >= 100000000) return `${(num / 100000000).toFixed(2)}亿`
-    if (num >= 10000) return `${(num / 10000).toFixed(2)}万`
-    return num.toFixed(decimals)
-  }
+  const columns = [
+    {
+      title: '报告期',
+      dataIndex: 'report_date',
+      key: 'report_date',
+      render: (value: any) => (
+        <span className="font-medium">{new Date(value).toLocaleDateString('zh-CN')}</span>
+      )
+    },
+    {
+      title: '基本每股收益',
+      dataIndex: 'basic_eps',
+      key: 'basic_eps',
+      align: 'right' as const,
+      render: (value: any) => <span className="font-mono">{formatNumber(value, 4)}</span>
+    },
+    {
+      title: '稀释每股收益',
+      dataIndex: 'diluted_eps',
+      key: 'diluted_eps',
+      align: 'right' as const,
+      render: (value: any) => <span className="font-mono">{formatNumber(value, 4)}</span>
+    },
+    {
+      title: '营业总收入',
+      dataIndex: 'operate_income',
+      key: 'operate_income',
+      align: 'right' as const,
+      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
+    },
+    {
+      title: '归属母公司净利润',
+      dataIndex: 'parent_netprofit',
+      key: 'parent_netprofit',
+      align: 'right' as const,
+      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
+    }
+  ]
 
   return (
     <div className="w-full">
       <h3 className="text-xl font-semibold mb-4 text-slate-800">利润表（按单季度）</h3>
-      
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-200 border-t-green-600"></div>
-        </div>
-      ) : data.length === 0 ? (
-        <div className="text-center py-12 text-slate-500">暂无利润表数据</div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-slate-50 border-b-2 border-slate-200">
-                <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">报告期</th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">基本每股收益</th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">稀释每股收益</th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">营业总收入</th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">归属母公司净利润</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((item) => (
-                <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                  <td className="px-4 py-3 text-sm text-slate-900 font-medium">
-                    {new Date(item.report_date).toLocaleDateString('zh-CN')}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-900 text-right font-mono">
-                    {formatNumber(item.basic_eps, 4)}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-900 text-right font-mono">
-                    {formatNumber(item.diluted_eps, 4)}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-900 text-right font-mono">
-                    {formatNumber(item.operate_income)}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-900 text-right font-mono">
-                    {formatNumber(item.parent_netprofit)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <Table 
+        columns={columns} 
+        dataSource={data} 
+        loading={loading}
+        emptyText="暂无利润表数据"
+      />
     </div>
   )
 }

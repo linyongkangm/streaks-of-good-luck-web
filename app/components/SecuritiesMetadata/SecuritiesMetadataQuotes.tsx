@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { info__stock_company, quote__stock_constituent_daily } from '@/types'
+import { formatNumber, formatVolume } from '@/app/tools'
 
 interface Props {
   selectedCompany: info__stock_company
@@ -53,19 +54,6 @@ export default function SecuritiesMetadataQuotes({ selectedCompany }: Props) {
     } finally {
       setLoading(false)
     }
-  }
-
-  const formatNumber = (value: any, decimals: number = 2) => {
-    if (value === null || value === undefined) return '-'
-    return Number(value).toFixed(decimals)
-  }
-
-  const formatVolume = (value: any) => {
-    if (value === null || value === undefined) return '-'
-    const num = Number(value)
-    if (num >= 100000000) return `${(num / 100000000).toFixed(2)}亿`
-    if (num >= 10000) return `${(num / 10000).toFixed(2)}万`
-    return num.toString()
   }
 
   const getDisplayData = (quote: any) => {
