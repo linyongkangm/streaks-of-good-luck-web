@@ -7,6 +7,7 @@ import SecuritiesMetadataQuotes from './SecuritiesMetadataQuotes'
 import SecuritiesMetadataBalanceSheet from './SecuritiesMetadataBalanceSheet'
 import SecuritiesMetadataProfitSheet from './SecuritiesMetadataProfitSheet'
 import SecuritiesMetadataCashFlowSheet from './SecuritiesMetadataCashFlowSheet'
+import SecuritiesMetadataFinancialView from './SecuritiesMetadataFinancialView'
 
 export default function SecuritiesMetadata() {
   const [selectedCompany, setSelectedCompany] = useState<info__stock_company | null>(null)
@@ -32,6 +33,10 @@ export default function SecuritiesMetadata() {
             <SecuritiesMetadataQuotes 
               selectedCompany={selectedCompany}
             />
+          </div>
+
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <SecuritiesMetadataFinancialView selectedCompany={selectedCompany} />
           </div>
 
           <div className="grid grid-cols-1 gap-6">
