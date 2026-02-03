@@ -32,6 +32,7 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
     end_date: '',
   })
   const [fetchingQuotes, setFetchingQuotes] = useState(false)
+  const [fetchingFinancials, setFetchingFinancials] = useState(false)
 
   useEffect(() => {
     fetchCompanies()
@@ -204,6 +205,33 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
       setFetchingQuotes(false)
     }
   }
+
+  const handleFetchFinancials = async (company: info__stock_company) => {
+    if (!confirm(`确定要获取 ${company.company_name} 的财报数据吗？`)) return
+
+    setFetchingFinancials(true)
+    try {
+      const res = await fetch('/api/financial-statements/fetch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company_id: company.id }),
+      })
+
+      if (res.ok) {
+        const result = await res.json()
+        alert(`财报数据获取成功！\n资产负债表: ${result.counts.balanceSheet} 条\n利润表: ${result.counts.profitSheet} 条\n现金流量表: ${result.counts.cashFlowSheet} 条`)
+      } else {
+        const error = await res.json()
+        alert(error.error || '获取财报数据失败')
+      }
+    } catch (error) {
+      console.error('获取财报数据失败:', error)
+      alert('获取财报数据失败')
+    } finally {
+      setFetchingFinancials(false)
+    }
+  }
+
   const resetForm = () => {
     setFormData({
       company_name: '',
@@ -304,6 +332,16 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
                         className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors text-xs font-medium mr-2"
                       >
                         获取行情
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleFetchFinancials(company)
+                        }}
+                        disabled={fetchingFinancials}
+                        className="px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors text-xs font-medium mr-2 disabled:opacity-50"
+                      >
+                        {fetchingFinancials ? '获取中...' : '获取财报'}
                       </button>
                       <button
                         onClick={(e) => {

@@ -18,15 +18,7 @@ export async function GET(
     }
 
     const company = await prisma.info__stock_company.findUnique({
-      where: { id },
-      include: {
-        indicator__company_finance: {
-          orderBy: {
-            report_date: 'desc',
-          },
-          take: 10, // 最近10期财务数据
-        },
-      },
+      where: { id }
     })
     if (!company) {
       return NextResponse.json(

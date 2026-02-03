@@ -1,6 +1,5 @@
 import { 
   info__stock_company, 
-  indicator__company_finance, 
   info__tweet,
   info__stock_board,
   info__industry_analysis,
@@ -15,7 +14,6 @@ import {
 // 导出 Prisma 生成的所有类型
 export {
   type info__stock_company,
-  type indicator__company_finance,
   type quote__stock_constituent_daily,
   type relation__stock_board_company,
   type info__tweet,
@@ -46,12 +44,8 @@ export interface ApiError {
 // 股票公司列表响应
 export type StockCompanyListResponse = ApiResponse<info__stock_company[]>
 
-// 股票公司详情响应（包含财务数据）
-export interface StockCompanyWithFinance extends info__stock_company {
-  indicator__company_finance: indicator__company_finance[]
-}
-
-export type StockCompanyDetailResponse = ApiResponse<StockCompanyWithFinance>
+// 股票公司详情响应
+export type StockCompanyDetailResponse = ApiResponse<info__stock_company>
 
 // 推文列表响应
 export type TweetListResponse = ApiResponse<info__tweet[]>
