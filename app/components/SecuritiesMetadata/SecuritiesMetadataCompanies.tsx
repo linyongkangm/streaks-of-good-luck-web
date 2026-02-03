@@ -3,7 +3,12 @@
 import { useState, useEffect } from 'react'
 import type { info__stock_company } from '@/types'
 
-export default function SecuritiesMetadataCompanies() {
+interface Props {
+  selectedCompany: info__stock_company | null
+  onSelectCompany: (company: info__stock_company | null) => void
+}
+
+export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectCompany }: Props) {
   const [companies, setCompanies] = useState<info__stock_company[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -22,7 +27,6 @@ export default function SecuritiesMetadataCompanies() {
   })
   const [fetchingMetadata, setFetchingMetadata] = useState(false)
   const [showQuoteForm, setShowQuoteForm] = useState(false)
-  const [selectedCompany, setSelectedCompany] = useState<info__stock_company | null>(null)
   const [quoteParams, setQuoteParams] = useState({
     start_date: '',
     end_date: '',
@@ -187,7 +191,7 @@ export default function SecuritiesMetadataCompanies() {
         const result = await res.json()
         alert(result.message || '行情数据获取成功')
         setShowQuoteForm(false)
-        setSelectedCompany(null)
+        onSelectCompany(null)
         setQuoteParams({ start_date: '', end_date: '' })
       } else {
         const error = await res.json()
@@ -264,7 +268,13 @@ export default function SecuritiesMetadataCompanies() {
               </thead>
               <tbody>
                 {companies.map((company) => (
-                  <tr key={company.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                  <tr 
+                    key={company.id} 
+                    className={`border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer ${
+                      selectedCompany?.id === company.id ? 'bg-blue-50' : ''
+                    }`}
+                    onClick={() => onSelectCompany(company)}
+                  >
                     <td className="px-4 py-3 text-sm text-slate-900 font-mono">{company.company_code}</td>
                     <td className="px-4 py-3 text-sm text-slate-900 font-medium">{company.company_name}</td>
                     <td className="px-4 py-3 text-sm text-slate-600">{company.industry || '-'}</td>
@@ -273,14 +283,18 @@ export default function SecuritiesMetadataCompanies() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <button
-                        onClick={() => handleEdit(company)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleEdit(company)
+                        }}
                         className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-xs font-medium mr-2"
                       >
                         编辑
                       </button>
                       <button
-                        onClick={() => {
-                          setSelectedCompany(company)
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onSelectCompany(company)
                           setQuoteParams({
                             start_date: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                             end_date: new Date().toISOString().split('T')[0],
@@ -292,7 +306,10 @@ export default function SecuritiesMetadataCompanies() {
                         获取行情
                       </button>
                       <button
-                        onClick={() => handleDelete(company.id)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDelete(company.id)
+                        }}
                         className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-xs font-medium"
                       >
                         删除
@@ -495,7 +512,7 @@ export default function SecuritiesMetadataCompanies() {
               <button
                 onClick={() => {
                   setShowQuoteForm(false)
-                  setSelectedCompany(null)
+                  onSelectCompany(null)
                 }}
                 className="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-medium"
                 disabled={fetchingQuotes}
