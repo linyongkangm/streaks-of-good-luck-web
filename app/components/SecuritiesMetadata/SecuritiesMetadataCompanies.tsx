@@ -260,6 +260,9 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
     {
       title: '上市日期',
       dataIndex: 'ipo_date',
+      render: (value: any) => (
+        value ? new Date(value).toISOString().split('T')[0] : ''
+      )
     },
     {
       title: '操作',
