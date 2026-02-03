@@ -154,8 +154,11 @@ export function fromISOUseBeijing(dateTime: string): luxon.DateTime {
 export function formatNumber(value: any, decimals: number = 2): string {
   if (value === null || value === undefined) return '-'
   const num = Number(value)
-  if (num >= 100000000) return `${(num / 100000000).toFixed(2)}亿`
-  if (num >= 10000) return `${(num / 10000).toFixed(2)}万`
+  const abs = Math.abs(num)
+  const sign = num < 0 ? '-' : ''
+  
+  if (abs >= 100000000) return `${sign}${(abs / 100000000).toFixed(2)}亿`
+  if (abs >= 10000) return `${sign}${(abs / 10000).toFixed(2)}万`
   return num.toFixed(decimals)
 }
 
@@ -167,7 +170,10 @@ export function formatNumber(value: any, decimals: number = 2): string {
 export function formatVolume(value: any): string {
   if (value === null || value === undefined) return '-'
   const num = Number(value)
-  if (num >= 100000000) return `${(num / 100000000).toFixed(2)}亿`
-  if (num >= 10000) return `${(num / 10000).toFixed(2)}万`
+  const abs = Math.abs(num)
+  const sign = num < 0 ? '-' : ''
+  
+  if (abs >= 100000000) return `${sign}${(abs / 100000000).toFixed(2)}亿`
+  if (abs >= 10000) return `${sign}${(abs / 10000).toFixed(2)}万`
   return num.toString()
 }
