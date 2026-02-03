@@ -1,11 +1,11 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["views"]
 }
 
 datasource db {
   provider = "mysql"
 }
-
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model info__industry_analysis {
@@ -45,12 +45,12 @@ model info__stock_company {
   update_time                    DateTime                         @default(now()) @updatedAt @db.DateTime(0)
   industry                       String?                          @db.VarChar(20)
   ipo_date                       DateTime?                        @db.Date
-  total_shares                   Decimal?                         @db.Decimal(20, 2)
   circulating_shares             Decimal?                         @db.Decimal(20, 2)
-  quote__stock_constituent_daily quote__stock_constituent_daily[]
+  total_shares                   Decimal?                         @db.Decimal(20, 2)
   quote__balance_sheet           quote__balance_sheet[]
-  quote__profit_sheet            quote__profit_sheet[]
   quote__cash_flow_sheet         quote__cash_flow_sheet[]
+  quote__profit_sheet            quote__profit_sheet[]
+  quote__stock_constituent_daily quote__stock_constituent_daily[]
   relation__stock_board_company  relation__stock_board_company[]
 }
 
@@ -77,40 +77,33 @@ model info__tweet {
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model quote__stock_constituent_daily {
-  id                 BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
-  company_id         Int                 @db.UnsignedInt
-  trade_date         DateTime            @db.Date
-  volume             BigInt              // 成交量（不受复权影响）
-  turnover_rate      Decimal             @db.Decimal(6, 3) // 换手率（不受复权影响）
-  price_range        Decimal             @db.Decimal(10, 2) // 振幅（不受复权影响）
-  change_percent     Decimal             @db.Decimal(5, 2) // 涨跌幅（不受复权影响）
-  
-  // 不复权数据 (adjust=null)
-  none_open_price    Decimal             @db.Decimal(10, 2)
-  none_close_price   Decimal             @db.Decimal(10, 2)
-  none_high_price    Decimal             @db.Decimal(10, 2)
-  none_low_price     Decimal             @db.Decimal(10, 2)
-  none_turnover      Decimal             @db.Decimal(18, 2) // 成交额
-  none_change_amt    Decimal             @db.Decimal(10, 2) // 涨跌额
-  
-  // 前复权数据 (adjust=qfq)
-  qfq_open_price     Decimal             @db.Decimal(10, 2)
-  qfq_close_price    Decimal             @db.Decimal(10, 2)
-  qfq_high_price     Decimal             @db.Decimal(10, 2)
-  qfq_low_price      Decimal             @db.Decimal(10, 2)
-  qfq_turnover       Decimal             @db.Decimal(18, 2)
-  qfq_change_amt     Decimal             @db.Decimal(10, 2)
-  
-  // 后复权数据 (adjust=hfq)
-  hfq_open_price     Decimal             @db.Decimal(10, 2)
-  hfq_close_price    Decimal             @db.Decimal(10, 2)
-  hfq_high_price     Decimal             @db.Decimal(10, 2)
-  hfq_low_price      Decimal             @db.Decimal(10, 2)
-  hfq_turnover       Decimal             @db.Decimal(18, 2)
-  hfq_change_amt     Decimal             @db.Decimal(10, 2)
-  
-  create_time        DateTime            @default(now()) @db.DateTime(0)
-  update_time        DateTime            @default(now()) @updatedAt @db.DateTime(0)
+  id                  BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
+  company_id          Int                 @db.UnsignedInt
+  trade_date          DateTime            @db.Date
+  volume              BigInt
+  turnover_rate       Decimal             @db.Decimal(6, 3)
+  change_percent      Decimal             @db.Decimal(5, 2)
+  price_range         Decimal             @db.Decimal(10, 2)
+  create_time         DateTime            @default(now()) @db.DateTime(0)
+  update_time         DateTime            @default(now()) @updatedAt @db.DateTime(0)
+  hfq_change_amt      Decimal             @db.Decimal(10, 2)
+  hfq_close_price     Decimal             @db.Decimal(10, 2)
+  hfq_high_price      Decimal             @db.Decimal(10, 2)
+  hfq_low_price       Decimal             @db.Decimal(10, 2)
+  hfq_open_price      Decimal             @db.Decimal(10, 2)
+  hfq_turnover        Decimal             @db.Decimal(18, 2)
+  none_change_amt     Decimal             @db.Decimal(10, 2)
+  none_close_price    Decimal             @db.Decimal(10, 2)
+  none_high_price     Decimal             @db.Decimal(10, 2)
+  none_low_price      Decimal             @db.Decimal(10, 2)
+  none_open_price     Decimal             @db.Decimal(10, 2)
+  none_turnover       Decimal             @db.Decimal(18, 2)
+  qfq_change_amt      Decimal             @db.Decimal(10, 2)
+  qfq_close_price     Decimal             @db.Decimal(10, 2)
+  qfq_high_price      Decimal             @db.Decimal(10, 2)
+  qfq_low_price       Decimal             @db.Decimal(10, 2)
+  qfq_open_price      Decimal             @db.Decimal(10, 2)
+  qfq_turnover        Decimal             @db.Decimal(18, 2)
   info__stock_company info__stock_company @relation(fields: [company_id], references: [id], map: "fk_quote_company_id")
 
   @@unique([company_id, trade_date], map: "uk_company_trade_date")
@@ -150,18 +143,18 @@ model relation__stock_board_company {
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model summary__article {
-  id          BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
-  info__predicts    info__predict[] // 注意：字段名建议用复数，与单向字段对应
-  title       String    @db.VarChar(255)
-  summary     String    @db.Text
-  source_url  String    @unique(map: "uk_source_url") @db.VarChar(512)
-  tags        String?   @db.VarChar(255)
-  create_time DateTime  @default(now()) @db.DateTime(0)
-  update_time DateTime  @default(now()) @updatedAt @db.DateTime(0)
-  publication String?   @db.VarChar(20)
-  issue_date  DateTime? @db.Date
-  source_text String?   @db.Text
-  contributor String?   @db.VarChar(255)
+  id             BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  title          String          @db.VarChar(255)
+  summary        String          @db.Text
+  source_url     String          @unique(map: "uk_source_url") @db.VarChar(512)
+  tags           String?         @db.VarChar(255)
+  create_time    DateTime        @default(now()) @db.DateTime(0)
+  update_time    DateTime        @default(now()) @updatedAt @db.DateTime(0)
+  publication    String?         @db.VarChar(20)
+  issue_date     DateTime?       @db.Date
+  source_text    String?         @db.Text
+  contributor    String?         @db.VarChar(255)
+  info__predicts info__predict[]
 
   @@index([tags], map: "idx_tags")
   @@index([title], map: "idx_title")
@@ -183,30 +176,28 @@ model summary__tweet {
 
 /// 预测记录表
 model info__predict {
-  id               BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
-  create_time      DateTime  @default(now()) @db.DateTime(0)
-  update_time      DateTime  @default(now()) @updatedAt @db.DateTime(0)
-  content          String    @db.Text
-  proposed_at      DateTime  @db.Date
-  interval_start   DateTime  @db.Date
-  interval_end     DateTime  @db.Date
-  verify_status    VerifyStatus @default(not_due)
-  predictor        String?    @db.VarChar(50)
-  delayed_note     String?   @db.Text
+  id               BigInt                           @id @default(autoincrement()) @db.UnsignedBigInt
+  create_time      DateTime                         @default(now()) @db.DateTime(0)
+  update_time      DateTime                         @default(now()) @updatedAt @db.DateTime(0)
+  content          String                           @db.Text
+  proposed_at      DateTime                         @db.Date
+  interval_start   DateTime                         @db.Date
+  interval_end     DateTime                         @db.Date
+  verify_status    VerifyStatus                     @default(not_due)
+  delayed_note     String?                          @db.Text
   assoc_type       AssocType?
-  assoc_article_id BigInt?   @db.UnsignedBigInt
-  assoc_link       String?   @db.VarChar(2048)
-
-  // 关联 summary__article（如有）
-  summary__article summary__article? @relation(fields: [assoc_article_id], references: [id])
-  // 关联的观察记录
+  assoc_article_id BigInt?                          @db.UnsignedBigInt
+  assoc_link       String?                          @db.VarChar(2048)
+  predictor        String?                          @db.VarChar(50)
   observations     indicator__predict_observation[]
+  summary__article summary__article?                @relation(fields: [assoc_article_id], references: [id])
 
   @@index([interval_start], map: "idx_interval_start")
   @@index([interval_end], map: "idx_interval_end")
   @@index([proposed_at], map: "idx_proposed_at")
   @@index([verify_status], map: "idx_verify_status")
   @@index([predictor], map: "idx_predictor")
+  @@index([assoc_article_id], map: "info__predict_assoc_article_id_fkey")
 }
 
 /// 预测观察记录表
@@ -217,12 +208,79 @@ model indicator__predict_observation {
   content          String        @db.Text
   create_time      DateTime      @default(now()) @db.DateTime(0)
   update_time      DateTime      @default(now()) @updatedAt @db.DateTime(0)
-
-  // 关联预测记录
   info__predict    info__predict @relation(fields: [predict_id], references: [id], onDelete: Cascade)
 
   @@index([predict_id], map: "idx_predict_id")
   @@index([observation_date], map: "idx_observation_date")
+}
+
+/// 资产负债表
+model quote__balance_sheet {
+  id                  BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
+  company_id          Int                 @db.UnsignedInt
+  report_date         DateTime            @db.Date
+  total_parent_equity Decimal             @db.Decimal(20, 2)
+  create_time         DateTime            @default(now()) @db.DateTime(0)
+  update_time         DateTime            @default(now()) @updatedAt @db.DateTime(0)
+  info__stock_company info__stock_company @relation(fields: [company_id], references: [id], map: "fk_balance_sheet_company_id")
+
+  @@unique([company_id, report_date], map: "uk_balance_company_report_date")
+  @@index([report_date], map: "idx_balance_report_date")
+}
+
+/// 利润表
+model quote__profit_sheet {
+  id                  BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
+  company_id          Int                 @db.UnsignedInt
+  report_date         DateTime            @db.Date
+  basic_eps           Decimal             @db.Decimal(10, 4)
+  diluted_eps         Decimal             @db.Decimal(10, 4)
+  operate_income      Decimal             @db.Decimal(20, 2)
+  parent_netprofit    Decimal             @db.Decimal(20, 2)
+  create_time         DateTime            @default(now()) @db.DateTime(0)
+  update_time         DateTime            @default(now()) @updatedAt @db.DateTime(0)
+  info__stock_company info__stock_company @relation(fields: [company_id], references: [id], map: "fk_profit_sheet_company_id")
+
+  @@unique([company_id, report_date], map: "uk_profit_company_report_date")
+  @@index([report_date], map: "idx_profit_report_date")
+}
+
+/// 现金流量表
+model quote__cash_flow_sheet {
+  id                  BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
+  company_id          Int                 @db.UnsignedInt
+  report_date         DateTime            @db.Date
+  netcash_operate     Decimal             @db.Decimal(20, 2)
+  netcash_invest      Decimal             @db.Decimal(20, 2)
+  netcash_finance     Decimal             @db.Decimal(20, 2)
+  rate_change_effect  Decimal             @db.Decimal(20, 2)
+  create_time         DateTime            @default(now()) @db.DateTime(0)
+  update_time         DateTime            @default(now()) @updatedAt @db.DateTime(0)
+  info__stock_company info__stock_company @relation(fields: [company_id], references: [id], map: "fk_cash_flow_sheet_company_id")
+
+  @@unique([company_id, report_date], map: "uk_cash_flow_company_report_date")
+  @@index([report_date], map: "idx_cash_flow_report_date")
+}
+
+view view_financial_statements {
+  stock_code                   String   @db.VarChar(20)
+  report_date                  DateTime @db.Date
+  total_parent_equity          Decimal? @db.Decimal(20, 2)
+  basic_eps_ttm                Decimal? @db.Decimal(32, 4)
+  diluted_eps_ttm              Decimal? @db.Decimal(32, 4)
+  parent_netprofit_ttm         Decimal? @db.Decimal(42, 2)
+  parent_netprofit_last_year   Decimal? @db.Decimal(42, 2)
+  weighted_average_shares      Decimal? @db.Decimal(50, 6)
+  operate_income_ttm           Decimal? @db.Decimal(42, 2)
+  operate_income_last_year     Decimal? @db.Decimal(42, 2)
+  netcash_operate_ttm          Decimal? @db.Decimal(42, 2)
+  netcash_operate_last_year    Decimal? @db.Decimal(42, 2)
+  netcash_invest_ttm           Decimal? @db.Decimal(42, 2)
+  netcash_invest_last_year     Decimal? @db.Decimal(42, 2)
+  netcash_finance_ttm          Decimal? @db.Decimal(42, 2)
+  netcash_finance_last_year    Decimal? @db.Decimal(42, 2)
+  rate_change_effect_ttm       Decimal? @db.Decimal(42, 2)
+  rate_change_effect_last_year Decimal? @db.Decimal(42, 2)
 }
 
 enum VerifyStatus {
@@ -236,52 +294,4 @@ enum VerifyStatus {
 enum AssocType {
   article
   link
-}
-
-/// 资产负债表
-model quote__balance_sheet {
-  id                       BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
-  company_id               Int                 @db.UnsignedInt
-  report_date              DateTime            @db.Date
-  total_parent_equity      Decimal             @db.Decimal(20, 2) // 归属母公司股东权益
-  create_time              DateTime            @default(now()) @db.DateTime(0)
-  update_time              DateTime            @default(now()) @updatedAt @db.DateTime(0)
-  info__stock_company      info__stock_company @relation(fields: [company_id], references: [id], map: "fk_balance_sheet_company_id")
-
-  @@unique([company_id, report_date], map: "uk_balance_company_report_date")
-  @@index([report_date], map: "idx_balance_report_date")
-}
-
-/// 利润表
-model quote__profit_sheet {
-  id                       BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
-  company_id               Int                 @db.UnsignedInt
-  report_date              DateTime            @db.Date
-  basic_eps                Decimal             @db.Decimal(10, 4) // 基本每股收益
-  diluted_eps              Decimal             @db.Decimal(10, 4) // 稀释每股收益
-  operate_income           Decimal             @db.Decimal(20, 2) // 营业总收入
-  parent_netprofit         Decimal             @db.Decimal(20, 2) // 归属母公司净利润
-  create_time              DateTime            @default(now()) @db.DateTime(0)
-  update_time              DateTime            @default(now()) @updatedAt @db.DateTime(0)
-  info__stock_company      info__stock_company @relation(fields: [company_id], references: [id], map: "fk_profit_sheet_company_id")
-
-  @@unique([company_id, report_date], map: "uk_profit_company_report_date")
-  @@index([report_date], map: "idx_profit_report_date")
-}
-
-/// 现金流量表
-model quote__cash_flow_sheet {
-  id                       BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
-  company_id               Int                 @db.UnsignedInt
-  report_date              DateTime            @db.Date
-  netcash_operate          Decimal             @db.Decimal(20, 2) // 经营活动产生的现金流量净额
-  netcash_invest           Decimal             @db.Decimal(20, 2) // 投资活动产生的现金流量净额
-  netcash_finance          Decimal             @db.Decimal(20, 2) // 筹资活动产生的现金流量净额
-  rate_change_effect       Decimal             @db.Decimal(20, 2) // 汇率变动对现金的影响
-  create_time              DateTime            @default(now()) @db.DateTime(0)
-  update_time              DateTime            @default(now()) @updatedAt @db.DateTime(0)
-  info__stock_company      info__stock_company @relation(fields: [company_id], references: [id], map: "fk_cash_flow_sheet_company_id")
-
-  @@unique([company_id, report_date], map: "uk_cash_flow_company_report_date")
-  @@index([report_date], map: "idx_cash_flow_report_date")
 }
