@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import PredictsNew from "./PredictsNew";
-import type { PredictDetail } from '@/types'
+import type { PredictDetail, ObservationDetail } from '@/types'
 import * as tools from '@/app/tools'
 function statusBadge(status: string) {
   const map: Record<string, { label: string; className: string }> = {
@@ -25,6 +25,10 @@ export default function PredictsList() {
   const [monthStats, setMonthStats] = useState<Record<string, number>>({});
   const [editingStatus, setEditingStatus] = useState<string | null>(null);
   const [delayedNote, setDelayedNote] = useState('');
+  const [expandedPredict, setExpandedPredict] = useState<string | null>(null);
+  const [observations, setObservations] = useState<Record<string, ObservationDetail[]>>({});
+  const [showObservationForm, setShowObservationForm] = useState<string | null>(null);
+  const [newObservation, setNewObservation] = useState({ observation_date: '', content: '' });
 
   const fetchPredicts = async () => {
     setLoading(true);
@@ -99,6 +103,56 @@ export default function PredictsList() {
     }
   };
 
+  const fetchObservations = async (predictId: bigint) => {
+    try {
+      const res = await fetch(`/api/predicts/${predictId}/observations`);
+      if (res.ok) {
+        const data = await res.json();
+        setObservations(prev => ({ ...prev, [String(predictId)]: data }));
+      }
+    } catch (error) {
+      console.error('获取观察记录失败:', error);
+    }
+  };
+
+  const handleToggleExpand = async (predictId: bigint) => {
+    const predictIdStr = String(predictId);
+    if (expandedPredict === predictIdStr) {
+      setExpandedPredict(null);
+    } else {
+      setExpandedPredict(predictIdStr);
+      if (!observations[predictIdStr]) {
+        await fetchObservations(predictId);
+      }
+    }
+  };
+
+  const handleCreateObservation = async (predictId: bigint) => {
+    if (!newObservation.observation_date || !newObservation.content.trim()) {
+      alert('请填写完整的观察记录');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/predicts/${predictId}/observations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newObservation),
+      });
+
+      if (res.ok) {
+        setShowObservationForm(null);
+        setNewObservation({ observation_date: '', content: '' });
+        await fetchObservations(predictId);
+      } else {
+        const error = await res.json();
+        alert(error.error || '创建失败');
+      }
+    } catch (error) {
+      alert('创建失败');
+    }
+  };
+
   useEffect(() => {
     fetchStats();
   }, []);
@@ -165,8 +219,9 @@ export default function PredictsList() {
           {predicts.map((p) => (
             <div
               key={p.id}
-              className="bg-white border border-gray-200 rounded-xl px-6 py-2 hover:shadow-lg hover:border-blue-300 transition-all duration-200 group"
+              className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg hover:border-blue-300 transition-all duration-200 group"
             >
+              <div className="px-6 py-2">
               <div className="flex flex-col lg:flex-row lg:items-start gap-4">
                 <div className="flex-1">
                   {/* 预测者和内容 */}
@@ -229,7 +284,29 @@ export default function PredictsList() {
                 </div>
 
                 {/* 右侧状态和操作 */}
-                <div className="flex lg:flex-col items-center lg:items-end gap-3 lg:min-w-[180px]">
+                <div className="flex lg:flex-col items-center lg:items-end gap-3 lg:min-w-[220px]">
+                  <div className="flex gap-2 w-full">
+                    <button
+                      onClick={() => handleToggleExpand(p.id)}
+                      className="flex-1 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-100 transition-colors flex items-center justify-center gap-1"
+                    >
+                      {expandedPredict === String(p.id) ? '收起' : '展开'}
+                      <span className="text-xs">{expandedPredict === String(p.id) ? '▲' : '▼'}</span>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowObservationForm(String(p.id));
+                        setNewObservation({ 
+                          observation_date: new Date().toISOString().slice(0, 16), 
+                          content: '' 
+                        });
+                      }}
+                      className="flex-1 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-xs font-medium hover:bg-green-100 transition-colors"
+                    >
+                      记录
+                    </button>
+                  </div>
                   {editingStatus === String(p.id) ? (
                     <div className="flex flex-col gap-2 w-full">
                       <textarea
@@ -276,8 +353,98 @@ export default function PredictsList() {
                       )}
                     </div>
                   )}
+
                 </div>
               </div>
+              </div>
+
+              {/* 观察记录区域 */}
+              {expandedPredict === String(p.id) && (
+                <div className="bg-gray-50 border-t border-gray-200 px-6 py-4">
+                  <div className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                    <span className="text-purple-500">📋</span>
+                    观察记录
+                    {observations[String(p.id)] && observations[String(p.id)].length > 0 && (
+                      <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                        {observations[String(p.id)].length}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* 创建观察记录表单 */}
+                  {showObservationForm === String(p.id) && (
+                    <div className="bg-white border border-green-200 rounded-lg p-4 mb-4 shadow-sm">
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            记录时间
+                          </label>
+                          <input
+                            type="date"
+                            value={newObservation.observation_date}
+                            onChange={(e) => setNewObservation(prev => ({ ...prev, observation_date: e.target.value }))}
+                            className="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            记录内容
+                          </label>
+                          <textarea
+                            value={newObservation.content}
+                            onChange={(e) => setNewObservation(prev => ({ ...prev, content: e.target.value }))}
+                            placeholder="请输入观察内容..."
+                            className="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                            rows={4}
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleCreateObservation(p.id)}
+                            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+                          >
+                            提交记录
+                          </button>
+                          <button
+                            onClick={() => setShowObservationForm(null)}
+                            className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-400 transition-colors"
+                          >
+                            取消
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 观察记录列表 */}
+                  {observations[String(p.id)] && observations[String(p.id)].length > 0 ? (
+                    <div className="space-y-3">
+                      {observations[String(p.id)].map((obs) => (
+                        <div
+                          key={obs.id}
+                          className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all"
+                        >
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <span className="text-blue-500">🕐</span>
+                              <span className="font-medium">
+                                {tools.toUTC(obs.observation_date).toFormat('yyyy-MM-dd')}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                            {obs.content}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500 text-sm">
+                      暂无观察记录
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>

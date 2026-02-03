@@ -287,12 +287,30 @@ model info__predict {
 
   // 关联 summary__article（如有）
   summary__article summary__article? @relation(fields: [assoc_article_id], references: [id])
+  // 关联的观察记录
+  observations     indicator__predict_observation[]
 
   @@index([interval_start], map: "idx_interval_start")
   @@index([interval_end], map: "idx_interval_end")
   @@index([proposed_at], map: "idx_proposed_at")
   @@index([verify_status], map: "idx_verify_status")
   @@index([predictor], map: "idx_predictor")
+}
+
+/// 预测观察记录表
+model indicator__predict_observation {
+  id               BigInt        @id @default(autoincrement()) @db.UnsignedBigInt
+  predict_id       BigInt        @db.UnsignedBigInt
+  observation_date DateTime      @db.Date
+  content          String        @db.Text
+  create_time      DateTime      @default(now()) @db.DateTime(0)
+  update_time      DateTime      @default(now()) @updatedAt @db.DateTime(0)
+
+  // 关联预测记录
+  info__predict    info__predict @relation(fields: [predict_id], references: [id], onDelete: Cascade)
+
+  @@index([predict_id], map: "idx_predict_id")
+  @@index([observation_date], map: "idx_observation_date")
 }
 
 enum VerifyStatus {

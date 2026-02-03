@@ -5,6 +5,7 @@ import {
   info__stock_board,
   info__industry_analysis,
   info__predict,
+  indicator__predict_observation,
   relation__stock_board_company,
   relation__board_industry_analysis,
   summary__tweet,
@@ -21,6 +22,7 @@ export {
   type info__stock_board,
   type info__industry_analysis,
   type info__predict,
+  type indicator__predict_observation,
   type relation__board_industry_analysis,
   type summary__tweet,
   type summary__article,
@@ -118,4 +120,11 @@ export type ArticleSummaryListResponse = ApiResponse<summary__article[]>
 
 export type PredictDetail = info__predict & {
   summary__article?: summary__article | null
+}
+// Ԥ��۲��¼�������
+export type ObservationDetail = indicator__predict_observation
+
+export interface CreateObservationRequest {
+  observation_date: string | Date
+  content: string
 }
