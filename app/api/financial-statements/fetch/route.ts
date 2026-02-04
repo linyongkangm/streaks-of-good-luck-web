@@ -97,16 +97,12 @@ export async function POST(req: NextRequest) {
             }
           },
           update: {
-            basic_eps: item.BASIC_EPS || 0,
-            diluted_eps: item.DILUTED_EPS || 0,
             operate_income: item.OPERATE_INCOME || 0,
             parent_netprofit: item.PARENT_NETPROFIT || 0,
           },
           create: {
             company_id: company.id,
             report_date: new Date(item.REPORT_DATE),
-            basic_eps: item.BASIC_EPS || 0,
-            diluted_eps: item.DILUTED_EPS || 0,
             operate_income: item.OPERATE_INCOME || 0,
             parent_netprofit: item.PARENT_NETPROFIT || 0,
           }

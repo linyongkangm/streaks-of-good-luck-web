@@ -13,22 +13,11 @@ profit_rolling AS (
         p.company_id,
         p.report_date,
         c.company_code,
+        c.total_shares,
         YEAR(p.report_date) as current_year,
-        p.basic_eps,
-        p.diluted_eps,
         p.parent_netprofit,
         p.operate_income,
         -- 最近四个季度汇总（包含当前季度）
-        SUM(p.basic_eps) OVER (
-            PARTITION BY p.company_id 
-            ORDER BY p.report_date 
-            ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
-        ) AS basic_eps_ttm,
-        SUM(p.diluted_eps) OVER (
-            PARTITION BY p.company_id 
-            ORDER BY p.report_date 
-            ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
-        ) AS diluted_eps_ttm,
         SUM(p.parent_netprofit) OVER (
             PARTITION BY p.company_id 
             ORDER BY p.report_date 
@@ -121,17 +110,10 @@ cashflow_rolling AS (
 SELECT 
     pr.company_id AS company_id,
     pr.report_date,
+    pr.total_shares,
     bs.total_parent_equity,
-    pr.basic_eps_ttm,
-    pr.diluted_eps_ttm,
     pr.parent_netprofit_ttm,
     pr.parent_netprofit_last_year,
-    -- 加权平均股本 = 最近四个季度归母净利润 / 最近四个季度基本每股收益
-    CASE 
-        WHEN pr.basic_eps_ttm IS NOT NULL AND pr.basic_eps_ttm != 0 
-        THEN pr.parent_netprofit_ttm / pr.basic_eps_ttm 
-        ELSE NULL 
-    END AS weighted_average_shares,
     pr.operate_income_ttm,
     pr.operate_income_last_year,
     cf.netcash_operate_ttm,

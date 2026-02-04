@@ -66,32 +66,23 @@ export async function GET(
         return null
       }
 
-      // 计算加权平均股本
-      const weightedAvgShares = Number(financial.weighted_average_shares);
-
+      // 总股本
+      const total_shares = Number(financial.total_shares);
+      const parentNetprofitTtm = Number(financial.parent_netprofit_ttm) // 归母净利润TTM
+      const totalParentEquity = Number(financial.total_parent_equity) // 归母权益
+      const operateIncomeTtm = Number(financial.operate_income_ttm) // 营业收入TTM
+      const netcashOperateTtm = Number(financial.netcash_operate_ttm) // 经营活动产生的现金流量净额TTM
       // 计算估值指标
       const calculateValuation = (closePrice: number) => {
-        if (!weightedAvgShares) return {}
+        if (!total_shares) return {}
 
-        const basicEpsTtm = Number(financial.basic_eps_ttm)
-        const totalParentEquity = Number(financial.total_parent_equity) // 归母权益
-        const operateIncomeTtm = Number(financial.operate_income_ttm) // 营业收入TTM
-        const netcashOperateTtm = Number(financial.netcash_operate_ttm) // 经营活动产生的现金流量净额TTM
+
 
         return {
-          pe: basicEpsTtm !== 0 ? closePrice / basicEpsTtm : null,
-          pb:
-            totalParentEquity !== 0
-              ? closePrice / (totalParentEquity / weightedAvgShares)
-              : null,
-          ps:
-            operateIncomeTtm !== 0
-              ? closePrice / (operateIncomeTtm / weightedAvgShares)
-              : null,
-          pc:
-            netcashOperateTtm !== 0
-              ? closePrice / (netcashOperateTtm / weightedAvgShares)
-              : null,
+          pe: parentNetprofitTtm !== 0 ? closePrice / (parentNetprofitTtm / total_shares) : null,
+          pb: totalParentEquity !== 0 ? closePrice / (totalParentEquity / total_shares) : null,
+          ps: operateIncomeTtm !== 0 ? closePrice / (operateIncomeTtm / total_shares) : null,
+          pc: netcashOperateTtm !== 0 ? closePrice / (netcashOperateTtm / total_shares) : null,
         }
       }
 
@@ -101,11 +92,11 @@ export async function GET(
         company_code: company?.info__stock_company.company_code,
         company_name: company?.info__stock_company.company_name,
         weight: company?.weight,
-        weighted_average_shares: weightedAvgShares,
-        basic_eps_ttm: Number(financial.basic_eps_ttm),
-        total_parent_equity: Number(financial.total_parent_equity),
-        operate_income_ttm: Number(financial.operate_income_ttm),
-        netcash_operate_ttm: Number(financial.netcash_operate_ttm),
+        total_shares: total_shares,
+        parent_netprofit_ttm: parentNetprofitTtm,
+        total_parent_equity: totalParentEquity,
+        operate_income_ttm: operateIncomeTtm,
+        netcash_operate_ttm: netcashOperateTtm,
         none_close_price: Number(quote.none_close_price),
         qfq_close_price: Number(quote.qfq_close_price),
         hfq_close_price: Number(quote.hfq_close_price),
@@ -119,13 +110,13 @@ export async function GET(
     const calculateQuantiles = (values: number[], quantiles: number[]) => {
       const sorted = values.filter(v => v !== null && !isNaN(v)).sort((a, b) => a - b)
       if (sorted.length === 0) return quantiles.map(() => null)
-      
+
       return quantiles.map(q => {
         const index = (sorted.length - 1) * q
         const lower = Math.floor(index)
         const upper = Math.ceil(index)
         const weight = index - lower
-        
+
         if (lower === upper) return sorted[lower]
         return sorted[lower] * (1 - weight) + sorted[upper] * weight
       })
@@ -145,7 +136,7 @@ export async function GET(
         const allValues = result
           .map(r => r?.[`${adjustType}_valuation`]?.[metric])
           .filter(v => v !== null && v !== undefined && !isNaN(v)) as number[]
-        
+
         quantileData[adjustType][metric] = calculateQuantiles(allValues, quantileLevels) as number[]
       })
     })
@@ -162,20 +153,20 @@ export async function GET(
 
       adjustTypes.forEach(adjustType => {
         quantilePrices[adjustType] = {}
-        
+
         valuationTypes.forEach(metric => {
           const quantiles = quantileData[adjustType][metric]
-          
+
           // 根据财务指标计算每个分位数对应的价格
           let baseValue = 0
           if (metric === 'pe') {
-            baseValue = item.basic_eps_ttm
+            baseValue = item.total_shares ? item.parent_netprofit_ttm / item.total_shares : 0
           } else if (metric === 'pb') {
-            baseValue = item.weighted_average_shares ? item.total_parent_equity / item.weighted_average_shares : 0
+            baseValue = item.total_shares ? item.total_parent_equity / item.total_shares : 0
           } else if (metric === 'ps') {
-            baseValue = item.weighted_average_shares ? item.operate_income_ttm / item.weighted_average_shares : 0
+            baseValue = item.total_shares ? item.operate_income_ttm / item.total_shares : 0
           } else if (metric === 'pc') {
-            baseValue = item.weighted_average_shares ? item.netcash_operate_ttm / item.weighted_average_shares : 0
+            baseValue = item.total_shares ? item.netcash_operate_ttm / item.total_shares : 0
           }
 
           quantilePrices[adjustType][metric] = {

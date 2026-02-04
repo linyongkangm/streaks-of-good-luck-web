@@ -46,20 +46,6 @@ export default function SecuritiesMetadataProfitSheet({ selectedCompany }: Props
       )
     },
     {
-      title: '基本每股收益',
-      dataIndex: 'basic_eps',
-      key: 'basic_eps',
-      align: 'right' as const,
-      render: (value: any) => <span className="font-mono">{formatNumber(value, 4)}</span>
-    },
-    {
-      title: '稀释每股收益',
-      dataIndex: 'diluted_eps',
-      key: 'diluted_eps',
-      align: 'right' as const,
-      render: (value: any) => <span className="font-mono">{formatNumber(value, 4)}</span>
-    },
-    {
       title: '营业总收入',
       dataIndex: 'operate_income',
       key: 'operate_income',

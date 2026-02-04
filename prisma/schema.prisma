@@ -233,8 +233,6 @@ model quote__profit_sheet {
   id                  BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
   company_id          Int                 @db.UnsignedInt
   report_date         DateTime            @db.Date
-  basic_eps           Decimal             @db.Decimal(10, 4)
-  diluted_eps         Decimal             @db.Decimal(10, 4)
   operate_income      Decimal             @db.Decimal(20, 2)
   parent_netprofit    Decimal             @db.Decimal(20, 2)
   create_time         DateTime            @default(now()) @db.DateTime(0)
@@ -265,12 +263,10 @@ model quote__cash_flow_sheet {
 view view_financial_statements {
   company_id                   Int?      @db.UnsignedInt
   report_date                  DateTime? @db.Date
+  total_shares                 Decimal?  @db.Decimal(20, 2)
   total_parent_equity          Decimal?  @db.Decimal(20, 2)
-  basic_eps_ttm                Decimal?  @db.Decimal(32, 4)
-  diluted_eps_ttm              Decimal?  @db.Decimal(32, 4)
   parent_netprofit_ttm         Decimal?  @db.Decimal(42, 2)
   parent_netprofit_last_year   Decimal?  @db.Decimal(42, 2)
-  weighted_average_shares      Decimal?  @db.Decimal(50, 6)
   operate_income_ttm           Decimal?  @db.Decimal(42, 2)
   operate_income_last_year     Decimal?  @db.Decimal(42, 2)
   netcash_operate_ttm          Decimal?  @db.Decimal(42, 2)

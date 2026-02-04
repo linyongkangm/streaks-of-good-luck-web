@@ -61,7 +61,6 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
     {
       title: '报告期',
       dataIndex: 'report_date',
-      key: 'report_date',
       sticky: true,
       className: 'text-xs',
       render: (value: any) => (
@@ -71,31 +70,6 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
     {
       title: '归母权益',
       dataIndex: 'total_parent_equity',
-      key: 'total_parent_equity',
-      align: 'right' as const,
-      className: 'text-xs',
-      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
-    },
-    {
-      title: '基本EPS(TTM)',
-      dataIndex: 'basic_eps_ttm',
-      key: 'basic_eps_ttm',
-      align: 'right' as const,
-      className: 'text-xs',
-      render: (value: any) => <span className="font-mono">{formatNumber(value, 4)}</span>
-    },
-    {
-      title: '稀释EPS(TTM)',
-      dataIndex: 'diluted_eps_ttm',
-      key: 'diluted_eps_ttm',
-      align: 'right' as const,
-      className: 'text-xs',
-      render: (value: any) => <span className="font-mono">{formatNumber(value, 4)}</span>
-    },
-    {
-      title: '加权平均股本',
-      dataIndex: 'weighted_average_shares',
-      key: 'weighted_average_shares',
       align: 'right' as const,
       className: 'text-xs',
       render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
@@ -103,7 +77,6 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
     {
       title: '归母净利(TTM)',
       dataIndex: 'parent_netprofit_ttm',
-      key: 'parent_netprofit_ttm',
       align: 'right' as const,
       className: 'text-xs',
       render: (value: any) => <span className="font-mono font-semibold">{formatNumber(value)}</span>
@@ -111,7 +84,6 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
     {
       title: '归母净利(去年)',
       dataIndex: 'parent_netprofit_last_year',
-      key: 'parent_netprofit_last_year',
       align: 'right' as const,
       className: 'text-xs text-slate-600',
       render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
@@ -119,7 +91,6 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
     {
       title: '同比',
       dataIndex: 'parent_netprofit_yoy',
-      key: 'parent_netprofit_yoy',
       align: 'center' as const,
       className: 'text-xs',
       render: (_: any, record: any) => (
@@ -131,7 +102,6 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
     {
       title: '营收(TTM)',
       dataIndex: 'operate_income_ttm',
-      key: 'operate_income_ttm',
       align: 'right' as const,
       className: 'text-xs',
       render: (value: any) => <span className="font-mono font-semibold">{formatNumber(value)}</span>
@@ -139,7 +109,6 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
     {
       title: '营收(去年)',
       dataIndex: 'operate_income_last_year',
-      key: 'operate_income_last_year',
       align: 'right' as const,
       className: 'text-xs text-slate-600',
       render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
@@ -147,7 +116,6 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
     {
       title: '同比',
       dataIndex: 'operate_income_yoy',
-      key: 'operate_income_yoy',
       align: 'center' as const,
       className: 'text-xs',
       render: (_: any, record: any) => (
@@ -159,7 +127,6 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
     {
       title: '经营现金流(TTM)',
       dataIndex: 'netcash_operate_ttm',
-      key: 'netcash_operate_ttm',
       align: 'right' as const,
       className: 'text-xs',
       render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
@@ -167,7 +134,6 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
     {
       title: '经营现金流(去年)',
       dataIndex: 'netcash_operate_last_year',
-      key: 'netcash_operate_last_year',
       align: 'right' as const,
       className: 'text-xs text-slate-600',
       render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
@@ -175,11 +141,10 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
     {
       title: '同比',
       dataIndex: 'netcash_operate_yoy',
-      key: 'netcash_operate_yoy',
       align: 'center' as const,
       className: 'text-xs',
       render: (_: any, record: any) => (
-        <span className="font-mono">
+        <span className="font-mono font-semibold">
           {formatPercent(record.netcash_operate_ttm, record.netcash_operate_last_year)}
         </span>
       )
@@ -187,7 +152,6 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
     {
       title: '投资现金流(TTM)',
       dataIndex: 'netcash_invest_ttm',
-      key: 'netcash_invest_ttm',
       align: 'right' as const,
       className: 'text-xs',
       render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
@@ -195,7 +159,6 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
     {
       title: '筹资现金流(TTM)',
       dataIndex: 'netcash_finance_ttm',
-      key: 'netcash_finance_ttm',
       align: 'right' as const,
       className: 'text-xs',
       render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
@@ -205,10 +168,10 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
   return (
     <div className="w-full">
       <h3 className="text-xl font-semibold mb-4 text-slate-800">📊 财务报表综合视图（滚动四季度）</h3>
-      
-      <Table 
-        columns={columns} 
-        dataSource={data} 
+
+      <Table
+        columns={columns}
+        dataSource={data}
         loading={loading}
         emptyText="暂无综合财务数据"
       />
