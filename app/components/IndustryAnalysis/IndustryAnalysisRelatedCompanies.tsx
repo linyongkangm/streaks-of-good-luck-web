@@ -6,6 +6,7 @@ import type {
   StockBoardWithRelations,
   info__stock_company
 } from '@/types'
+import Table from '@/app/widget/Table'
 
 interface Props {
   selectedBoard: StockBoardWithRelations;
@@ -90,6 +91,74 @@ export default function IndustryAnalysisRelatedCompanies({ selectedBoard, fetchB
     if (!selectedBoard) return 0
     return selectedBoard.relation__stock_board_company.reduce((sum, company) => sum + Number(company.weight), 0)
   }, [selectedBoard])
+
+  const columns = [
+    {
+      title: '公司代码',
+      dataIndex: 'company_code',
+      render: (_: any, record: any) => record.info__stock_company.company_code,
+    },
+    {
+      title: '公司名称',
+      dataIndex: 'company_name',
+      render: (_: any, record: any) => record.info__stock_company.company_name,
+    },
+    {
+      title: '权重',
+      dataIndex: 'weight',
+      render: (_: any, record: any) => {
+        if (editingWeightId === record.id) {
+          return (
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                value={editWeightValue}
+                onChange={(e) => setEditWeightValue(e.target.value)}
+                className="text-slate-900 w-20 px-2 py-1 border-2 border-blue-500 rounded"
+                step="1"
+              />
+              <button
+                onClick={() => handleUpdateWeight(record.id, editWeightValue)}
+                className="px-2 py-1 bg-green-500 text-white rounded text-xs"
+              >
+                ✓
+              </button>
+              <button
+                onClick={() => setEditingWeightId(null)}
+                className="px-2 py-1 bg-gray-400 text-white rounded text-xs"
+              >
+                ✕
+              </button>
+            </div>
+          )
+        }
+        return (
+          <button
+            onClick={() => {
+              setEditingWeightId(record.id)
+              setEditWeightValue(record.weight.toString())
+            }}
+            className="inline-flex items-center px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 font-medium hover:bg-blue-200"
+          >
+            {((Number(record.weight) / totalWeight) * 100).toFixed(2)}% ✏️
+          </button>
+        )
+      },
+    },
+    {
+      title: '操作',
+      dataIndex: 'action',
+      render: (_: any, record: any) => (
+        <button
+          onClick={() => handleRemoveCompany(record.id)}
+          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
+        >
+          移除
+        </button>
+      ),
+    },
+  ]
+
   return <div className="bg-white rounded-xl shadow-lg p-6">
     <div className="flex items-center justify-between mb-4">
       <h3 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-2">
@@ -105,77 +174,12 @@ export default function IndustryAnalysisRelatedCompanies({ selectedBoard, fetchB
         + 添加公司
       </button>
     </div>
-    <div className="overflow-x-auto rounded-lg border border-slate-200">
-      <table className="min-w-full">
-        <thead className="bg-gradient-to-r from-slate-50 to-slate-100">
-          <tr>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-slate-700">公司代码</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-slate-700">公司名称</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-slate-700">行业</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-slate-700">权重</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-slate-700">操作</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-200">
-          {selectedBoard.relation__stock_board_company.map((relation) => (
-            <tr key={relation.id} className="hover:bg-blue-50/50 transition-colors">
-              <td className="px-6 py-4 text-sm font-mono text-slate-900">
-                {relation.info__stock_company.company_code}
-              </td>
-              <td className="px-6 py-4 text-sm font-medium text-slate-900">
-                {relation.info__stock_company.company_name}
-              </td>
-              <td className="px-6 py-4 text-sm text-slate-600">
-                {relation.info__stock_company.industry || '-'}
-              </td>
-              <td className="px-6 py-4 text-sm">
-                {editingWeightId === relation.id ? (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      value={editWeightValue}
-                      onChange={(e) => setEditWeightValue(e.target.value)}
-                      className="text-slate-900 w-20 px-2 py-1 border-2 border-blue-500 rounded"
-                      step="1"
-                    />
-                    <button
-                      onClick={() => handleUpdateWeight(relation.id, editWeightValue)}
-                      className="px-2 py-1 bg-green-500 text-white rounded text-xs"
-                    >
-                      ✓
-                    </button>
-                    <button
-                      onClick={() => setEditingWeightId(null)}
-                      className="px-2 py-1 bg-gray-400 text-white rounded text-xs"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setEditingWeightId(relation.id)
-                      setEditWeightValue(relation.weight.toString())
-                    }}
-                    className="inline-flex items-center px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 font-medium hover:bg-blue-200"
-                  >
-                    {((Number(relation.weight) / totalWeight) * 100).toFixed(2)}% ✏️
-                  </button>
-                )}
-              </td>
-              <td className="px-6 py-4 text-sm">
-                <button
-                  onClick={() => handleRemoveCompany(relation.id)}
-                  className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
-                >
-                  移除
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+
+    <Table
+      columns={columns}
+      dataSource={selectedBoard.relation__stock_board_company}
+      emptyText="暂无关联公司"
+    />
 
     {/* 添加公司模态框 */}
     {showAddCompanyModal && (
