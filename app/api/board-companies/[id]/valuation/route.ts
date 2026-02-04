@@ -51,8 +51,6 @@ export async function GET(
     // 合并数据并计算估值指标
     const result = quotes.map((quote) => {
       const company = boardCompanies.find((bc) => bc.company_id === quote.company_id)
-      const companyId = company?.info__stock_company.id
-
       // 查找最近的财务数据（报告日期 <= 交易日期）
       const financial = financials
         .filter(
@@ -76,9 +74,9 @@ export async function GET(
         if (!weightedAvgShares) return {}
 
         const basicEpsTtm = Number(financial.basic_eps_ttm)
-        const totalParentEquity = Number(financial.total_parent_equity)
-        const operateIncomeTtm = Number(financial.operate_income_ttm)
-        const netcashOperateTtm = Number(financial.netcash_operate_ttm)
+        const totalParentEquity = Number(financial.total_parent_equity) // 归母权益
+        const operateIncomeTtm = Number(financial.operate_income_ttm) // 营业收入TTM
+        const netcashOperateTtm = Number(financial.netcash_operate_ttm) // 经营活动产生的现金流量净额TTM
 
         return {
           pe: basicEpsTtm !== 0 ? closePrice / basicEpsTtm : null,
@@ -102,16 +100,19 @@ export async function GET(
         company_id: quote.company_id,
         company_code: company?.info__stock_company.company_code,
         company_name: company?.info__stock_company.company_name,
+        weighted_average_shares: weightedAvgShares,
+        basic_eps_ttm: Number(financial.basic_eps_ttm),
+        total_parent_equity: Number(financial.total_parent_equity),
+        operate_income_ttm: Number(financial.operate_income_ttm),
+        netcash_operate_ttm: Number(financial.netcash_operate_ttm),
         none_close_price: Number(quote.none_close_price),
         qfq_close_price: Number(quote.qfq_close_price),
         hfq_close_price: Number(quote.hfq_close_price),
         none_valuation: calculateValuation(Number(quote.none_close_price)),
         qfq_valuation: calculateValuation(Number(quote.qfq_close_price)),
         hfq_valuation: calculateValuation(Number(quote.hfq_close_price)),
-        weighted_average_shares: weightedAvgShares,
       }
     }).filter(Boolean)
-
     return NextResponse.json({ data: result })
   } catch (error) {
     console.error('获取估值数据失败:', error)
