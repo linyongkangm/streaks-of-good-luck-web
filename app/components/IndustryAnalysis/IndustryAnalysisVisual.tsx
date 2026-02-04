@@ -160,7 +160,7 @@ export default function IndustryAnalysisVisual({ selectedBoard }: Props) {
         channel: 'y',
       });
     const ps = [10, 30, 50, 70, 90];
-    const genGrayGradient = tools.genGrayGradient(ps.length);
+    const genGrayGradient = tools.genColorGradient(ps.length, '#f6dfc9', '#A68B7A');
     ps.forEach((q, index) => {
       chart
         .line()

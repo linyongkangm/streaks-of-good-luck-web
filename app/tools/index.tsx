@@ -178,6 +178,49 @@ export function formatVolume(value: any): string {
   return num.toString()
 }
 
+/**
+ * 生成颜色渐变数组
+ * @param {number} len 生成的颜色数量
+ * @param {string} startColor 起始颜色（十六进制格式，如 '#FF0000'）
+ * @param {string} endColor 结束颜色（十六进制格式，如 '#0000FF'）
+ * @returns {string[]} 颜色字符串数组
+ */
+export function genColorGradient(len: number, startColor: string, endColor: string): string[] {
+  if (len <= 0) return []
+  if (len === 1) return [startColor]
+
+  // 解析十六进制颜色为 RGB
+  const parseColor = (color: string): [number, number, number] => {
+    const hex = color.replace('#', '')
+    return [
+      parseInt(hex.substring(0, 2), 16),
+      parseInt(hex.substring(2, 4), 16),
+      parseInt(hex.substring(4, 6), 16),
+    ]
+  }
+
+  // RGB 转十六进制颜色
+  const rgbToHex = (r: number, g: number, b: number): string => {
+    const toHex = (n: number) => Math.round(n).toString(16).padStart(2, '0')
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+  }
+
+  const [r1, g1, b1] = parseColor(startColor)
+  const [r2, g2, b2] = parseColor(endColor)
+
+  const colors: string[] = []
+  for (let i = 0; i < len; i++) {
+    const ratio = i / (len - 1)
+    const r = r1 + (r2 - r1) * ratio
+    const g = g1 + (g2 - g1) * ratio
+    const b = b1 + (b2 - b1) * ratio
+    colors.push(rgbToHex(r, g, b))
+  }
+
+  return colors
+}
+
+
 export function genGrayGradient(len: number): string[] {
   const minGrayValue = 60;   // 最深灰度值
   const maxGrayValue = 240;  // 最浅灰度值
@@ -189,3 +232,4 @@ export function genGrayGradient(len: number): string[] {
     return `#${hex}${hex}${hex}`;
   });
 }
+
