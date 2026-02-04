@@ -150,16 +150,6 @@ export default function IndustryAnalysisVisual({ selectedBoard }: Props) {
         name: `${metricLabels[metric]}`,
         channel: 'y',
       });
-    // chart
-    //   .point()
-    //   .data(chartData)
-    //   .encode('x', 'trade_date')
-    //   .encode('y', 'value')
-    //   .encode('color', 'type')
-    //   .encode('size', 3)
-    //   .encode('shape', 'point')
-    //   .tooltip(false)
-
     chart.render()
     chartInstance.current = chart
 
