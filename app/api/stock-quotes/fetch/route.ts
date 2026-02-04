@@ -5,15 +5,15 @@ import { prisma } from '@/lib/db';
 // POST /api/stock-quotes/fetch - 从AKShare获取历史行情数据并保存
 export async function POST(req: NextRequest) {
   try {
-    const { symbol, start_date, end_date } = await req.json();
+    const { company_id, start_date, end_date } = await req.json();
 
-    if (!symbol || !start_date || !end_date) {
+    if (!company_id || !start_date || !end_date) {
       return NextResponse.json({ error: '缺少必要参数' }, { status: 400 });
     }
 
     // 查找公司
     const company = await prisma.info__stock_company.findUnique({
-      where: { company_akshare_code: symbol },
+      where: { id: company_id },
     });
 
     if (!company) {
@@ -22,9 +22,9 @@ export async function POST(req: NextRequest) {
 
     // 分别获取三种复权方式的数据
     const [noneData, qfqData, hfqData] = await Promise.all([
-      fetchQuoteData(symbol, start_date, end_date, ''), // 不复权
-      fetchQuoteData(symbol, start_date, end_date, 'qfq'), // 前复权
-      fetchQuoteData(symbol, start_date, end_date, 'hfq'), // 后复权
+      fetchQuoteData(company.company_code, start_date, end_date, ''), // 不复权
+      fetchQuoteData(company.company_code, start_date, end_date, 'qfq'), // 前复权
+      fetchQuoteData(company.company_code, start_date, end_date, 'hfq'), // 后复权
     ]);
 
     if (!noneData || !qfqData || !hfqData) {

@@ -186,7 +186,7 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          symbol: selectedCompany.company_akshare_code,
+          company_id: selectedCompany.id,
           start_date: quoteParams.start_date,
           end_date: quoteParams.end_date,
         }),
