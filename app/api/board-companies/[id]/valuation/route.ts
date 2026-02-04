@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import {prisma} from '@/lib/db'
+import { prisma } from '@/lib/db'
 
 export async function GET(
   request: NextRequest,
- { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const boardId = parseInt((await params).id)
@@ -25,6 +25,7 @@ export async function GET(
     }
 
     const companyIds = boardCompanies.map((bc) => bc.company_id)
+    const companyCodes = boardCompanies.map((bc) => bc.info__stock_company.company_code)
 
     // 构建日期过滤条件
     const dateFilter: any = {}
@@ -41,29 +42,12 @@ export async function GET(
     })
 
     // 获取财务数据
-    const financials = await prisma.$queryRaw<any[]>`
-      SELECT 
-        stock_code,
-        report_date,
-        total_parent_equity,
-        basic_eps_ttm,
-        diluted_eps_ttm,
-        parent_netprofit_ttm,
-        operate_income_ttm,
-        netcash_operate_ttm,
-        (parent_netprofit_ttm / basic_eps_ttm) as weighted_average_shares
-      FROM view_financial_statements
-      WHERE stock_code IN (${companyIds.map((id) => {
-        const company = boardCompanies.find((bc) => bc.company_id === id)
-        return company?.info__stock_company.company_code
-      }).join(',')})
-      ORDER BY report_date ASC
-    `
-
-    // 构建公司代码映射
-    const codeToIdMap = new Map(
-      boardCompanies.map((bc) => [bc.info__stock_company.company_code, bc.company_id])
-    )
+    const financials = await prisma.view_financial_statements.findMany({
+      where: {
+        stock_code: { in: companyCodes },
+      },
+      orderBy: { report_date: 'asc' },
+    })
 
     // 合并数据并计算估值指标
     const result = quotes.map((quote) => {
@@ -75,17 +59,18 @@ export async function GET(
         .filter(
           (f) =>
             f.stock_code === companyCode &&
+            f.report_date !== null &&
+            quote.trade_date !== null &&
             new Date(f.report_date) <= new Date(quote.trade_date)
         )
-        .sort((a, b) => new Date(b.report_date).getTime() - new Date(a.report_date).getTime())[0]
+        .sort((a, b) => new Date(b.report_date!).getTime() - new Date(a.report_date!).getTime())[0]
 
       if (!financial) {
         return null
       }
 
-      const weightedAvgShares = financial.weighted_average_shares
-        ? Number(financial.weighted_average_shares)
-        : null
+      // 计算加权平均股本
+      const weightedAvgShares = Number(financial.weighted_average_shares);
 
       // 计算估值指标
       const calculateValuation = (closePrice: number) => {
