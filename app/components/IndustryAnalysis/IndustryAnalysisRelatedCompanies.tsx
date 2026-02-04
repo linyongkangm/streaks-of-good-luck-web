@@ -114,18 +114,19 @@ export default function IndustryAnalysisRelatedCompanies({ selectedBoard, fetchB
               <input
                 type="number"
                 value={editWeightValue}
+                onClick={(e) => e.stopPropagation()}
                 onChange={(e) => setEditWeightValue(e.target.value)}
                 className="text-slate-900 w-20 px-2 py-1 border-2 border-blue-500 rounded"
                 step="1"
               />
               <button
-                onClick={() => handleUpdateWeight(record.id, editWeightValue)}
+                onClick={(e) => { e.stopPropagation(); handleUpdateWeight(record.id, editWeightValue); }}
                 className="px-2 py-1 bg-green-500 text-white rounded text-xs"
               >
                 ✓
               </button>
               <button
-                onClick={() => setEditingWeightId(null)}
+                onClick={(e) => { e.stopPropagation(); setEditingWeightId(null); }}
                 className="px-2 py-1 bg-gray-400 text-white rounded text-xs"
               >
                 ✕
@@ -135,7 +136,8 @@ export default function IndustryAnalysisRelatedCompanies({ selectedBoard, fetchB
         }
         return (
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation()
               setEditingWeightId(record.id)
               setEditWeightValue(record.weight.toString())
             }}
