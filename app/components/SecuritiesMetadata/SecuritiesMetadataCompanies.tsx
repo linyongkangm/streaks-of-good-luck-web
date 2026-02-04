@@ -20,11 +20,11 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
   const [formData, setFormData] = useState({
     company_name: '',
     company_code: '',
-    company_akshare_code: '',
     industry: '',
     ipo_date: '',
     total_shares: '',
     circulating_shares: '',
+    company_akshare_exchange: 'sz',
   })
   const [fetchingMetadata, setFetchingMetadata] = useState(false)
   const [showQuoteForm, setShowQuoteForm] = useState(false)
@@ -62,7 +62,7 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
   }
 
   const handleFetchMetadata = async () => {
-    if (!formData.company_akshare_code) {
+    if (!formData.company_code || !formData.company_akshare_exchange) {
       alert('请输入AKShare代码')
       return
     }
@@ -72,7 +72,7 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
       const res = await fetch('/api/stock-metadata/fetch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol: formData.company_akshare_code }),
+        body: JSON.stringify({ symbol: formData.company_akshare_exchange + formData.company_code }),
       })
 
       if (res.ok) {
@@ -103,7 +103,7 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
   }
 
   const handleSubmit = async () => {
-    if (!formData.company_name || !formData.company_code || !formData.company_akshare_code) {
+    if (!formData.company_name || !formData.company_code || !formData.company_akshare_exchange) {
       alert('请填写必填字段')
       return
     }
@@ -117,7 +117,10 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          company_akshare_code: formData.company_akshare_exchange + formData.company_code,
+        }),
       })
 
       if (res.ok) {
@@ -141,7 +144,7 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
     setFormData({
       company_name: company.company_name,
       company_code: company.company_code,
-      company_akshare_code: company.company_akshare_code,
+      company_akshare_exchange: company.company_akshare_code.replace(company.company_code, ''),
       industry: company.industry || '',
       ipo_date: company.ipo_date ? new Date(company.ipo_date).toISOString().split('T')[0] : '',
       total_shares: company.total_shares?.toString() || '',
@@ -237,7 +240,7 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
     setFormData({
       company_name: '',
       company_code: '',
-      company_akshare_code: '',
+      company_akshare_exchange: 'sz',
       industry: '',
       ipo_date: '',
       total_shares: '',
@@ -409,16 +412,24 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
                   AKShare代码 <span className="text-red-500">*</span>
                 </label>
                 <div className="flex gap-2">
+                  <select
+                    value={formData.company_akshare_exchange}
+                    onChange={(e) => setFormData({ ...formData, company_akshare_exchange: e.target.value })}
+                    className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
+                  >
+                    <option value="sz">深交所</option>
+                    <option value="sh">上交所</option>
+                  </select>
                   <input
                     type="text"
-                    value={formData.company_akshare_code}
-                    onChange={(e) => setFormData({ ...formData, company_akshare_code: e.target.value })}
+                    value={formData.company_code}
+                    onChange={(e) => setFormData({ ...formData, company_code: e.target.value })}
                     className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
                     placeholder="例如: 000001"
                   />
                   <button
                     onClick={handleFetchMetadata}
-                    disabled={fetchingMetadata || !formData.company_akshare_code}
+                    disabled={fetchingMetadata || !formData.company_code}
                     className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium whitespace-nowrap"
                   >
                     {fetchingMetadata ? '获取中...' : '获取元数据'}
@@ -439,7 +450,7 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
                   />
                 </div>
 
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     股票代码 <span className="text-red-500">*</span>
                   </label>
@@ -449,7 +460,7 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
                     onChange={(e) => setFormData({ ...formData, company_code: e.target.value })}
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
                   />
-                </div>
+                </div> */}
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">行业</label>
