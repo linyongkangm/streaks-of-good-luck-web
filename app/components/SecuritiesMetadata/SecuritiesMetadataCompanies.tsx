@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import type { info__stock_company } from '@/types'
 import Table, { Column } from '@/app/widget/Table'
-
+import * as tools from '@/app/tools'
 interface Props {
   selectedCompany: info__stock_company | null
   onSelectCompany: (company: info__stock_company | null) => void
@@ -260,8 +260,9 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
       dataIndex: 'company_name',
     },
     {
-      title: '行业',
-      dataIndex: 'industry',
+      title: '总股本',
+      dataIndex: 'total_shares',
+      render: (value: any) => (tools.formatNumber(value))
     },
     {
       title: '上市日期',
@@ -452,19 +453,6 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
                   />
                 </div>
-
-                {/* <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    股票代码 <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.company_code}
-                    onChange={(e) => setFormData({ ...formData, company_code: e.target.value })}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
-                  />
-                </div> */}
-
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">行业</label>
                   <input
@@ -484,6 +472,7 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
                   />
                 </div>
+                <div></div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">总股本</label>
                   <input
