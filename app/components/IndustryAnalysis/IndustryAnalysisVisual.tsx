@@ -105,79 +105,85 @@ export default function IndustryAnalysisVisual({ selectedBoard }: Props) {
       height: 500,
     })
     console.log(chartDatasource)
-    chart.data(chartDatasource);
-    chart
-      .line()
-      .encode('x', 'trade_date')
-      .encode('y', 'closePrice')
-      .encode('color', '#5470C6')
-      .scale('x', { type: 'time', nice: true })
-      .scale('y', { independent: true })
-      .style('lineWidth', 2)
-      .axis('x', {
-        title: '交易日期',
-        titleFill: '#666',
-        titleFontSize: 12,
-      })
-      .axis('y', {
-        title: `收盘价(${adjustTypeLabels[adjustType]})`,
-        titleFill: '#666',
-        titleFontSize: 12,
-      })
-      .legend('color', { position: 'top' })
-      .tooltip({
-        title: (d) => tools.toUTC(d.trade_date).toFormat(tools.DATE_FORMAT),
-      })
-      .tooltip({
-        name: `收盘价(${adjustTypeLabels[adjustType]})`,
-        channel: 'y',
-      });
-    chart
-      .line()
-      .encode('x', 'trade_date')
-      .encode('y', 'valuation')
-      .encode('color', '#EE6666')
-      .scale('x', { type: 'time', nice: true })
-      .scale('y', { independent: true })
-      .style('lineWidth', 2)
-      .axis('y', {
-        position: 'right',
-        title: metricLabels[metric],
-        titleFill: '#666',
-        titleFontSize: 12,
-      })
-      .axis('x', {
-        title: '交易日期',
-        titleFill: '#666',
-        titleFontSize: 12,
-      })
-      .legend('color', { position: 'top' })
-      .tooltip({
-        title: (d) => tools.toUTC(d.trade_date).toFormat(tools.DATE_FORMAT),
-      })
-      .tooltip({
-        name: `${metricLabels[metric]}`,
-        channel: 'y',
-      });
     const ps = [10, 30, 50, 70, 90];
-    const genGrayGradient = tools.genColorGradient(ps.length, '#f6dfc9', '#A68B7A');
-    ps.forEach((q, index) => {
-      chart
-        .line()
-        .encode('x', 'trade_date')
-        .encode('y', `quantile_price_p${q}`)
-        .encode('color', genGrayGradient[index])
-        .style('lineWidth', 1)
-        .axis('y', false)
-        .tooltip({
-          title: (d) => tools.toUTC(d.trade_date).toFormat(tools.DATE_FORMAT),
-        })
-        .tooltip({
-          name: `${q}分位价`,
-          channel: 'y',
-        });
+    const grayGradient = tools.genColorGradient(ps.length, '#f6dfc9', '#A68B7A');
+    chart.options({
+      type: 'view',
+      data: chartDatasource,
+      encode: {
+        x: 'trade_date',
+      },
+      axis: {
+        x: {
+          title: '交易日期',
+        },
+      },
+      scale: {
+        y: {
+          nice: true,
+        },
+        x: {
+          nice: true,
+        }
+      },
+      children: [
+        {
+          type: 'line',
+          encode: {
+            y: 'closePrice',
+          },
+          axis: {
+            y: {
+              title: `收盘价(${adjustTypeLabels[adjustType]})`,
+            },
+          },
+          style: {
+            lineWidth: 2,
+          },
+          tooltip: {
+            name: `收盘价(${adjustTypeLabels[adjustType]})`,
+            channel: 'y',
+          }
+        },
+        {
+          type: 'line',
+          encode: {
+            y: 'valuation',
+          },
+          scale: {
+            y: { independent: true },
+          },
+          axis: {
+            y: {
+              position: 'right',
+              title: metricLabels[metric],
+            },
+          },
+          style: {
+            lineWidth: 2,
+            stroke: '#EE6666',
+          },
+          tooltip: {
+            name: metricLabels[metric],
+            channel: 'y',
+          }
+        },
+        ...ps.map((q, index) => ({
+          type: 'line',
+          encode: {
+            y: `quantile_price_p${q}`,
+          },
+          style: {
+            lineWidth: 1,
+            stroke: grayGradient[index],
+          },
+          tooltip: {
+            name: `${q}分位价`,
+            channel: 'y',
+          }
+        }))
+      ],
     })
-
     chart.render()
     chartInstance.current = chart
 
