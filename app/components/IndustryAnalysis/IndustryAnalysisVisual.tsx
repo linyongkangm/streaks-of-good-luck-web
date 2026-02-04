@@ -28,7 +28,7 @@ export default function IndustryAnalysisVisual({ selectedBoard }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
   const chartInstance = useRef<Chart | null>(null)
   const [loading, setLoading] = useState(false)
-  const [adjustType, setAdjustType] = useState<AdjustType>('none')
+  const [adjustType, setAdjustType] = useState<AdjustType>('qfq')
   const [metric, setMetric] = useState<ValuationMetric>('pe')
   const [data, setData] = useState<any[]>([])
   const [dateRange, setDateRange] = useState({
