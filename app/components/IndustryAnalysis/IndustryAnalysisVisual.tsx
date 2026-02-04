@@ -106,7 +106,7 @@ export default function IndustryAnalysisVisual({ selectedBoard }: Props) {
     })
     console.log(chartDatasource)
     const ps = [10, 30, 50, 70, 90];
-    const grayGradient = tools.genColorGradient(ps.length, '#f6dfc9', '#A68B7A');
+    const grayGradient = tools.genColorGradient(ps.length, '#edc29a', '#bca08e');
     chart.options({
       type: 'view',
       data: chartDatasource,
