@@ -57,6 +57,7 @@ export default function Table<T>({
                   column.sticky ? 'sticky left-0 bg-slate-50 z-10' : ''
                 } ${column.className || ''}`}
                 style={{ width: column.width }}
+                data-column-key={String(column.dataIndex) || column.key}
               >
                 {column.title}
               </th>
@@ -73,12 +74,14 @@ export default function Table<T>({
                 key={index}
                 className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${rowClass}`}
                 {...rowProps}
+                data-row-key={index}
               >
                 {columns.map((column) => {
                   const value = record[column.dataIndex as keyof T];
                   return (
                     <td
                       key={String(column.dataIndex) || column.key}
+                      data-column-key={String(column.dataIndex) || column.key}
                       className={`px-4 py-3 text-sm text-slate-900 text-${column.align || 'left'} ${
                         column.sticky ? 'sticky left-0 bg-white hover:bg-slate-50' : ''
                       } ${column.className || ''}`}
