@@ -100,6 +100,7 @@ export async function GET(
         company_id: quote.company_id,
         company_code: company?.info__stock_company.company_code,
         company_name: company?.info__stock_company.company_name,
+        weight: company?.weight,
         weighted_average_shares: weightedAvgShares,
         basic_eps_ttm: Number(financial.basic_eps_ttm),
         total_parent_equity: Number(financial.total_parent_equity),
