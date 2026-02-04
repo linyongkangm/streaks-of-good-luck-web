@@ -86,15 +86,13 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
         trade_date: new Date(item.trade_date),
         valuation: parseFloat(valuation.toFixed(2)),
       }
-
-      // 如果是公司数据，包含 closePrice 和 quantile_prices
       if (item.company_id) {
         dataPoint.company_name = item.company_name
         dataPoint.company_code = item.company_code
         dataPoint.company_id = item.company_id
       }
       const closePrice = item[`${adjustType}_close_price`]
-      dataPoint.closePrice = closePrice
+      dataPoint.closePrice = parseFloat(closePrice.toFixed(2))
       const quantile_price = item.quantile_prices?.[adjustType]?.[metric] || {}
       Object.keys(quantile_price).forEach((key) => {
         if (quantile_price[key] !== null) {

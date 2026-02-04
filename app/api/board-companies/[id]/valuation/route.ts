@@ -106,16 +106,6 @@ export async function GET(
       }
     }).filter(Boolean)
 
-    // 按公司分组数据
-    const dataByCompany: Record<number, any[]> = {}
-    result.forEach(item => {
-      if (!item) return
-      if (!dataByCompany[item.company_id]) {
-        dataByCompany[item.company_id] = []
-      }
-      dataByCompany[item.company_id].push(item)
-    })
-
     // 计算板块整体加权数据
     const calculateBoardWeightedData = () => {
       // 按交易日分组
@@ -132,39 +122,43 @@ export async function GET(
       // 计算每个交易日的板块整体数据
       const boardData = Array.from(dateMap.entries()).map(([dateKey, items]) => {
         const trade_date = new Date(dateKey)
-        
+
+        // 先计算加权财务数据
+        let weightedTotalShares = 0
+        let weightedParentNetprofit = 0
+        let weightedTotalParentEquity = 0
+        let weightedOperateIncome = 0
+        let weightedNetcashOperate = 0
+        let totalWeight = 0
+
+        items.forEach(item => {
+          const weight = Number(item.weight) || 0
+          weightedTotalShares += item.total_shares * weight
+          weightedParentNetprofit += item.parent_netprofit_ttm * weight
+          weightedTotalParentEquity += item.total_parent_equity * weight
+          weightedOperateIncome += item.operate_income_ttm * weight
+          weightedNetcashOperate += item.netcash_operate_ttm * weight
+          totalWeight += weight
+        })
+
         // 计算加权估值指标和加权股价
         const calculateBoardValuation = (adjustType: 'none' | 'qfq' | 'hfq') => {
-          let totalMarketCap = 0
-          let totalParentNetprofit = 0
-          let totalParentEquity = 0
-          let totalOperateIncome = 0
-          let totalNetcashOperate = 0
-          let totalWeight = 0
-          let weightedClosePrice = 0
-
+          let totalMarketCap = 0 // 总市值
           items.forEach(item => {
-            const weight = Number(item.weight) || 0
+            const itemWeight = Number(item.weight) || 0
             const closePrice = item[`${adjustType}_close_price`]
             const totalShares = item.total_shares
-
+            // 市值 = 股价 * 总股本 * 权重
             if (closePrice && totalShares) {
-              totalMarketCap += closePrice * totalShares * weight
-              totalParentNetprofit += item.parent_netprofit_ttm * weight
-              totalParentEquity += item.total_parent_equity * weight
-              totalOperateIncome += item.operate_income_ttm * weight
-              totalNetcashOperate += item.netcash_operate_ttm * weight
-              weightedClosePrice += closePrice * weight
-              totalWeight += weight
+              totalMarketCap += closePrice * totalShares * itemWeight
             }
           })
-
           return {
-            close_price: totalWeight !== 0 ? weightedClosePrice / totalWeight : null,
-            pe: totalParentNetprofit !== 0 ? totalMarketCap / totalParentNetprofit : null,
-            pb: totalParentEquity !== 0 ? totalMarketCap / totalParentEquity : null,
-            ps: totalOperateIncome !== 0 ? totalMarketCap / totalOperateIncome : null,
-            pc: totalNetcashOperate !== 0 ? totalMarketCap / totalNetcashOperate : null,
+            close_price: weightedTotalShares !== 0 ? totalMarketCap / weightedTotalShares : null,
+            pe: weightedParentNetprofit !== 0 ? totalMarketCap / weightedParentNetprofit : null,
+            pb: weightedTotalParentEquity !== 0 ? totalMarketCap / weightedTotalParentEquity : null,
+            ps: weightedOperateIncome !== 0 ? totalMarketCap / weightedOperateIncome : null,
+            pc: weightedNetcashOperate !== 0 ? totalMarketCap / weightedNetcashOperate : null,
           }
         }
 
@@ -174,6 +168,11 @@ export async function GET(
 
         return {
           trade_date,
+          total_shares: weightedTotalShares,
+          parent_netprofit_ttm: weightedParentNetprofit,
+          total_parent_equity: weightedTotalParentEquity,
+          operate_income_ttm: weightedOperateIncome,
+          netcash_operate_ttm: weightedNetcashOperate,
           none_close_price: noneData.close_price,
           qfq_close_price: qfqData.close_price,
           hfq_close_price: hfqData.close_price,
@@ -287,76 +286,21 @@ export async function GET(
       return resultWithQuantiles
     }
 
-    // 计算板块整体的分位数（板块数据没有 total_shares，只计算估值分位数，不计算价格）
-    const processBoardQuantiles = (dataList: any[]) => {
-      const calculateQuantiles = (values: number[], quantiles: number[]) => {
-        const sorted = values.filter(v => v !== null && !isNaN(v)).sort((a, b) => a - b)
-        if (sorted.length === 0) return quantiles.map(() => null)
-
-        return quantiles.map(q => {
-          const index = (sorted.length - 1) * q
-          const lower = Math.floor(index)
-          const upper = Math.ceil(index)
-          const weight = index - lower
-
-          if (lower === upper) return sorted[lower]
-          return sorted[lower] * (1 - weight) + sorted[upper] * weight
-        })
-      }
-
-      const quantileLevels = [0.1, 0.3, 0.5, 0.7, 0.9]
-      const valuationTypes = ['pe', 'pb', 'ps', 'pc'] as const
-      const adjustTypes = ['none', 'qfq', 'hfq'] as const
-      const quantileData: Record<string, Record<string, number[]>> = {}
-
-      adjustTypes.forEach(adjustType => {
-        quantileData[adjustType] = {}
-        valuationTypes.forEach(metric => {
-          const allValues = dataList
-            .map(r => r?.[`${adjustType}_valuation`]?.[metric])
-            .filter(v => v !== null && v !== undefined && !isNaN(v)) as number[]
-
-          quantileData[adjustType][metric] = calculateQuantiles(allValues, quantileLevels) as number[]
-        })
-      })
-
-      const resultWithQuantiles = dataList.map(item => {
-        if (!item) return null
-
-        const quantilePrices: Record<string, Record<string, { p10: number | null; p30: number | null; p50: number | null; p70: number | null; p90: number | null }>> = {
-          none: {},
-          qfq: {},
-          hfq: {},
-        }
-
-        adjustTypes.forEach(adjustType => {
-          quantilePrices[adjustType] = {}
-          valuationTypes.forEach(metric => {
-            const quantiles = quantileData[adjustType][metric]
-            quantilePrices[adjustType][metric] = {
-              p10: quantiles[0],
-              p30: quantiles[1],
-              p50: quantiles[2],
-              p70: quantiles[3],
-              p90: quantiles[4],
-            }
-          })
-        })
-
-        return {
-          ...item,
-          quantile_prices: quantilePrices,
-        }
-      })
-
-      return resultWithQuantiles
-    }
-
     // 组装返回数据
     const responseData: Record<string, any> = {
-      all: processBoardQuantiles(boardData),
+      all: processResultWithQuantiles(boardData),
     }
 
+
+    // 按公司分组数据
+    const dataByCompany: Record<number, any[]> = {}
+    result.forEach(item => {
+      if (!item) return
+      if (!dataByCompany[item.company_id]) {
+        dataByCompany[item.company_id] = []
+      }
+      dataByCompany[item.company_id].push(item)
+    })
     // 为每个公司计算分位数
     Object.keys(dataByCompany).forEach(companyIdStr => {
       const companyId = parseInt(companyIdStr)
