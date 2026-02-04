@@ -286,13 +286,47 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
             编辑
           </button>
           <button
-            onClick={(e) => {
+            onClick={async (e) => {
               e.stopPropagation()
               onSelectCompany(company)
-              setQuoteParams({
-                start_date: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                end_date: new Date().toISOString().split('T')[0],
-              })
+              
+              // 获取公司的最新行情日期
+              try {
+                const res = await fetch(`/api/stock-quotes?company_id=${company.id}&limit=1`)
+                if (res.ok) {
+                  const data = await res.json()
+                  let startDate: string
+                  
+                  if (data.data && data.data.length > 0) {
+                    // 有历史数据，从最新日期的下一天开始
+                    const latestDate = new Date(data.data[0].trade_date)
+                    latestDate.setDate(latestDate.getDate() + 1)
+                    startDate = latestDate.toISOString().split('T')[0]
+                  } else {
+                    // 没有历史数据，从30天前开始
+                    startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                  }
+                  
+                  setQuoteParams({
+                    start_date: startDate,
+                    end_date: new Date().toISOString().split('T')[0],
+                  })
+                } else {
+                  // 查询失败，使用默认值
+                  setQuoteParams({
+                    start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    end_date: new Date().toISOString().split('T')[0],
+                  })
+                }
+              } catch (error) {
+                console.error('获取最新行情日期失败:', error)
+                // 出错使用默认值
+                setQuoteParams({
+                  start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                  end_date: new Date().toISOString().split('T')[0],
+                })
+              }
+              
               setShowQuoteForm(true)
             }}
             className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors text-xs font-medium mr-2"
