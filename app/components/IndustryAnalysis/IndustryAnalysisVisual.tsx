@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Chart } from '@antv/g2'
 import type { StockBoardWithRelations } from '@/types'
-
+import * as tools from '@/app/tools'
 interface Props {
   selectedBoard: StockBoardWithRelations
 }
@@ -70,24 +70,18 @@ export default function IndustryAnalysisVisual({ selectedBoard }: Props) {
     if (!chartRef.current || data.length === 0) return
 
     // 准备图表数据
-    const chartData: any[] = []
+    const chartDatasource: any[] = []
     data.forEach((item) => {
       const closePrice = item[`${adjustType}_close_price`]
       const valuation = item[`${adjustType}_valuation`]?.[metric]
-
       if (closePrice && valuation) {
-        chartData.push({
-          trade_date: new Date(item.trade_date).getTime(),
-          value: closePrice,
-          type: '收盘价',
+        const data = {
+          trade_date: new Date(item.trade_date),
+          closePrice,
+          valuation: parseFloat(valuation.toFixed(2)),
           company_name: item.company_name,
-        })
-        chartData.push({
-          trade_date: new Date(item.trade_date).getTime(),
-          value: valuation,
-          type: metricLabels[metric],
-          company_name: item.company_name,
-        })
+        }
+        chartDatasource.push(data)
       }
     })
 
@@ -102,32 +96,51 @@ export default function IndustryAnalysisVisual({ selectedBoard }: Props) {
       autoFit: true,
       height: 500,
     })
-
+    chart.data(chartDatasource);
     chart
       .line()
-      .data(chartData)
       .encode('x', 'trade_date')
-      .encode('y', 'value')
-      .encode('color', 'type')
+      .encode('y', 'closePrice')
+      .encode('color', '#5470C6')
       .scale('x', { type: 'time', nice: true })
-      .scale('y', { nice: true })
+      .scale('y', { independent: true })
       .style('lineWidth', 2)
-      .tooltip({ shared: true })
-      .axis('x', { title: false })
-      .axis('y', { 
-        title: { text: '收盘价 / ' + metricLabels[metric], style: { fontSize: 12, fill: '#666' } } 
+      .axis('y', {
+        title: `收盘价(${adjustTypeLabels[adjustType]})`,
+        titleFill: '#666',
+        titleFontSize: 12,
       })
       .legend('color', { position: 'top' })
-
+      .tooltip({
+        title: (d) => tools.toUTC(d.trade_date).toFormat(tools.DATE_FORMAT),
+      });
     chart
-      .point()
-      .data(chartData)
+      .line()
       .encode('x', 'trade_date')
-      .encode('y', 'value')
-      .encode('color', 'type')
-      .encode('size', 3)
-      .encode('shape', 'point')
-      .tooltip(false)
+      .encode('y', 'valuation')
+      .encode('color', '#EE6666')
+      .scale('x', { type: 'time', nice: true })
+      .scale('y', { independent: true })
+      .style('lineWidth', 2)
+      .axis('y', {
+        position: 'right',
+        title: metricLabels[metric],
+        titleFill: '#666',
+        titleFontSize: 12,
+      })
+      .legend('color', { position: 'top' })
+      .tooltip({
+        title: (d) => tools.toUTC(d.trade_date).toFormat(tools.DATE_FORMAT),
+      });
+    // chart
+    //   .point()
+    //   .data(chartData)
+    //   .encode('x', 'trade_date')
+    //   .encode('y', 'value')
+    //   .encode('color', 'type')
+    //   .encode('size', 3)
+    //   .encode('shape', 'point')
+    //   .tooltip(false)
 
     chart.render()
     chartInstance.current = chart
@@ -168,11 +181,10 @@ export default function IndustryAnalysisVisual({ selectedBoard }: Props) {
               <button
                 key={type}
                 onClick={() => setAdjustType(type)}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  adjustType === type
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-md'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
+                className={`px-4 py-2 rounded-lg font-medium transition-all ${adjustType === type
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-md'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
               >
                 {adjustTypeLabels[type]}
               </button>
