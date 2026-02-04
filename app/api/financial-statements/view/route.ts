@@ -4,31 +4,35 @@ import { prisma } from '@/lib/db'
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
-    const stock_code = searchParams.get('stock_code')
+    const company_id = parseInt(searchParams.get('company_id') || '')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
 
-    if (!stock_code) {
-      return NextResponse.json({ error: '缺少stock_code参数' }, { status: 400 })
+    if (!company_id) {
+      return NextResponse.json({ error: '缺少company_id参数' }, { status: 400 })
     }
 
     const skip = (page - 1) * limit
 
     // 查询视图数据
-    const data = await prisma.$queryRaw`
-      SELECT * FROM view_financial_statements
-      WHERE stock_code = ${stock_code}
-      ORDER BY report_date DESC
-      LIMIT ${limit} OFFSET ${skip}
-    `
+    const data = await prisma.view_financial_statements.findMany({
+      where: {
+        company_id: company_id,
+      },
+      orderBy: {
+        report_date: 'desc',
+      },
+      take: limit,
+      skip: skip,
+    })
 
     // 查询总数
-    const countResult = await prisma.$queryRaw<Array<{ total: bigint }>>`
-      SELECT COUNT(*) as total FROM view_financial_statements
-      WHERE stock_code = ${stock_code}
-    `
+    const total = await prisma.view_financial_statements.count({
+      where: {
+        company_id: company_id,
+      },
+    })
     
-    const total = Number(countResult[0]?.total || 0)
     const totalPages = Math.ceil(total / limit)
 
     return NextResponse.json({

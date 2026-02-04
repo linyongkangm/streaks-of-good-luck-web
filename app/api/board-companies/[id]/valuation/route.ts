@@ -25,7 +25,6 @@ export async function GET(
     }
 
     const companyIds = boardCompanies.map((bc) => bc.company_id)
-    const companyCodes = boardCompanies.map((bc) => bc.info__stock_company.company_code)
 
     // 构建日期过滤条件
     const dateFilter: any = {}
@@ -44,7 +43,7 @@ export async function GET(
     // 获取财务数据
     const financials = await prisma.view_financial_statements.findMany({
       where: {
-        stock_code: { in: companyCodes },
+        company_id: { in: companyIds },
       },
       orderBy: { report_date: 'asc' },
     })
@@ -52,13 +51,13 @@ export async function GET(
     // 合并数据并计算估值指标
     const result = quotes.map((quote) => {
       const company = boardCompanies.find((bc) => bc.company_id === quote.company_id)
-      const companyCode = company?.info__stock_company.company_code
+      const companyId = company?.info__stock_company.id
 
       // 查找最近的财务数据（报告日期 <= 交易日期）
       const financial = financials
         .filter(
           (f) =>
-            f.stock_code === companyCode &&
+            f.company_id === quote.company_id &&
             f.report_date !== null &&
             quote.trade_date !== null &&
             new Date(f.report_date) <= new Date(quote.trade_date)
@@ -101,7 +100,7 @@ export async function GET(
       return {
         trade_date: quote.trade_date,
         company_id: quote.company_id,
-        company_code: companyCode,
+        company_code: company?.info__stock_company.company_code,
         company_name: company?.info__stock_company.company_name,
         none_close_price: Number(quote.none_close_price),
         qfq_close_price: Number(quote.qfq_close_price),

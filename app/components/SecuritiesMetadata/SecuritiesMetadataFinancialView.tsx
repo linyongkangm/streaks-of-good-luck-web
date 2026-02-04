@@ -32,7 +32,7 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
     setLoading(true)
     try {
       const res = await fetch(
-        `/api/financial-statements/view?stock_code=${selectedCompany.company_code}&page=${page}&limit=20`
+        `/api/financial-statements/view?company_id=${selectedCompany.id}&page=${page}&limit=20`
       )
       if (res.ok) {
         const result = await res.json()

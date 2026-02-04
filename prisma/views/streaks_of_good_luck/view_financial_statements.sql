@@ -149,7 +149,7 @@ WITH `profit_rolling` AS (
     `streaks_of_good_luck`.`quote__cash_flow_sheet` `cf`
 )
 SELECT
-  `pr`.`company_code` AS `stock_code`,
+  `pr`.`company_id` AS `company_id`,
   `pr`.`report_date` AS `report_date`,
   `bs`.`total_parent_equity` AS `total_parent_equity`,
   `pr`.`basic_eps_ttm` AS `basic_eps_ttm`,

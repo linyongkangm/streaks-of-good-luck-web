@@ -263,7 +263,7 @@ model quote__cash_flow_sheet {
 }
 
 view view_financial_statements {
-  stock_code                   String    @db.VarChar(20)
+  company_id                   Int?      @db.UnsignedInt
   report_date                  DateTime? @db.Date
   total_parent_equity          Decimal?  @db.Decimal(20, 2)
   basic_eps_ttm                Decimal?  @db.Decimal(32, 4)

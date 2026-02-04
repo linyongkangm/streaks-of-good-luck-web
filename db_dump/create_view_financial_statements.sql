@@ -119,7 +119,7 @@ cashflow_rolling AS (
 )
 -- 主查询：整合所有数据
 SELECT 
-    pr.company_code AS stock_code,
+    pr.company_id AS company_id,
     pr.report_date,
     bs.total_parent_equity,
     pr.basic_eps_ttm,
