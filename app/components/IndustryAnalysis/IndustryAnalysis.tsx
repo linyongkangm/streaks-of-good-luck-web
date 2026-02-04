@@ -9,6 +9,8 @@ import IndustryAnalysisStockBoardInfo from './IndustryAnalysisStockBoardInfo'
 import IndustryAnalysisRelatedCompanies from './IndustryAnalysisRelatedCompanies'
 import IndustryAnalysisStockBoards from './IndustryAnalysisStockBoards'
 import IndustryAnalysisIndustryAnalysis from './IndustryAnalysisIndustryAnalysis'
+import IndustryAnalysisLoading from './IndustryAnalysisLoading'
+import Loading from '@/app/widget/Loading'
 
 export default function IndustryAnalysis() {
   const [boards, setBoards] = useState<info__stock_board[]>([])
@@ -47,11 +49,7 @@ export default function IndustryAnalysis() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-      </div>
-    )
+    return <Loading></Loading>
   }
 
   return (
@@ -69,29 +67,21 @@ export default function IndustryAnalysis() {
 
       {/* 右侧：详细信息 */}
       <div className="col-span-9">
-        {detailLoading ? (
-          <div className="flex items-center justify-center p-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-          </div>
-        ) : selectedBoard ? (
-          <div className="space-y-6">
-            {/* 板块标题编辑 */}
-            <IndustryAnalysisStockBoardInfo selectedBoard={selectedBoard} fetchBoards={fetchBoards} fetchBoardDetail={fetchBoardDetail}></IndustryAnalysisStockBoardInfo>
+        <IndustryAnalysisLoading loading={detailLoading} selectedBoard={selectedBoard}>
+          {
+            !selectedBoard ? null : <div className="space-y-6">
+              {/* 板块标题编辑 */}
+              <IndustryAnalysisStockBoardInfo selectedBoard={selectedBoard} fetchBoards={fetchBoards} fetchBoardDetail={fetchBoardDetail}></IndustryAnalysisStockBoardInfo>
 
-            {/* 关联公司 */}
-            <IndustryAnalysisRelatedCompanies selectedBoard={selectedBoard} fetchBoards={fetchBoards} fetchBoardDetail={fetchBoardDetail}></IndustryAnalysisRelatedCompanies>
+              {/* 关联公司 */}
+              <IndustryAnalysisRelatedCompanies selectedBoard={selectedBoard} fetchBoards={fetchBoards} fetchBoardDetail={fetchBoardDetail}></IndustryAnalysisRelatedCompanies>
 
-            {/* 行业分析报告 */}
-            <IndustryAnalysisIndustryAnalysis selectedBoard={selectedBoard}></IndustryAnalysisIndustryAnalysis>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-[60vh] bg-white rounded-xl shadow-lg">
-            <div className="text-6xl mb-4">📋</div>
-            <p className="text-slate-500 text-lg">请从左侧选择一个行业板块</p>
-          </div>
-        )}
+              {/* 行业分析报告 */}
+              <IndustryAnalysisIndustryAnalysis selectedBoard={selectedBoard}></IndustryAnalysisIndustryAnalysis>
+            </div>
+          }
+        </IndustryAnalysisLoading>
       </div>
-
     </div>
   )
 }
