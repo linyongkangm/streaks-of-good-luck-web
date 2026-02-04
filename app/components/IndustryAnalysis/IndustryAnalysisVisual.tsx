@@ -105,6 +105,11 @@ export default function IndustryAnalysisVisual({ selectedBoard }: Props) {
       .scale('x', { type: 'time', nice: true })
       .scale('y', { independent: true })
       .style('lineWidth', 2)
+      .axis('x', {
+        title: '交易日期',
+        titleFill: '#666',
+        titleFontSize: 12,
+      })
       .axis('y', {
         title: `收盘价(${adjustTypeLabels[adjustType]})`,
         titleFill: '#666',
@@ -113,6 +118,10 @@ export default function IndustryAnalysisVisual({ selectedBoard }: Props) {
       .legend('color', { position: 'top' })
       .tooltip({
         title: (d) => tools.toUTC(d.trade_date).toFormat(tools.DATE_FORMAT),
+      })
+      .tooltip({
+        name: `收盘价(${adjustTypeLabels[adjustType]})`,
+        channel: 'y',
       });
     chart
       .line()
@@ -128,9 +137,18 @@ export default function IndustryAnalysisVisual({ selectedBoard }: Props) {
         titleFill: '#666',
         titleFontSize: 12,
       })
+      .axis('x', {
+        title: '交易日期',
+        titleFill: '#666',
+        titleFontSize: 12,
+      })
       .legend('color', { position: 'top' })
       .tooltip({
         title: (d) => tools.toUTC(d.trade_date).toFormat(tools.DATE_FORMAT),
+      })
+      .tooltip({
+        name: `${metricLabels[metric]}`,
+        channel: 'y',
       });
     // chart
     //   .point()
