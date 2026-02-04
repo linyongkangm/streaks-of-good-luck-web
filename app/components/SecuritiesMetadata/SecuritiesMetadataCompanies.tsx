@@ -251,6 +251,9 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
     {
       title: '股票代码',
       dataIndex: 'company_code',
+    },    {
+      title: 'akshare代码',
+      dataIndex: 'company_akshare_code',
     },
     {
       title: '公司名称',
