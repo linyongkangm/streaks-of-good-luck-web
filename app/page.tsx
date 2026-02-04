@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import IndustryAnalysis from "./components/IndustryAnalysis";
+import IndustryAnalysis from "./components/IndustryAnalysis/IndustryAnalysis";
 import TweetAnalysis from "./components/TweetAnalysis";
 import ArticleAnalysis from "./components/ArticleAnalysis";
 import PredictsList from "./components/Predicts/PredictsList";

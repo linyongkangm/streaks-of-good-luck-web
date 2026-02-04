@@ -6,6 +6,7 @@ import type {
   StockBoardWithRelations,
   info__stock_company
 } from '@/types'
+import IndustryAnalysisStockBoardInfo from './IndustryAnalysisStockBoardInfo'
 
 export default function IndustryAnalysis() {
   const [boards, setBoards] = useState<info__stock_board[]>([])
@@ -14,8 +15,6 @@ export default function IndustryAnalysis() {
   const [detailLoading, setDetailLoading] = useState(false)
 
   // 板块编辑状态
-  const [isEditingBoard, setIsEditingBoard] = useState(false)
-  const [editBoardName, setEditBoardName] = useState('')
   const [showAddBoardModal, setShowAddBoardModal] = useState(false)
   const [newBoardName, setNewBoardName] = useState('')
 
@@ -63,7 +62,6 @@ export default function IndustryAnalysis() {
       const response = await fetch(`/api/stock-boards/${boardId}`)
       const data = await response.json()
       setSelectedBoard(data.data)
-      setEditBoardName(data.data.board_name)
     } catch (error) {
       console.error('Failed to fetch board detail:', error)
     } finally {
@@ -87,24 +85,6 @@ export default function IndustryAnalysis() {
       }
     } catch (error) {
       console.error('Failed to add board:', error)
-    }
-  }
-
-  const handleUpdateBoard = async () => {
-    if (!selectedBoard || !editBoardName.trim()) return
-    try {
-      const response = await fetch(`/api/stock-boards/${selectedBoard.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ board_name: editBoardName }),
-      })
-      if (response.ok) {
-        await fetchBoards()
-        await fetchBoardDetail(selectedBoard.id)
-        setIsEditingBoard(false)
-      }
-    } catch (error) {
-      console.error('Failed to update board:', error)
     }
   }
 
@@ -239,100 +219,8 @@ export default function IndustryAnalysis() {
         ) : selectedBoard ? (
           <div className="space-y-6">
             {/* 板块标题编辑 */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              {isEditingBoard ? (
-                <div className="flex items-center gap-3">
-                  <input
-                    type="text"
-                    value={editBoardName}
-                    onChange={(e) => setEditBoardName(e.target.value)}
-                    className="text-slate-900 flex-1 text-3xl font-bold px-3 py-2 border-2 border-blue-500 rounded-lg focus:outline-none"
-                  />
-                  <button
-                    onClick={handleUpdateBoard}
-                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
-                  >
-                    保存
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsEditingBoard(false)
-                      setEditBoardName(selectedBoard.board_name)
-                    }}
-                    className="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500"
-                  >
-                    取消
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between">
-                  <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                    {selectedBoard.board_name}
-                  </h2>
-                  <button
-                    onClick={() => setIsEditingBoard(true)}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm"
-                  >
-                    ✏️ 编辑
-                  </button>
-                </div>
-              )}
-            </div>
-            {/* 行业分析报告 */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-2">
-                <span>行业分析报告</span>
-                <span className="text-lg text-slate-500 font-normal">
-                  ({selectedBoard.relation__board_industry_analysis.length})
-                </span>
-              </h3>
-              <div className="space-y-4">
-                {selectedBoard.relation__board_industry_analysis.map((relation) => (
-                  <div key={relation.id} className="border border-slate-200 rounded-lg p-5 hover:shadow-md transition-shadow bg-gradient-to-br from-white to-slate-50">
-                    <h4 className="font-semibold text-lg mb-3 text-slate-900">
-                      {relation.info__industry_analysis.title}
-                    </h4>
-                    <div className="flex flex-wrap gap-3 text-sm text-slate-600 mb-3">
-                      {relation.info__industry_analysis.publisher && (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full">
-                          <span>📢</span>
-                          {relation.info__industry_analysis.publisher}
-                        </span>
-                      )}
-                      {relation.info__industry_analysis.author && (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full">
-                          <span>✍️</span>
-                          {relation.info__industry_analysis.author}
-                        </span>
-                      )}
-                      {relation.info__industry_analysis.report_time && (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 rounded-full">
-                          <span>📅</span>
-                          {new Date(relation.info__industry_analysis.report_time).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap mb-3">
-                      {relation.info__industry_analysis.summary}
-                    </p>
-                    {relation.info__industry_analysis.original_url && (
-                      <a
-                        href={relation.info__industry_analysis.original_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm group"
-                      >
-                        查看原文
-                        <span className="group-hover:translate-x-1 transition-transform">→</span>
-                      </a>
-                    )}
-                  </div>
-                ))}
-                {selectedBoard.relation__board_industry_analysis.length === 0 && (
-                  <p className="text-center text-slate-500 py-8">暂无行业分析报告</p>
-                )}
-              </div>
-            </div>
+            <IndustryAnalysisStockBoardInfo selectedBoard={selectedBoard} fetchBoards={fetchBoards} fetchBoardDetail={fetchBoardDetail}></IndustryAnalysisStockBoardInfo>
+
             {/* 关联公司 */}
             <div className="bg-white rounded-xl shadow-lg p-6">
               <div className="flex items-center justify-between mb-4">
@@ -422,7 +310,61 @@ export default function IndustryAnalysis() {
               </div>
             </div>
 
-
+            {/* 行业分析报告 */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-2">
+                <span>行业分析报告</span>
+                <span className="text-lg text-slate-500 font-normal">
+                  ({selectedBoard.relation__board_industry_analysis.length})
+                </span>
+              </h3>
+              <div className="space-y-4">
+                {selectedBoard.relation__board_industry_analysis.map((relation) => (
+                  <div key={relation.id} className="border border-slate-200 rounded-lg p-5 hover:shadow-md transition-shadow bg-gradient-to-br from-white to-slate-50">
+                    <h4 className="font-semibold text-lg mb-3 text-slate-900">
+                      {relation.info__industry_analysis.title}
+                    </h4>
+                    <div className="flex flex-wrap gap-3 text-sm text-slate-600 mb-3">
+                      {relation.info__industry_analysis.publisher && (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full">
+                          <span>📢</span>
+                          {relation.info__industry_analysis.publisher}
+                        </span>
+                      )}
+                      {relation.info__industry_analysis.author && (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full">
+                          <span>✍️</span>
+                          {relation.info__industry_analysis.author}
+                        </span>
+                      )}
+                      {relation.info__industry_analysis.report_time && (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 rounded-full">
+                          <span>📅</span>
+                          {new Date(relation.info__industry_analysis.report_time).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap mb-3">
+                      {relation.info__industry_analysis.summary}
+                    </p>
+                    {relation.info__industry_analysis.original_url && (
+                      <a
+                        href={relation.info__industry_analysis.original_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm group"
+                      >
+                        查看原文
+                        <span className="group-hover:translate-x-1 transition-transform">→</span>
+                      </a>
+                    )}
+                  </div>
+                ))}
+                {selectedBoard.relation__board_industry_analysis.length === 0 && (
+                  <p className="text-center text-slate-500 py-8">暂无行业分析报告</p>
+                )}
+              </div>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-[60vh] bg-white rounded-xl shadow-lg">
