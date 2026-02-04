@@ -12,13 +12,14 @@ interface Props {
   selectedBoard: StockBoardWithRelations;
   fetchBoards: () => Promise<void>;
   fetchBoardDetail: (boardId: number) => Promise<void>;
+  selectedCompanyId: number | null;
+  setSelectedCompanyId: (id: number | null) => void;
 }
 
-export default function IndustryAnalysisRelatedCompanies({ selectedBoard, fetchBoards, fetchBoardDetail }: Props) {
+export default function IndustryAnalysisRelatedCompanies({ selectedBoard, fetchBoards, fetchBoardDetail, selectedCompanyId, setSelectedCompanyId }: Props) {
   const [showAddCompanyModal, setShowAddCompanyModal] = useState(false)
   const [editingWeightId, setEditingWeightId] = useState<number | null>(null)
   const [editWeightValue, setEditWeightValue] = useState('')
-  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null)
   const [allCompanies, setAllCompanies] = useState<info__stock_company[]>([])
   const [newCompanyWeight, setNewCompanyWeight] = useState('0')
   const fetchAllCompanies = async () => {
@@ -179,6 +180,17 @@ export default function IndustryAnalysisRelatedCompanies({ selectedBoard, fetchB
       columns={columns}
       dataSource={selectedBoard.relation__stock_board_company}
       emptyText="暂无关联公司"
+      rowClassName={(record: any) => 
+        selectedCompanyId === record.company_id ? 'bg-blue-50' : ''
+      }
+      onRow={(record: any) => ({
+        onClick: () => {
+          setSelectedCompanyId(
+            selectedCompanyId === record.company_id ? null : record.company_id
+          )
+        },
+        style: { cursor: 'pointer' },
+      })}
     />
 
     {/* 添加公司模态框 */}

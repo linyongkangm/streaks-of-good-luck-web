@@ -16,6 +16,7 @@ import IndustryAnalysisVisual from './IndustryAnalysisVisual'
 export default function IndustryAnalysis() {
   const [boards, setBoards] = useState<info__stock_board[]>([])
   const [selectedBoard, setSelectedBoard] = useState<StockBoardWithRelations | null>(null)
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [detailLoading, setDetailLoading] = useState(false)
 
@@ -38,6 +39,7 @@ export default function IndustryAnalysis() {
 
   const fetchBoardDetail = async (boardId: number) => {
     setDetailLoading(true)
+    setSelectedCompanyId(null) // 切换板块时重置选中的公司
     try {
       const response = await fetch(`/api/stock-boards/${boardId}`)
       const data = await response.json()
@@ -60,7 +62,10 @@ export default function IndustryAnalysis() {
         <IndustryAnalysisStockBoards
           boards={boards}
           selectedBoard={selectedBoard}
-          setSelectedBoard={setSelectedBoard}
+          setSelectedBoard={(board) => {
+            setSelectedBoard(board)
+            setSelectedCompanyId(null)
+          }}
           fetchBoards={fetchBoards}
           fetchBoardDetail={fetchBoardDetail}
         ></IndustryAnalysisStockBoards>
@@ -73,9 +78,9 @@ export default function IndustryAnalysis() {
             !selectedBoard ? null : <div className="space-y-6">
               {/* 板块标题编辑 */}
               <IndustryAnalysisStockBoardInfo selectedBoard={selectedBoard} fetchBoards={fetchBoards} fetchBoardDetail={fetchBoardDetail}></IndustryAnalysisStockBoardInfo>
-              <IndustryAnalysisVisual selectedBoard={selectedBoard}></IndustryAnalysisVisual>
+              <IndustryAnalysisVisual selectedBoard={selectedBoard} selectedCompanyId={selectedCompanyId}></IndustryAnalysisVisual>
               {/* 关联公司 */}
-              <IndustryAnalysisRelatedCompanies selectedBoard={selectedBoard} fetchBoards={fetchBoards} fetchBoardDetail={fetchBoardDetail}></IndustryAnalysisRelatedCompanies>
+              <IndustryAnalysisRelatedCompanies selectedBoard={selectedBoard} fetchBoards={fetchBoards} fetchBoardDetail={fetchBoardDetail} selectedCompanyId={selectedCompanyId} setSelectedCompanyId={setSelectedCompanyId}></IndustryAnalysisRelatedCompanies>
 
               {/* 行业分析报告 */}
               <IndustryAnalysisIndustryAnalysis selectedBoard={selectedBoard}></IndustryAnalysisIndustryAnalysis>

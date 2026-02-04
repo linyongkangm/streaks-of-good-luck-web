@@ -6,6 +6,7 @@ import type { StockBoardWithRelations } from '@/types'
 import * as tools from '@/app/tools'
 interface Props {
   selectedBoard: StockBoardWithRelations
+  selectedCompanyId: number | null
 }
 
 type AdjustType = 'none' | 'qfq' | 'hfq'
@@ -24,13 +25,13 @@ const metricLabels = {
   pc: 'PC (市现率)',
 }
 
-export default function IndustryAnalysisVisual({ selectedBoard }: Props) {
+export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyId }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
   const chartInstance = useRef<Chart | null>(null)
   const [loading, setLoading] = useState(false)
   const [adjustType, setAdjustType] = useState<AdjustType>('qfq')
   const [metric, setMetric] = useState<ValuationMetric>('pe')
-  const [data, setData] = useState<any[]>([])
+  const [data, setData] = useState<{ [key: string]: any[] }>({})
   const [dateRange, setDateRange] = useState({
     start_date: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     end_date: new Date().toISOString().split('T')[0],
@@ -67,30 +68,42 @@ export default function IndustryAnalysisVisual({ selectedBoard }: Props) {
 
   // 绘制图表
   useEffect(() => {
-    if (!chartRef.current || data.length === 0) return
+    if (!chartRef.current || !data || Object.keys(data).length === 0) return
+
+    // 根据 selectedCompanyId 选择数据源
+    const dataKey = selectedCompanyId ? selectedCompanyId.toString() : 'all'
+    const chartData = data[dataKey] || []
+
+    if (chartData.length === 0) return
 
     // 准备图表数据
     const chartDatasource: any[] = []
-    data.forEach((item) => {
-      const closePrice = item[`${adjustType}_close_price`]
+    chartData.forEach((item) => {
       const valuation = item[`${adjustType}_valuation`]?.[metric]
-      if (closePrice && valuation) {
-        const quantile_price = item.quantile_prices?.[adjustType]?.[metric] || {}
-        const obj = new Map<string, number>();
-        quantile_price && Object.keys(quantile_price).forEach((key) => {
-          obj.set(`quantile_price_${key}`, parseFloat((quantile_price[key]).toFixed(2)));
-        });
-        const data = {
-          trade_date: new Date(item.trade_date),
-          closePrice,
-          valuation: parseFloat(valuation.toFixed(2)),
-          company_name: item.company_name,
-          company_code: item.company_code,
-          company_id: item.company_id,
-          ...Object.fromEntries(obj),
-        }
-        chartDatasource.push(data)
+      if (!valuation) return
+
+      const dataPoint: any = {
+        trade_date: new Date(item.trade_date),
+        valuation: parseFloat(valuation.toFixed(2)),
       }
+
+      // 如果是公司数据，包含 closePrice 和 quantile_prices
+      if (item.company_id) {
+        dataPoint.company_name = item.company_name
+        dataPoint.company_code = item.company_code
+        dataPoint.company_id = item.company_id
+      }
+      const closePrice = item[`${adjustType}_close_price`]
+      dataPoint.closePrice = closePrice
+      const quantile_price = item.quantile_prices?.[adjustType]?.[metric] || {}
+      Object.keys(quantile_price).forEach((key) => {
+        if (quantile_price[key] !== null) {
+          dataPoint[`quantile_price_${key}`] = parseFloat(quantile_price[key].toFixed(2))
+        }
+      })
+
+
+      chartDatasource.push(dataPoint)
     })
 
     // 销毁旧图表
@@ -168,20 +181,22 @@ export default function IndustryAnalysisVisual({ selectedBoard }: Props) {
             channel: 'y',
           }
         },
-        ...ps.map((q, index) => ({
-          type: 'line',
-          encode: {
-            y: `quantile_price_p${q}`,
-          },
-          style: {
-            lineWidth: 1,
-            stroke: grayGradient[index],
-          },
-          tooltip: {
-            name: `${q}分位价`,
-            channel: 'y',
+        ...ps.map((q, index) => {
+          return {
+            type: 'line',
+            encode: {
+              y: `quantile_price_p${q}`,
+            },
+            style: {
+              lineWidth: 1,
+              stroke: grayGradient[index],
+            },
+            tooltip: {
+              name: `${q}分位价`,
+              channel: 'y',
+            }
           }
-        }))
+        })
       ],
     })
     chart.render()
@@ -192,7 +207,7 @@ export default function IndustryAnalysisVisual({ selectedBoard }: Props) {
         chartInstance.current.destroy()
       }
     }
-  }, [data, adjustType, metric])
+  }, [data, adjustType, metric, selectedCompanyId])
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6">
@@ -254,7 +269,7 @@ export default function IndustryAnalysisVisual({ selectedBoard }: Props) {
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600"></div>
         </div>
-      ) : data.length === 0 ? (
+      ) : Object.keys(data).length === 0 ? (
         <div className="text-center py-12 text-slate-500">暂无数据</div>
       ) : (
         <div ref={chartRef} className="w-full"></div>
