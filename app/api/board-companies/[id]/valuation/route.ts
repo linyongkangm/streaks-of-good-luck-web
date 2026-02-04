@@ -114,7 +114,87 @@ export async function GET(
         hfq_valuation: calculateValuation(Number(quote.hfq_close_price)),
       }
     }).filter(Boolean)
-    return NextResponse.json({ data: result })
+
+    // 计算分位数价格
+    const calculateQuantiles = (values: number[], quantiles: number[]) => {
+      const sorted = values.filter(v => v !== null && !isNaN(v)).sort((a, b) => a - b)
+      if (sorted.length === 0) return quantiles.map(() => null)
+      
+      return quantiles.map(q => {
+        const index = (sorted.length - 1) * q
+        const lower = Math.floor(index)
+        const upper = Math.ceil(index)
+        const weight = index - lower
+        
+        if (lower === upper) return sorted[lower]
+        return sorted[lower] * (1 - weight) + sorted[upper] * weight
+      })
+    }
+
+    // 为每种估值指标计算分位数
+    const quantileLevels = [0.1, 0.3, 0.5, 0.7, 0.9]
+    const valuationTypes = ['pe', 'pb', 'ps', 'pc'] as const
+
+    // 为每个复权类型和估值指标计算分位数
+    const adjustTypes = ['none', 'qfq', 'hfq'] as const
+    const quantileData: Record<string, Record<string, number[]>> = {}
+
+    adjustTypes.forEach(adjustType => {
+      quantileData[adjustType] = {}
+      valuationTypes.forEach(metric => {
+        const allValues = result
+          .map(r => r?.[`${adjustType}_valuation`]?.[metric])
+          .filter(v => v !== null && v !== undefined && !isNaN(v)) as number[]
+        
+        quantileData[adjustType][metric] = calculateQuantiles(allValues, quantileLevels) as number[]
+      })
+    })
+
+    // 为每个交易日添加分位数对应的价格
+    const resultWithQuantiles = result.map(item => {
+      if (!item) return null
+
+      const quantilePrices: Record<string, Record<string, { p10: number | null; p30: number | null; p50: number | null; p70: number | null; p90: number | null }>> = {
+        none: {},
+        qfq: {},
+        hfq: {},
+      }
+
+      adjustTypes.forEach(adjustType => {
+        quantilePrices[adjustType] = {}
+        
+        valuationTypes.forEach(metric => {
+          const quantiles = quantileData[adjustType][metric]
+          
+          // 根据财务指标计算每个分位数对应的价格
+          let baseValue = 0
+          if (metric === 'pe') {
+            baseValue = item.basic_eps_ttm
+          } else if (metric === 'pb') {
+            baseValue = item.weighted_average_shares ? item.total_parent_equity / item.weighted_average_shares : 0
+          } else if (metric === 'ps') {
+            baseValue = item.weighted_average_shares ? item.operate_income_ttm / item.weighted_average_shares : 0
+          } else if (metric === 'pc') {
+            baseValue = item.weighted_average_shares ? item.netcash_operate_ttm / item.weighted_average_shares : 0
+          }
+
+          quantilePrices[adjustType][metric] = {
+            p10: quantiles[0] !== null && baseValue !== 0 ? quantiles[0] * baseValue : null,
+            p30: quantiles[1] !== null && baseValue !== 0 ? quantiles[1] * baseValue : null,
+            p50: quantiles[2] !== null && baseValue !== 0 ? quantiles[2] * baseValue : null,
+            p70: quantiles[3] !== null && baseValue !== 0 ? quantiles[3] * baseValue : null,
+            p90: quantiles[4] !== null && baseValue !== 0 ? quantiles[4] * baseValue : null,
+          }
+        })
+      })
+
+      return {
+        ...item,
+        quantile_prices: quantilePrices,
+      }
+    })
+
+    return NextResponse.json({ data: resultWithQuantiles })
   } catch (error) {
     console.error('获取估值数据失败:', error)
     return NextResponse.json({ error: '获取估值数据失败' }, { status: 500 })

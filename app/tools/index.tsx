@@ -156,7 +156,7 @@ export function formatNumber(value: any, decimals: number = 2): string {
   const num = Number(value)
   const abs = Math.abs(num)
   const sign = num < 0 ? '-' : ''
-  
+
   if (abs >= 100000000) return `${sign}${(abs / 100000000).toFixed(2)}亿`
   if (abs >= 10000) return `${sign}${(abs / 10000).toFixed(2)}万`
   return num.toFixed(decimals)
@@ -172,8 +172,20 @@ export function formatVolume(value: any): string {
   const num = Number(value)
   const abs = Math.abs(num)
   const sign = num < 0 ? '-' : ''
-  
+
   if (abs >= 100000000) return `${sign}${(abs / 100000000).toFixed(2)}亿`
   if (abs >= 10000) return `${sign}${(abs / 10000).toFixed(2)}万`
   return num.toString()
+}
+
+export function genGrayGradient(len: number): string[] {
+  const minGrayValue = 60;   // 最深灰度值
+  const maxGrayValue = 240;  // 最浅灰度值
+  // 计算每一步的递减步长（均匀分配灰度梯度）
+  const step = len === 1 ? 0 : (maxGrayValue - minGrayValue) / (len - 1);
+  return Array.from({ length: len }, (_, i) => {
+    const grayValue = Math.floor(maxGrayValue - (i * step));
+    const hex = grayValue.toString(16).padStart(2, '0');
+    return `#${hex}${hex}${hex}`;
+  });
 }

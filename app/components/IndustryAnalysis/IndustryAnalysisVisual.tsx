@@ -75,11 +75,19 @@ export default function IndustryAnalysisVisual({ selectedBoard }: Props) {
       const closePrice = item[`${adjustType}_close_price`]
       const valuation = item[`${adjustType}_valuation`]?.[metric]
       if (closePrice && valuation) {
+        const quantile_price = item.quantile_prices?.[adjustType]?.[metric] || {}
+        const obj = new Map<string, number>();
+        quantile_price && Object.keys(quantile_price).forEach((key) => {
+          obj.set(`quantile_price_${key}`, parseFloat((quantile_price[key]).toFixed(2)));
+        });
         const data = {
           trade_date: new Date(item.trade_date),
           closePrice,
           valuation: parseFloat(valuation.toFixed(2)),
           company_name: item.company_name,
+          company_code: item.company_code,
+          company_id: item.company_id,
+          ...Object.fromEntries(obj),
         }
         chartDatasource.push(data)
       }
@@ -96,6 +104,7 @@ export default function IndustryAnalysisVisual({ selectedBoard }: Props) {
       autoFit: true,
       height: 500,
     })
+    console.log(chartDatasource)
     chart.data(chartDatasource);
     chart
       .line()
@@ -150,6 +159,25 @@ export default function IndustryAnalysisVisual({ selectedBoard }: Props) {
         name: `${metricLabels[metric]}`,
         channel: 'y',
       });
+    const ps = [10, 30, 50, 70, 90];
+    const genGrayGradient = tools.genGrayGradient(ps.length);
+    ps.forEach((q, index) => {
+      chart
+        .line()
+        .encode('x', 'trade_date')
+        .encode('y', `quantile_price_p${q}`)
+        .encode('color', genGrayGradient[index])
+        .style('lineWidth', 1)
+        .axis('y', false)
+        .tooltip({
+          title: (d) => tools.toUTC(d.trade_date).toFormat(tools.DATE_FORMAT),
+        })
+        .tooltip({
+          name: `${q}分位价`,
+          channel: 'y',
+        });
+    })
+
     chart.render()
     chartInstance.current = chart
 
