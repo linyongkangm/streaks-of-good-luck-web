@@ -126,7 +126,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
       },
       axis: {
         x: {
-          title: '交易日期',
+          title: (selectedBoard.relation__stock_board_company.find(company => company.company_id === selectedCompanyId)?.info__stock_company?.company_name || 'All') + ' - 交易日期',
         },
       },
       scale: {
