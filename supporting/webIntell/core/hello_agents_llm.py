@@ -77,14 +77,11 @@ class HelloAgentsLLM:
             )
 
             # 处理流式响应
-            logger.info("✅ 大语言模型响应成功:")
             collected_content = []
             for chunk in response:
                 content = chunk.choices[0].delta.content or ""
-                if content == "":
-                    continue
-                logger.info(content)
-                collected_content.append(content)
+                if content != "":
+                    collected_content.append(content)
             return "".join(collected_content)
 
         except APIError as e:

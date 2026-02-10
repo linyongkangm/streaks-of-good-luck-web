@@ -299,11 +299,13 @@ def server(host, port):
 
 
 @cli.command()
-def test():
+@app.get("/test")
+async def test():
     """运行测试任务"""
-    tasks.test()
-
     click.echo("运行测试任务...")
+    source_text = "这是一个测试文章，用于验证文章分析功能是否正常工作。文章内容包含多个段落，涵盖不同的主题和观点。我们希望模型能够正确地提取出文章的主要内容，并生成准确的标签和摘要。"
+    issue_date = "2024-06-01"
+    await tasks.gen_article_analysis(source_text, issue_date)
     # 在这里添加测试任务调用
     click.echo("测试任务完成。")
 
