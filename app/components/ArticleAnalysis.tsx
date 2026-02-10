@@ -184,7 +184,7 @@ export default function ArticleAnalysis() {
 
     try {
       setReanalyzing(article.id.toString())
-      const response = await fetch('/api/process-articles', {
+      const response = await fetch('/api/update-articles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
