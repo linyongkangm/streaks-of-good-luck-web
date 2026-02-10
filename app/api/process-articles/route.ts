@@ -43,21 +43,18 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // 串行处理每篇新文章
-    const results: { status: 'fulfilled' | 'rejected'; value?: any; reason?: any }[] = [];
-    for (const article of newArticles) {
-      try {
+    // 并行处理每篇新文章
+    const results = await Promise.allSettled(
+      newArticles.map(async (article) => {
         const r = await generateArticleAnalysis(article, false);
-        results.push({ status: 'fulfilled', value: r });
         if (r.success && r.data) {
           const issue_date = r.data.issue_date ? r.data.issue_date.toISOString().split('T')[0] : '未知日期';
           tools.postArticleMessage(r.data.title, `${r.data.summary} [${r.data.publication} ${issue_date}]`, r.data.source_url);
           console.log(`✓ Article processed: ${r.data.title} (${r.data.source_url})`);
         }
-      } catch (e) {
-        results.push({ status: 'rejected', reason: e });
-      }
-    }
+        return r;
+      })
+    );
 
     // 统计成功和失败的数量
     const successful = results.filter((r) => r.status === 'fulfilled' && (r.value as any).success).length
