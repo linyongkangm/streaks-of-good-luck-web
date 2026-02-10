@@ -25,7 +25,7 @@ export default function Home() {
             <ul className="mb-4 max-h-60 overflow-y-auto">
               {articleResults.map((item, idx) => (
                 <li key={idx} className="flex justify-between items-center py-1 border-b last:border-b-0">
-                  <span className="text-slate-600 max-w-[400px]" title={item.title}>{item.title}</span>
+                  <a className="text-slate-600 max-w-[400px] hover:underline" title={item.title} href={item.source_url} target="_blank" rel="noopener noreferrer">{item.title}</a>
                   <span className={
                     item.status === '处理完成'
                       ? 'text-green-600'

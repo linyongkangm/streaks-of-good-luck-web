@@ -44,7 +44,6 @@ export async function POST(request: NextRequest) {
 
     // 串行处理每篇新文章
     const results: { status: 'fulfilled' | 'rejected'; value?: any; reason?: any }[] = [];
-    
     for (const article of newArticles) {
       try {
         const r = await generateArticleAnalysis(article, false);
