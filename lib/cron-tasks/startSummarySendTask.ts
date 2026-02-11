@@ -1,6 +1,6 @@
 import * as tools from '@/app/tools';
 import cron from 'node-cron';
-import { prisma } from '../db';
+import { prisma } from '@/lib/db';
 const SEND_HOUR = 9; // 发送摘要的小时（24小时制）
 // 定时任务：每天发送前一日的推文摘要
 // 每天早上9点执行

@@ -1,7 +1,7 @@
 import cron from 'node-cron';
 import { BrowserContext } from 'playwright';
 import { prisma } from '@/lib/db';
-
+import * as stools from '@/app/tools/stools';
 const SEND_HOUR = 9; // 发送摘要的小时（24小时制）
 async function collectTweetSummaries(context: BrowserContext) {
   try {
@@ -34,7 +34,6 @@ async function collectTweetSummaries(context: BrowserContext) {
 }
 
 async function startDataCollectionTaskCallback() {
-  const stools = await import('@/app/tools/stools');
   // 启动浏览器并触发EXTERNAL_EVENT事件
   const context = await stools.launchBrowser(process.env.HOST_URL);
   console.log('Starting data collection task...');
