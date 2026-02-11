@@ -67,10 +67,12 @@ class HelloAgentsLLM:
         调用大语言模型进行思考，并返回其响应。
         """
         logger = utils.locator.get_project_logger()
-        logger.info(f"🧠 正在调用 {self.model} 模型...")
+        
+        cur_model = self.model
+        logger.info(f"🧠 正在调用 {cur_model} 模型...")
         try:
             response = self.client.chat.completions.create(
-                model=self.model,
+                model=cur_model,
                 messages=messages,
                 temperature=temperature,
                 stream=True,
@@ -87,6 +89,8 @@ class HelloAgentsLLM:
         except APIError as e:
             logger.error(f"❌ 调用LLM API时发生错误: {e}")
             if "You have exceeded today's quota" in e.message:
-                self.shiftModel(1)
+                # 还没有更智能的方式来判断是否需要切换模型，所以先简单地在遇到配额超限错误时切换模型
+                if cur_model == self.model:
+                    self.shiftModel(1)
                 return self.think(messages, temperature)
             raise ValueError("调用LLM API时发生错误，请检查配置和网络连接。") from e
