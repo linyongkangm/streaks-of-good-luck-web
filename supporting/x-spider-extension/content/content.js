@@ -28,6 +28,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       isScraping = false;
       sendFailedResponse({}, error.message || 'Scraping failed');
     });
+  } else if (request.action === "SCRAPING_LIST") {
+    scrapeList(request).then(records => {
+      sendSuccessResponse({ records }, 'List scraping completed');
+    }).catch(error => {
+      console.error('List scraping error:', error);
+      sendFailedResponse({}, error.message || 'List scraping failed');
+    });
   }
   return true;
 });
