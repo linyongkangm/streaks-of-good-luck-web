@@ -6,12 +6,11 @@ export default function useExternalEvent() {
     const handle = async (event: any) => {
       console.log('Received EXTERNAL_EVENT with detail:', event.detail);
       if (event.detail?.type === 'collectTweetSummaries') {
-        const response = await fetch('/api/tweet-summaries/existing');
-        const data = await response.json();
-        const collectFromMapExistingTweetIds: Record<string, string[]> = data.collectFromMapExistingTweetIds || {};
-        Object.entries(collectFromMapExistingTweetIds).forEach(([collectFrom, existingTweetIds]) => {
-          console.log(`Collecting from ${collectFrom} with existing tweet IDs:`, existingTweetIds);
-          ctools.collectLatestTweets(collectFrom, existingTweetIds).then((data) => {
+        const response = await fetch('/api/tweet-summaries?collect_from_only=true')
+        const data = await response.json()
+        const collectFromList: string[] = data.data || [];
+        collectFromList.forEach((collectFrom) => {
+          ctools.collectLatestTweets(collectFrom).then((data) => {
             console.log('Tweets collected successfully:', data);
           }).catch((error) => {
             console.error('Error collecting tweets:', error);

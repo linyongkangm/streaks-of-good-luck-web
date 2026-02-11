@@ -9,8 +9,8 @@ export async function processArticles(articles: any[]) {
   return result;
 }
 
-export function collectLatestTweets(collectFrom: String, existingFlags: String[] = []) {
-  return new Promise<any>((resolve, reject) => {
+export function collectLatestTweets(collectFrom: string) {
+  return new Promise<any>(async (resolve, reject) => {
     const callbackCode = 'CALLBACK_REDIRECT_TAB_SCRAPING_' + Math.random().toString(36).substring(2)
     document.addEventListener(callbackCode, async (event: any) => {
       console.log('Latest tweets fetched:', event.detail.records);
@@ -46,11 +46,14 @@ export function collectLatestTweets(collectFrom: String, existingFlags: String[]
         resolve({ success: true, successful: 0, failed: 0 })
       }
     }, { once: true });
+    const response = await fetch(`/api/tweet-summaries/existing?collect_from=${collectFrom}`);
+    const data = await response.json();
+    const existingTweetIds: string[] = data.existingTweetIds || [];
     document.dispatchEvent(new CustomEvent('REDIRECT_TAB_SCRAPING', {
       detail: {
         target: collectFrom,
         callbackCode,
-        existingFlags,
+        existingFlags: existingTweetIds,
       }
     }))
   });

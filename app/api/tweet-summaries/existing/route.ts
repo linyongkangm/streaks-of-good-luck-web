@@ -4,37 +4,22 @@ import { prisma } from '@/lib/db';
 // POST /api/tweet-summaries/existing - 获取数据库中已存在的tweet_id列表，按collect_from分组
 export async function GET(req: NextRequest) {
   try {
-    // 从数据库获取所有唯一的collect_from
-    const summaries = await prisma.summary__tweet.findMany({
-      select: {
-        collect_from: true,
-      },
-      distinct: ['collect_from']
-    });
-    const collectFroms = summaries.map(s => s.collect_from);
-    if (collectFroms.length === 0) {
-      console.log('No collect_from found in database');
-      return;
+    const searchParams = req.nextUrl.searchParams
+    const collectFrom = searchParams.get('collect_from');
+    if (!collectFrom) {
+      return NextResponse.json({ error: 'Missing collect_from parameter' }, { status: 400 });
     }
-    console.log(`Found ${collectFroms.length} sources to collect from:`, collectFroms);
-
-    const tweetsMap = await Promise.all(collectFroms.map(async (collectFrom) => {
-      return prisma.info__tweet.findMany({
-        select: {
-          tweet_id: true,
-        },
-        distinct: ['tweet_id'],
-        where: {
-          collect_from: collectFrom,
-        },
-      });
-    }));
-    const collectFromMapExistingTweetIds: Record<string, string[]> = {};
-    collectFroms.forEach((collectFrom, index) => {
-      const tweetIds = tweetsMap[index].map(t => t.tweet_id);
-      collectFromMapExistingTweetIds[collectFrom] = tweetIds;
+    const tweetsMap = await prisma.info__tweet.findMany({
+      select: {
+        tweet_id: true,
+      },
+      distinct: ['tweet_id'],
+      where: {
+        collect_from: collectFrom,
+      },
     });
-    return NextResponse.json({ collectFromMapExistingTweetIds });
+    const existingTweetIds = tweetsMap.map(t => t.tweet_id);
+    return NextResponse.json({ existingTweetIds });
   } catch (error) {
     console.error('Failed to fetch tweet summaries existing:', error)
     return NextResponse.json(
