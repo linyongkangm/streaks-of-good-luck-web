@@ -1,5 +1,5 @@
 import { scraping, markRecordedScrapings, getRecordedScrapings } from './lib/scraping.js';
-import { getCurrentTab, redirectToTargetTab, getIsScraping, setIsScraping } from './lib/utils.js';
+import { getCurrentTab, redirectToTargetTab, getIsScraping, setIsScraping, getHostTab } from './lib/utils.js';
 export function register(messageObserver) {
   messageObserver.on("CURRENT_TAB_SCRAPING", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
     const tab = await getCurrentTab();
@@ -25,17 +25,17 @@ export function register(messageObserver) {
 
   const listUrls = new Set([
     "https://www.wsj.com/finance/commodities-futures?page=1",
-    "https://www.wsj.com/finance/banking?page=1",
-    "https://www.wsj.com/finance/currencies?page=1",
-    "https://www.wsj.com/finance/investing?page=1",
-    "https://www.wsj.com/finance/regulation?page=1",
-    "https://www.wsj.com/finance/stocks?page=1",
-    "https://www.wsj.com/tech/ai?page=1",
-    "https://www.wsj.com/tech/biotech?page=1",
-    "https://www.wsj.com/tech/personal-tech?page=1",
-    "https://www.wsj.com/economy/central-banking?page=1",
-    "https://www.wsj.com/economy/trade?page=1",
-    "https://www.wsj.com/economy/global?page=1",
+    // "https://www.wsj.com/finance/banking?page=1",
+    // "https://www.wsj.com/finance/currencies?page=1",
+    // "https://www.wsj.com/finance/investing?page=1",
+    // "https://www.wsj.com/finance/regulation?page=1",
+    // "https://www.wsj.com/finance/stocks?page=1",
+    // "https://www.wsj.com/tech/ai?page=1",
+    // "https://www.wsj.com/tech/biotech?page=1",
+    // "https://www.wsj.com/tech/personal-tech?page=1",
+    // "https://www.wsj.com/economy/central-banking?page=1",
+    // "https://www.wsj.com/economy/trade?page=1",
+    // "https://www.wsj.com/economy/global?page=1",
   ]);
   messageObserver.on("BATCH_LIST_SCRAPING", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
     let contentUrls = (await Promise.all(
@@ -52,24 +52,30 @@ export function register(messageObserver) {
         }
       })
     )).flat();
-    contentUrls = [...new Set(contentUrls)];
+    contentUrls = [...new Set(contentUrls)].slice(0, 5);
     // todo - 过滤已记录的URL
+
+    const hostTab = await getHostTab();
+    const count = 3
     let index = 0;
     while (index < contentUrls.length) {
-      const batchUrls = contentUrls.slice(index, index + 5);
+      const batchUrls = contentUrls.slice(index, index + count);
       Promise.all(batchUrls.map(async (url) => {
         const targetTab = await redirectToTargetTab(url);
         const records = await scraping(targetTab);
         if (records.length > 0) {
           await chrome.tabs.remove(targetTab.id);
-          messageObserver.emit("SEND_TO_HOST", {
-            type: "STORE_ARTICLE",
-            records
-          })
+          await chrome.tabs.sendMessage(hostTab.id, {
+            action: "RECEIVE_FROM_EXTENSION",
+            payload: {
+              type: "STORE_ARTICLE",
+              records
+            }
+          });
         }
       }));
-      index += 5;
-      await new Promise(resolve => setTimeout(resolve, 10 * 1000)); // 每5秒处理5个URL，避免过快打开多个标签页
+      index += count;
+      await new Promise(resolve => setTimeout(resolve, 10 * 1000)); // 每10秒处理5个URL，避免过快打开多个标签页
     }
     sendSuccessResponse();
   });
