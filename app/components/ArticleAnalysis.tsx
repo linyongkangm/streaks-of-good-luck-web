@@ -23,6 +23,7 @@ export default function ArticleAnalysis() {
   const [searchIssueDate, setSearchIssueDate] = useState('')
   const [publications, setPublications] = useState<string[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
+  const [isProcessingWSJ, setIsProcessingWSJ] = useState(false)
   const [reanalyzing, setReanalyzing] = useState<string | null>(null)
   const [extractingPredicts, setExtractingPredicts] = useState<string | null>(null)
   const [predictPreview, setPredictPreview] = useState<{
@@ -368,12 +369,27 @@ export default function ArticleAnalysis() {
               '获取求是'
             )}
           </button>
-          <button onClick={() => {
-            ctools.collectLatestWSJArticles()
+          <button onClick={async () => {
+            try {
+              setIsProcessingWSJ(true)
+              await ctools.collectLatestWSJArticles()
+            } catch (error) {
+              console.error('Failed to collect WSJ articles:', error)
+            } finally {
+              setIsProcessingWSJ(false)
+            }
           }}
+            disabled={isProcessingWSJ}
             className="px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            获取WSJ
+            {isProcessingWSJ ? (
+              <>
+                <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                处理中...
+              </>
+            ) : (
+              '获取WSJ'
+            )}
           </button>
         </div>
       </div>
