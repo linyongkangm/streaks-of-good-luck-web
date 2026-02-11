@@ -3,6 +3,7 @@ console.log('X-Spider zhihu-content script');
 async function scrape() {
   const scrollY = window.scrollY;
   window.scrollTo(0, document.body.scrollHeight);
+  await new Promise(resolve => setTimeout(resolve, 1000)); // 等待页面加载
   let record = null;
   const source_url = window.location.origin + window.location.pathname;
   const publication = 'zhihu';
