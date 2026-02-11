@@ -52,7 +52,7 @@ export function register(messageObserver) {
         }
       })
     )).flat();
-    contentUrls = [...new Set(contentUrls)].slice(0, 5);
+    contentUrls = [...new Set(contentUrls)];
     // todo - 过滤已记录的URL
 
     const hostTab = await getHostTab();
