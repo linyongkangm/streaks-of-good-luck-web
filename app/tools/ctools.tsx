@@ -9,52 +9,76 @@ export async function processArticles(articles: any[]) {
   return result;
 }
 
-export function collectLatestTweets(collectFrom: string) {
-  return new Promise<any>(async (resolve, reject) => {
-    const callbackCode = 'CALLBACK_REDIRECT_TAB_SCRAPING_' + Math.random().toString(36).substring(2)
+export function callXSpider(action: string, detail: any) {
+  return new Promise((resolve, reject) => {
+    const callbackCode = `CALLBACK_${action}_` + Math.random().toString(36).substring(2)
     document.addEventListener(callbackCode, async (event: any) => {
-      console.log('Latest tweets fetched:', event.detail.records);
-      const records = event.detail.records;
-      // 批量创建推文
-      if (records && records.length > 0) {
-        try {
-          const response = await fetch('/api/batch-create-tweets', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tweetRecords: records }),
-          })
-          const data = await response.json()
-
-          if (data.success) {
-            // 刷新摘要列表
-            document.dispatchEvent(new CustomEvent('MARK_RECORDED_SCRAPINGS', {
-              detail: {
-                flags: (data.successfulTweetIds || []).concat(data.existingTweetIds || []),
-                host: collectFrom,
-              }
-            }))
-            resolve(data)
-          } else {
-            throw new Error(data.message || 'Batch create tweets failed')
-          }
-        } catch (error) {
-          console.error('Failed to batch create tweets:', error)
-          reject(error)
-        }
-      } else {
-        console.log('No new tweets to process.')
-        resolve({ success: true, successful: 0, failed: 0 })
-      }
-    }, { once: true });
-    const response = await fetch(`/api/tweet-summaries/existing?collect_from=${collectFrom}`);
-    const data = await response.json();
-    const existingTweetIds: string[] = data.existingTweetIds || [];
-    document.dispatchEvent(new CustomEvent('REDIRECT_TAB_SCRAPING', {
+      console.log(`${action} result received:`, event.detail);
+      resolve(event.detail);
+    }, { once: true })
+    console.log(`Dispatching ${action} with detail:`, detail);
+    document.dispatchEvent(new CustomEvent(action, {
       detail: {
-        target: collectFrom,
+        ...detail,
         callbackCode,
-        existingFlags: existingTweetIds,
       }
     }))
+  });
+}
+
+export async function collectLatestTweets(collectFrom: string) {
+  const response = await fetch(`/api/tweet-summaries/existing?collect_from=${collectFrom}`);
+  const data = await response.json();
+  const existingTweetIds: string[] = data.existingTweetIds || [];
+  const callXSpiderResult: any = await callXSpider('REDIRECT_TAB_SCRAPING', {
+    target: collectFrom,
+    existingFlags: existingTweetIds,
+  });
+  const records = callXSpiderResult.records || []
+  if (records && records.length > 0) {
+    try {
+      const response = await fetch('/api/batch-create-tweets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tweetRecords: records }),
+      })
+      const data = await response.json()
+
+      if (data.success) {
+        return (data)
+      } else {
+        throw new Error(data.message || 'Batch create tweets failed')
+      }
+    } catch (error) {
+      console.error('Failed to batch create tweets:', error)
+      throw error
+    }
+  } else {
+    console.log('No new tweets to process.')
+    return { success: true, successful: 0, failed: 0 }
+  }
+}
+
+export async function collectLatestWSJArticles() {
+  const listUrls = new Set([
+    "https://www.wsj.com/finance/commodities-futures?page=1",
+    "https://www.wsj.com/finance/banking?page=1",
+    // "https://www.wsj.com/finance/currencies?page=1",
+    // "https://www.wsj.com/finance/investing?page=1",
+    // "https://www.wsj.com/finance/regulation?page=1",
+    // "https://www.wsj.com/finance/stocks?page=1",
+    // "https://www.wsj.com/tech/ai?page=1",
+    // "https://www.wsj.com/tech/biotech?page=1",
+    // "https://www.wsj.com/tech/personal-tech?page=1",
+    // "https://www.wsj.com/economy/central-banking?page=1",
+    // "https://www.wsj.com/economy/trade?page=1",
+    // "https://www.wsj.com/economy/global?page=1",
+  ]);
+  const response = await fetch('/api/article-summaries/existing?publication=wsj')
+  const data = await response.json();
+  const existingSourceUrls: string[] = data.existingSourceUrls || [];
+  await callXSpider('BATCH_LIST_SCRAPING', {
+    urls: Array.from(listUrls),
+    existingFlags: existingSourceUrls,
   });
 }

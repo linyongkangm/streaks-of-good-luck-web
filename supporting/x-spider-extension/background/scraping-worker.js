@@ -24,23 +24,9 @@ export function register(messageObserver) {
     sendSuccessResponse({ recordedScrapings });
   });
 
-  const listUrls = new Set([
-    "https://www.wsj.com/finance/commodities-futures?page=1",
-    // "https://www.wsj.com/finance/banking?page=1",
-    // "https://www.wsj.com/finance/currencies?page=1",
-    // "https://www.wsj.com/finance/investing?page=1",
-    // "https://www.wsj.com/finance/regulation?page=1",
-    // "https://www.wsj.com/finance/stocks?page=1",
-    // "https://www.wsj.com/tech/ai?page=1",
-    // "https://www.wsj.com/tech/biotech?page=1",
-    // "https://www.wsj.com/tech/personal-tech?page=1",
-    // "https://www.wsj.com/economy/central-banking?page=1",
-    // "https://www.wsj.com/economy/trade?page=1",
-    // "https://www.wsj.com/economy/global?page=1",
-  ]);
   messageObserver.on("BATCH_LIST_SCRAPING", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
     let contentUrls = (await Promise.all(
-      Array.from(listUrls).map(async (url) => {
+      Array.from(request.urls).map(async (url) => {
         const targetTab = await redirectToTargetTab(url);
         const response = await chrome.tabs.sendMessage(targetTab.id, { action: "SCRAPING_LIST" });
         if (response?.success) {
@@ -55,6 +41,9 @@ export function register(messageObserver) {
     )).flat();
     contentUrls = [...new Set(contentUrls)];
     // todo - 过滤已记录的URL
+    const existingFlags = request.existingFlags || [];
+    contentUrls = contentUrls.filter(url => !existingFlags.includes(url));
+    console.log('URLs to scrape:', contentUrls);
 
     const hostTab = await getHostTab();
     const count = 3

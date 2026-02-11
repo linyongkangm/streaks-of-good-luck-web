@@ -14,13 +14,18 @@ document.addEventListener('REDIRECT_TAB_SCRAPING', async function (e) {
   }
 });
 
-document.addEventListener('MARK_RECORDED_SCRAPINGS', async function (e) {
-  console.log('Custom event received in host-content script:', 'MARK_RECORDED_SCRAPINGS', e.detail);
+document.addEventListener('BATCH_LIST_SCRAPING', async function (e) {
+  console.log('Custom event received in host-content script:', "BATCH_LIST_SCRAPING", e.detail);
 
-  chrome.runtime.sendMessage({
-    action: "MARK_RECORDED_SCRAPINGS",
+  const response = await chrome.runtime.sendMessage({
     ...e.detail,
+    action: "BATCH_LIST_SCRAPING",
   });
+  if (response.success) {
+    document.dispatchEvent(new CustomEvent(e.detail.callbackCode, {
+      detail: response.data
+    }));
+  }
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
