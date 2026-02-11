@@ -69,8 +69,7 @@ export function startSummarySendTask() {
   cron.schedule(`0 ${SEND_HOUR},${SEND_HOUR + 4} * * *`, async () => {
     console.log('Starting summary send task...');
     try {
-      // 获取前一天的日期
-
+      // 获取前一天的日期，美东时间的0点
       const now = new Date();
       const yesterday = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0));
 
