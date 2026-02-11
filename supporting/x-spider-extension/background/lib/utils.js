@@ -34,3 +34,11 @@ export async function redirectToTargetTab(url) {
   console.log("Redirected to target tab:", targetTab);
   return targetTab;
 }
+
+export async function getIsScraping(tab) {
+  return await chrome.tabs.sendMessage(tab.id, { action: "GET_IS_SCRAPING" }).then(response => response?.data?.isScraping);
+}
+
+export async function setIsScraping(tab, isScraping) {
+  await chrome.tabs.sendMessage(tab.id, { action: "SET_IS_SCRAPING", data: { isScraping } });
+}
