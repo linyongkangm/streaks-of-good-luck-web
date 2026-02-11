@@ -70,13 +70,7 @@ export async function collectLatestQIUSHIArticles() {
   });
   const records = callXSpiderResult.records || []
   if (records && records.length > 0) {
-    const response = await fetch('/api/process-articles', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ articles: records }),
-    })
-    const data = await response.json();
-    return data;
+    return processArticles(records);
   } else {
     console.log('No new articles to process.')
     alert('没有需要处理的新文章')
