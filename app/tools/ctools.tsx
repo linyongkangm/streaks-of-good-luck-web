@@ -60,7 +60,7 @@ export async function collectLatestTweets(collectFrom: string) {
 }
 
 export async function collectLatestQIUSHIArticles() {
-  const qiushiUrl = 'https://www.qstheory.cn/20251231/2d916da295774130ac2fb223fd208895/c.html';
+  const qiushiUrl = 'https://www.qstheory.cn/20251231/2d916da295774130ac2fb223fd208895/c.html'; // 每年一个链接
   const response = await fetch('/api/article-summaries/existing?publication=qiushi');
   const data = await response.json();
   const existingSourceUrls: string[] = data.existingSourceUrls || [];
