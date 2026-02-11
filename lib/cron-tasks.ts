@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { prisma } from '@/lib/db';
 import * as tools from '@/app/tools';
+import { BrowserContext } from 'playwright';
 
 const SEND_HOUR = 9; // 发送摘要的小时（24小时制）
 const SYNC_HOUR = 16; // 同步股票行情的小时（24小时制）
@@ -9,58 +10,49 @@ const SYNC_HOUR = 16; // 同步股票行情的小时（24小时制）
 // 每天早上8点执行
 export function startDataCollectionTask() {
   cron.schedule(`50 ${SEND_HOUR - 1},${SEND_HOUR - 1 + 4} * * *`, async () => {
+    const stools = await import('@/app/tools/stools');
+    // 启动浏览器并触发EXTERNAL_EVENT事件
+    const context = await stools.launchBrowser(process.env.HOST_URL);
     console.log('Starting data collection task...');
-    try {
-      // 动态导入 stools 以避免 playwright 模块解析问题
-      const stools = await import('@/app/tools/stools');
-      
-      // 从数据库获取所有唯一的collect_from
-      const summaries = await prisma.summary__tweet.findMany({
-        select: {
-          collect_from: true
-        },
-        distinct: ['collect_from']
-      });
-
-      const collectFroms = summaries.map(s => s.collect_from);
-
-      if (collectFroms.length === 0) {
-        console.log('No collect_from found in database');
-        return;
-      }
-
-      console.log(`Found ${collectFroms.length} sources to collect from:`, collectFroms);
-
-      // 启动浏览器并触发EXTERNAL_EVENT事件
-      const context = await stools.launchBrowser(process.env.HOST_URL);
-      if (context) {
-        const page = context.pages()[0];
-
-        // 触发EXTERNAL_EVENT事件
-        await page.evaluate((collectFroms) => {
-          const event = new CustomEvent('EXTERNAL_EVENT', {
-            detail: {
-              collectFroms
-            }
-          });
-          document.dispatchEvent(event);
-        }, collectFroms);
-
-        console.log('EXTERNAL_EVENT triggered successfully');
-
-        // 等待一段时间让数据采集完成（根据实际情况调整）
-        await new Promise(resolve => setTimeout(resolve, 3 * 60000)); // 等待180秒
-
-        // 关闭浏览器
-        await context.close();
-        console.log('Data collection task completed');
-      }
-    } catch (error) {
-      console.error('Error in data collection task:', error);
+    if (context) {
+      collectTweetSummaries(context);
+      // 等待一段时间让数据采集完成（根据实际情况调整）
+      await new Promise(resolve => setTimeout(resolve, 5 * 60000)); // 等待300秒
+      // 关闭浏览器
+      await context.close();
     }
   });
-
   console.log(`Data collection task scheduled: every day at ${SEND_HOUR - 1}:50,${SEND_HOUR - 1 + 4}:50 AM`);
+}
+
+async function collectTweetSummaries(context: BrowserContext) {
+  try {
+    // 从数据库获取所有唯一的collect_from
+    const summaries = await prisma.summary__tweet.findMany({
+      select: {
+        collect_from: true,
+      },
+      distinct: ['collect_from']
+    });
+    const collectFroms = summaries.map(s => s.collect_from);
+    if (collectFroms.length === 0) {
+      console.log('No collect_from found in database');
+      return;
+    }
+    console.log(`Found ${collectFroms.length} sources to collect from:`, collectFroms);
+    const page = context.pages()[0];
+    // 触发EXTERNAL_EVENT事件
+    await page.evaluate((collectFroms) => {
+      const event = new CustomEvent('EXTERNAL_EVENT', {
+        detail: {
+          collectFroms
+        }
+      });
+      document.dispatchEvent(event);
+    }, collectFroms);
+  } catch (error) {
+    console.error('Error in data collection task:', error);
+  }
 }
 
 // 定时任务：每天发送前一日的推文摘要
