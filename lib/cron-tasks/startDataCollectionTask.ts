@@ -2,7 +2,7 @@ import cron from 'node-cron';
 import { BrowserContext } from 'playwright';
 import { prisma } from '@/lib/db';
 import * as stools from '@/app/tools/stools';
-const SEND_HOUR = 9; // 发送摘要的小时（24小时制）
+
 async function collectTweetSummaries(context: BrowserContext) {
   try {
     // 从数据库获取所有唯一的collect_from
@@ -50,6 +50,7 @@ async function startDataCollectionTaskCallback() {
 // 定时任务：每天采集推文数据
 // 每天早上8点执行
 export function startDataCollectionTask() {
+  const SEND_HOUR = 9; // 发送摘要的小时（24小时制）
   const expression = `50 ${SEND_HOUR - 1},${SEND_HOUR - 1 + 4} * * *`;
   cron.schedule(expression, startDataCollectionTaskCallback);
   console.log(`Data collection task scheduled: every day at ${SEND_HOUR - 1}:50,${SEND_HOUR - 1 + 4}:50 AM`);
