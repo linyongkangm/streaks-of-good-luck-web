@@ -24,11 +24,11 @@ export function startStockQuoteSyncTask() {
       console.log('Stock quote sync result:', result);
 
       // 发送通知消息
-      if (result.data && result.data.companies_needing_sync > 0) {
+      if (result.data && result.data.success_count > 0) {
         await tools.postTextMessage(
           `📊 股票行情同步任务完成\n` +
           `总公司数: ${result.data.total_companies}\n` +
-          `需要同步: ${result.data.companies_needing_sync}家`
+          `需要同步: ${result.data.success_count}家`
         );
       } else {
         await tools.postTextMessage('📊 股票行情数据已是最新，无需同步');
