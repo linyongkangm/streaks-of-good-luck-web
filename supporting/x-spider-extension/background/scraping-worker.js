@@ -47,7 +47,7 @@ export function register(messageObserver) {
     let index = 0;
     while (index < contentUrls.length) {
       const batchUrls = contentUrls.slice(index, index + 5);
-      await Promise.all(batchUrls.map(async (url) => {
+      Promise.all(batchUrls.map(async (url) => {
         const targetTab = await redirectToTargetTab(url);
         const records = await scraping(targetTab);
         if (records.length > 0) {
@@ -59,7 +59,7 @@ export function register(messageObserver) {
         }
       }));
       index += 5;
-      await new Promise(resolve => setTimeout(resolve, 5000)); // 每5秒处理5个URL，避免过快打开多个标签页
+      await new Promise(resolve => setTimeout(resolve, 10 * 1000)); // 每5秒处理5个URL，避免过快打开多个标签页
     }
     sendSuccessResponse();
   });
