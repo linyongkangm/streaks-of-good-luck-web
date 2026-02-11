@@ -8,8 +8,9 @@ export function register(messageObserver) {
   });
 
   messageObserver.on("REDIRECT_TAB_SCRAPING", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
+    console.log("Received REDIRECT_TAB_SCRAPING message:", request);
     const targetTab = await redirectToTargetTab(request.target);
-    const records = await scraping(targetTab);
+    const records = await scraping(targetTab, request.existingFlags);
     sendSuccessResponse({ records });
   });
 

@@ -2,16 +2,12 @@
 console.log('X-Spider x-content script');
 const tweetRecords = new Map()
 
-async function scrape() {
-  const collectFrom = location.href
-  const scrapingRecorded = (await chrome.runtime.sendMessage({
-    action: "GET_RECORDED_SCRAPINGS",
-    host: collectFrom
-  }))?.data?.recordedScrapings || [];
+async function scrape({ existingFlags = [] } = {}) {
+  console.log('Starting scraping with existingFlags:', existingFlags);
   do {
     scraping(tweetRecords)
     const records = Array.from(tweetRecords.values());
-    const cacheRecords = records.filter(item => !scrapingRecorded.includes(item.tweetID));
+    const cacheRecords = records.filter(item => !existingFlags.includes(item.tweetID));
     console.log(`XScraping: 已抓取 ${records.length} 条，去重后 ${cacheRecords.length} 条`);
     if (records.length - cacheRecords.length >= 20) {
       isScraping = false;
@@ -19,7 +15,7 @@ async function scrape() {
     await new Promise(resolve => setTimeout(resolve, 1000));
   } while (isScraping);
   const records = Array.from(tweetRecords.values());
-  const cacheRecords = records.filter(item => !scrapingRecorded.includes(item.tweetID));
+  const cacheRecords = records.filter(item => !existingFlags.includes(item.tweetID));
   return cacheRecords;
 }
 

@@ -1,39 +1,22 @@
 import cron from 'node-cron';
 import { BrowserContext } from 'playwright';
-import { prisma } from '@/lib/db';
 import * as stools from '@/app/tools/stools';
 
 async function collectTweetSummaries(context: BrowserContext) {
   try {
-    // 从数据库获取所有唯一的collect_from
-    const summaries = await prisma.summary__tweet.findMany({
-      select: {
-        collect_from: true,
-      },
-      distinct: ['collect_from']
-    });
-    const collectFroms = summaries.map(s => s.collect_from);
-    if (collectFroms.length === 0) {
-      console.log('No collect_from found in database');
-      return;
-    }
-    console.log(`Found ${collectFroms.length} sources to collect from:`, collectFroms);
     const page = context.pages()[0];
-    // 触发EXTERNAL_EVENT事件
-    await page.evaluate((collectFroms) => {
+    await page.evaluate(() => {
       const event = new CustomEvent('EXTERNAL_EVENT', {
-        detail: {
-          collectFroms
-        }
+        detail: {}
       });
       document.dispatchEvent(event);
-    }, collectFroms);
+    });
   } catch (error) {
     console.error('Error in data collection task:', error);
   }
 }
 
-async function startDataCollectionTaskCallback() {
+export async function startDataCollectionTaskCallback() {
   // 启动浏览器并触发EXTERNAL_EVENT事件
   const context = await stools.launchBrowser(process.env.HOST_URL);
   console.log('Starting data collection task...');

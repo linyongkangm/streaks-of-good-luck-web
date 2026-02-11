@@ -3,6 +3,7 @@ import { getCurrentTab, getHostTab } from './lib/utils.js';
 import { register as registerScrapingWorker } from './scraping-worker.js';
 // Background Service Worker
 const messageObserver = new MessageObserver();
+registerScrapingWorker(messageObserver);
 
 chrome.runtime.onInstalled.addListener(() => {
   console.log('X-Spider Extension installed');
@@ -36,4 +37,3 @@ messageObserver.on("SEND_TO_HOST", async (request, sender, sendSuccessResponse, 
   sendSuccessResponse();
 });
 
-registerScrapingWorker(messageObserver);

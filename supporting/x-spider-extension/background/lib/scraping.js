@@ -1,5 +1,5 @@
-export async function scraping(tab) {
-  const response = await chrome.tabs.sendMessage(tab.id, { action: "SCRAPING" });
+export async function scraping(tab, existingFlags) {
+  const response = await chrome.tabs.sendMessage(tab.id, { action: "SCRAPING", existingFlags });
   return response?.data?.records || [];
 }
 
