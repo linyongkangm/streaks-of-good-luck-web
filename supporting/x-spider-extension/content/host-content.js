@@ -1,10 +1,10 @@
 console.log('X-Spider host-content script');
 
-document.addEventListener('REDIRECT_SCRAPING', async function (e) {
-  console.log('Custom event received in host-content script:', "REDIRECT_SCRAPING", e.detail);
+document.addEventListener('REDIRECT_TAB_SCRAPING', async function (e) {
+  console.log('Custom event received in host-content script:', "REDIRECT_TAB_SCRAPING", e.detail);
 
   const response = await chrome.runtime.sendMessage({
-    action: "REDIRECT_SCRAPING",
+    action: "REDIRECT_TAB_SCRAPING",
     target: e.detail.target,
   });
   if (response.success) {
@@ -22,20 +22,6 @@ document.addEventListener('MARK_RECORDED_SCRAPINGS', async function (e) {
     host: e.detail.host,
     flags: e.detail.flags,
   });
-});
-
-document.addEventListener('GET_LATEST_TWEETS', async function (e) {
-  console.log('Custom event received in host-content script:', 'GET_LATEST_TWEETS', e.detail);
-
-  const response = await chrome.runtime.sendMessage({
-    action: "COLLECT_LATEST_TWEETS",
-    collect_from: e.detail.collect_from,
-  });
-  if (response.success) {
-    document.dispatchEvent(new CustomEvent(e.detail.callbackCode, {
-      detail: response.data
-    }));
-  }
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {

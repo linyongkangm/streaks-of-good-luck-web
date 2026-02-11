@@ -11,7 +11,7 @@ export async function processArticles(articles: any[]) {
 
 export function collectLatestTweets(collectFrom: String) {
   return new Promise<any>((resolve, reject) => {
-    const callbackCode = 'CALLBACK_GET_LATEST_TWEETS_' + Math.random().toString(36).substring(2)
+    const callbackCode = 'CALLBACK_REDIRECT_TAB_SCRAPING_' + Math.random().toString(36).substring(2)
     document.addEventListener(callbackCode, async (event: any) => {
       // tweetRecords结构示例
       // [{
@@ -60,9 +60,9 @@ export function collectLatestTweets(collectFrom: String) {
         resolve({ success: true, successful: 0, failed: 0 })
       }
     }, { once: true });
-    document.dispatchEvent(new CustomEvent('GET_LATEST_TWEETS', {
+    document.dispatchEvent(new CustomEvent('REDIRECT_TAB_SCRAPING', {
       detail: {
-        collect_from: collectFrom,
+        target: collectFrom,
         callbackCode
       }
     }))

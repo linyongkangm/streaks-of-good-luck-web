@@ -335,7 +335,7 @@ export default function ArticleAnalysis() {
           </button>
           <button
             onClick={() => {
-              const callbackCode = 'CALLBACK_REDIRECT_SCRAPING_' + Math.random().toString(36).substring(2)
+              const callbackCode = 'CALLBACK_REDIRECT_TAB_SCRAPING_' + Math.random().toString(36).substring(2)
               document.addEventListener(callbackCode, (e: any) => {
                 console.log('Redirect scraping completed.', e.detail.records)
                 if (e.detail.records && e.detail.records.length > 0) {
@@ -344,7 +344,7 @@ export default function ArticleAnalysis() {
                   alert('未获取到文章数据')
                 }
               }, { once: true })
-              document.dispatchEvent(new CustomEvent('REDIRECT_SCRAPING', {
+              document.dispatchEvent(new CustomEvent('REDIRECT_TAB_SCRAPING', {
                 detail: {
                   // 一年改一次，当年链接
                   target: 'https://www.qstheory.cn/20251231/2d916da295774130ac2fb223fd208895/c.html',

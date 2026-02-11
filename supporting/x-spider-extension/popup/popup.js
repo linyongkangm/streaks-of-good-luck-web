@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const isScraping = await getIsScraping(tab);
     if (isScraping) {
       await updateScrapingButton(false);
-      await chrome.runtime.sendMessage({ action: "STOP_SCRAPING" });
+      await setIsScraping(tab, false);
     } else {
       await updateScrapingButton(true);
       const resp = await chrome.runtime.sendMessage({ action: "CURRENT_TAB_SCRAPING" });
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
     }
-    
+
   });
 });
 

@@ -26,7 +26,6 @@ export async function redirectToTargetTab(url) {
   if (!targetTab) {
     targetTab = await chrome.tabs.create({ url: url });
   }
-  await chrome.tabs.update(targetTab.id, { active: true });
   do {
     targetTab = (await chrome.tabs.query({ url: url }))[0];
     await new Promise(resolve => setTimeout(resolve, 500));

@@ -2,18 +2,25 @@
 console.log('X-Spider x-content script');
 const tweetRecords = new Map()
 
-window.addEventListener('beforeunload', function (e) {
-  chrome.runtime.sendMessage({ action: "STOP_SCRAPING" });
-});
-
-// Example: Listen for messages from popup
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log('Message received in x-content script:', request.action, request);
-  if (request.action === "SCRAPING") {
+async function scrape() {
+  const scrapingRecorded = (await chrome.runtime.sendMessage({
+    action: "GET_RECORDED_SCRAPINGS",
+    host: 'https://www.qstheory.cn'
+  }))?.data?.recordedScrapings || [];
+  do {
     scraping(tweetRecords)
-    sendResponse({ success: true, data: { records: Array.from(tweetRecords.values()) } });
-  }
-});
+    const records = Array.from(tweetRecords.values());
+    const cacheRecords = records.filter(item => !scrapingRecorded.includes(item.tweetID));
+    console.log(`XScraping: 已抓取 ${records.length} 条，去重后 ${cacheRecords.length} 条`);
+    if (records.length - cacheRecords.length >= 20) {
+      isScraping = false;
+    }
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  } while (isScraping);
+  const records = Array.from(tweetRecords.values());
+  const cacheRecords = records.filter(item => !scrapingRecorded.includes(item.tweetID));
+  return cacheRecords;
+}
 
 function scraping(tweetRecords) {
   window.scrollTo({

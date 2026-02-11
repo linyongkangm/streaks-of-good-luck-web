@@ -1,6 +1,5 @@
 import MessageObserver from './lib/MessageObserver.js';
 import { getCurrentTab, getHostTab } from './lib/utils.js';
-import { register as registerXWorker } from './x-worker.js';
 import { register as registerScrapingWorker } from './scraping-worker.js';
 // Background Service Worker
 const messageObserver = new MessageObserver();
@@ -36,7 +35,5 @@ messageObserver.on("SEND_TO_HOST", async (request, sender, sendSuccessResponse, 
   chrome.tabs.sendMessage(hostTab.id, { action: "RECEIVE_FROM_EXTENSION", payload: request.payload });
   sendSuccessResponse();
 });
-
-registerXWorker(messageObserver);
 
 registerScrapingWorker(messageObserver);

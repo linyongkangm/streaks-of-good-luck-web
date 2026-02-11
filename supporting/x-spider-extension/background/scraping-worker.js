@@ -7,18 +7,10 @@ export function register(messageObserver) {
     sendSuccessResponse({ records });
   });
 
-  messageObserver.on("STOP_SCRAPING", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
-    sendSuccessResponse();
-  });
-
-  messageObserver.on("REDIRECT_SCRAPING", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
-    await redirectToTargetTab(request.target);
-    const _sendSuccessResponse = (...args) => {
-      console.log("Scraping completed.", args);
-      sendSuccessResponse(...args);
-      chrome.tabs.update(sender.tab.id, { active: true });
-    }
-    messageObserver.emit("SCRAPING", request, sender, _sendSuccessResponse, sendFailedResponse);
+  messageObserver.on("REDIRECT_TAB_SCRAPING", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
+    const targetTab = await redirectToTargetTab(request.target);
+    const records = await scraping(targetTab);
+    sendSuccessResponse({ records });
   });
 
   messageObserver.on("MARK_RECORDED_SCRAPINGS", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
