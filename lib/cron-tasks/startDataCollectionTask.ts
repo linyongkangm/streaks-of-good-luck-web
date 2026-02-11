@@ -53,8 +53,8 @@ export async function startDataCollectionTaskCallback() {
 // 定时任务：每天采集推文数据
 // 每天早上8点执行
 export function startDataCollectionTask() {
-  const SEND_HOUR = 9; // 发送摘要的小时（24小时制）
-  const expression = `50 ${SEND_HOUR - 1},${SEND_HOUR - 1 + 4} * * *`;
+  const SEND_HOUR = 8; // 发送摘要的小时（24小时制）
+  const expression = `50 ${SEND_HOUR},${SEND_HOUR + 4} * * *`;
   cron.schedule(expression, startDataCollectionTaskCallback);
-  console.log(`Data collection task scheduled: every day at ${SEND_HOUR - 1}:50,${SEND_HOUR - 1 + 4}:50 AM`);
+  console.log(`Data collection task scheduled: every day at ${SEND_HOUR}:50,${SEND_HOUR + 4}:50 AM`);
 }
