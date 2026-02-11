@@ -7,7 +7,9 @@ async function collectTweetSummaries(context: BrowserContext) {
     const page = context.pages()[0];
     await page.evaluate(() => {
       const event = new CustomEvent('EXTERNAL_EVENT', {
-        detail: {}
+        detail: {
+          type: 'collectTweetSummaries',
+        }
       });
       document.dispatchEvent(event);
     });
@@ -21,7 +23,7 @@ export async function startDataCollectionTaskCallback() {
   const context = await stools.launchBrowser(process.env.HOST_URL);
   console.log('Starting data collection task...');
   if (context) {
-    collectTweetSummaries(context);
+    await collectTweetSummaries(context);
     // 等待一段时间让数据采集完成（根据实际情况调整）
     await new Promise(resolve => setTimeout(resolve, 5 * 60000)); // 等待300秒
 
