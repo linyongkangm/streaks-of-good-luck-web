@@ -3,9 +3,10 @@ console.log('X-Spider x-content script');
 const tweetRecords = new Map()
 
 async function scrape() {
+  const collectFrom = location.href
   const scrapingRecorded = (await chrome.runtime.sendMessage({
     action: "GET_RECORDED_SCRAPINGS",
-    host: 'https://www.qstheory.cn'
+    host: collectFrom
   }))?.data?.recordedScrapings || [];
   do {
     scraping(tweetRecords)
