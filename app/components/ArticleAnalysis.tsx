@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import type { summary__article } from '@/types'
 import * as tools from '@/app/tools'
+import * as ctools from '@/app/tools/ctools'
 function appendPredictsSaved(articleId: string) {
   const predicts_saved = localStorage.getItem('PREDICTS_SAVED')?.split(',') || []
   predicts_saved.push(articleId)
@@ -333,6 +334,9 @@ export default function ArticleAnalysis() {
           >
             搜索
           </button>
+
+        </div>
+        <div className="flex gap-4 mt-4">
           <button
             onClick={() => {
               const callbackCode = 'CALLBACK_REDIRECT_TAB_SCRAPING_' + Math.random().toString(36).substring(2)
@@ -363,6 +367,13 @@ export default function ArticleAnalysis() {
             ) : (
               '获取求是'
             )}
+          </button>
+          <button onClick={() => {
+            ctools.collectLatestWSJArticles()
+          }}
+            className="px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            获取WSJ
           </button>
         </div>
       </div>
