@@ -6,12 +6,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.runtime.sendMessage(messageData);
   });
 
-  const batchScrapingBtn = document.getElementById('BatchScrapingBtn');
-  batchScrapingBtn.addEventListener('click', async () => {
-    const resp = await chrome.runtime.sendMessage({ action: "BATCH_LIST_SCRAPING" });
-    console.log('Batch scraping records:', resp);
-  });
-
   await updateScrapingButton();
   const scrapingBtn = document.getElementById('ScrapingBtn');
   scrapingBtn.addEventListener('click', async () => {
