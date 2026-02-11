@@ -1,103 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-
-const PYTHON_API_URL = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'
-
-async function analyzeTweetsForDateAndSource(collectFrom: string, date: string) {
-  try {
-    console.log(`Fetching tweets for ${collectFrom} on ${date}...`)
-    
-    // 1. 从数据库查询该日期和来源的所有推文
-    const targetDate = new Date(date)
-    const nextDate = new Date(targetDate)
-    nextDate.setDate(nextDate.getDate() + 1)
-
-    const tweets = await prisma.info__tweet.findMany({
-      where: {
-        collect_from: collectFrom,
-        tweet_date: {
-          gte: targetDate,
-          lt: nextDate,
-        },
-      },
-      orderBy: { tweet_date: 'asc' },
-    })
-
-    if (tweets.length === 0) {
-      console.log(`No tweets found for ${collectFrom} on ${date}`)
-      return { collectFrom, date, status: 'skipped', message: 'No tweets found' }
-    }
-
-    console.log(`Found ${tweets.length} tweets for ${collectFrom} on ${date}`)
-
-    // 2. 转换为 API 需要的格式
-    const tweetInfos = tweets.map((tweet) => ({
-      tweet_date: tweet.tweet_date.toISOString().split('T')[0],
-      user_name: tweet.user_name,
-      tweet_from: tweet.tweet_from,
-      tweet_text: tweet.tweet_text,
-    }))
-
-    // 3. 调用 Python API，传递 tweet_infos
-    console.log(`Calling Python API: ${PYTHON_API_URL}/analyze-tweet`)
-    const response = await fetch(`${PYTHON_API_URL}/analyze-tweet`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        collect_from: collectFrom,
-        date: date,
-        tweet_infos: tweetInfos,
-      }),
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(`API error: ${response.status} - ${JSON.stringify(errorData)}`)
-    }
-
-    const result = await response.json()
-    console.log(`Successfully received analysis result for ${collectFrom} on ${date}:`, result)
-    
-    // 4. 如果分析成功，保存结果到数据库
-    if (result.success && result.analysis) {
-      console.log(`Saving analysis result to database for ${collectFrom} on ${date}...`)
-      
-      const targetDateObj = new Date(date)
-      const summary = result.analysis.summary || ''
-      
-      // 使用 upsert 来插入或更新记录
-      await prisma.summary__tweet.upsert({
-        where: {
-          collect_from_date: {
-            collect_from: collectFrom,
-            date: targetDateObj,
-          },
-        },
-        update: {
-          summary: summary,
-          update_time: new Date(),
-        },
-        create: {
-          collect_from: collectFrom,
-          date: targetDateObj,
-          summary: summary,
-          create_time: new Date(),
-          update_time: new Date(),
-        },
-      })
-      
-      console.log(`✓ Analysis result saved for ${collectFrom} on ${date}`)
-    }
-    
-    return result
-  } catch (error) {
-    console.error(`Failed to analyze tweets for ${collectFrom} on ${date}:`, error)
-    throw error
-  }
-}
-
+import { analyzeTweetsForDateAndSource } from '@/app/tools/analyzeTweetsForDateAndSource';
+import * as tools from '@/app/tools';
 // POST /api/batch-create-tweets - 批量创建推文
 export async function POST(request: NextRequest) {
   try {
@@ -151,27 +55,28 @@ export async function POST(request: NextRequest) {
     // 只用新推文的记录来确定是否需要分析
     const successfulNewTweetRecords = newTweetRecords.filter((_, index) => results[index].status === 'fulfilled')
     const successfulTweetIds = successfulNewTweetRecords.map((record: any) => record.tweetID)
-    const dateSourceMap = new Map<string, string>() // key: "collect_from|date"
+
+    const dateSourceSet = new Set<string>() // collectFrom|date
 
     successfulNewTweetRecords.forEach((record: any) => {
-      const date = new Date(record.tweetDate).toISOString().split('T')[0]
-      const key = `${record.collectFrom}|${date}`
-      dateSourceMap.set(key, record.collectFrom)
+      const date = tools.toEastern(record.tweetDate).toFormat('yyyy-MM-dd');
+      dateSourceSet.add(`${record.collectFrom}|${date}`);
     })
 
 
-    // 串行处理每个有新推文的日期和来源
-    const analysisResults = [];
-    for (const [key, collectFrom] of dateSourceMap.entries()) {
-      const [source, date] = key.split('|');
-      try {
-        await analyzeTweetsForDateAndSource(source, date);
-        analysisResults.push({ status: 'fulfilled', value: { collectFrom: source, date, status: 'success' } });
-      } catch (error) {
-        console.error(`Failed to analyze tweets for ${source} on ${date}:`, error);
-        analysisResults.push({ status: 'rejected', reason: error, value: { collectFrom: source, date, status: 'failed', error: String(error) } });
-      }
-    }
+    // 并行处理每个有新推文的日期和来源
+    const analysisResults = await Promise.allSettled(
+      Array.from(dateSourceSet).map(async (dateSource) => {
+        const [source, date] = dateSource.split('|');
+        try {
+          await analyzeTweetsForDateAndSource(source, date);
+          return ({ status: 'fulfilled', value: { collectFrom: source, date, status: 'success' } });
+        } catch (error) {
+          console.error(`Failed to analyze tweets for ${source} on ${date}:`, error);
+          return ({ status: 'rejected', reason: error, value: { collectFrom: source, date, status: 'failed', error: String(error) } });
+        }
+      })
+    );
     const analysisSuccessful = analysisResults.filter(
       (r) => r.status === 'fulfilled' && (r.value as any).status === 'success'
     ).length
