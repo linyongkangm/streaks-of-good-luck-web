@@ -18,15 +18,33 @@ async function collectTweetSummaries(context: BrowserContext) {
   }
 }
 
+
+async function collectWSJArticles(context: BrowserContext) {
+  try {
+    const page = context.pages()[0];
+    await page.evaluate(() => {
+      const event = new CustomEvent('EXTERNAL_EVENT', {
+        detail: {
+          type: 'collectWSJArticles',
+        }
+      });
+      document.dispatchEvent(event);
+    });
+  } catch (error) {
+    console.error('Error in data collection task:', error);
+  }
+}
+
 export async function startDataCollectionTaskCallback() {
   // 启动浏览器并触发EXTERNAL_EVENT事件
   const context = await stools.launchBrowser(process.env.HOST_URL);
   console.log('Starting data collection task...');
   if (context) {
-    await collectTweetSummaries(context);
-    // 等待一段时间让数据采集完成（根据实际情况调整）
-    await new Promise(resolve => setTimeout(resolve, 5 * 60000)); // 等待300秒
-
+    await Promise.all([
+      collectTweetSummaries(context),
+      collectWSJArticles(context)
+    ]);
+    await new Promise(resolve => setTimeout(resolve, 5 * 60000)); // 等待300秒，确保数据采集完成
     // 关闭浏览器
     await context.close();
   }

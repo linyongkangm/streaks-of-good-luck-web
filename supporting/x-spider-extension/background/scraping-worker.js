@@ -40,6 +40,7 @@ export function register(messageObserver) {
       })
     )).flat();
     contentUrls = [...new Set(contentUrls)];
+    console.log('Extracted content URLs:', contentUrls);
     // todo - 过滤已记录的URL
     const existingFlags = request.existingFlags || [];
     contentUrls = contentUrls.filter(url => !existingFlags.includes(url));

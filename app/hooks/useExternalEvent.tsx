@@ -16,6 +16,8 @@ export default function useExternalEvent() {
             console.error('Error collecting tweets:', error);
           });
         });
+      } else if (event.detail?.type === 'collectWSJArticles') {
+        ctools.collectLatestWSJArticles()
       }
     };
     document.addEventListener('EXTERNAL_EVENT', handle);
