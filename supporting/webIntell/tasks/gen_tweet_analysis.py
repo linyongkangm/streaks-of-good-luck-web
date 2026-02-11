@@ -1,7 +1,7 @@
 import utils
 from typing import cast, List
 import re
-
+import asyncio
 # Tweet Analysis 提示词模板
 TWEET_ANALYSIS_PROMPT_TEMPLATE = """
 请注意，你是一名优秀的推文分析助手，负责分析和总结每日的推文内容.
@@ -46,7 +46,7 @@ async def gen_tweet_analysis(tweet_infos: list):
                 "content": TWEET_ANALYSIS_PROMPT_TEMPLATE.format(tweets=tweets),
             }
         ]
-        responseText = agents.think(cast(List, messages))
+        responseText = await asyncio.to_thread(agents.think, cast(List, messages))
         if responseText:
             logger.info("\n\n--- 完整模型响应 ---")
             logger.info(responseText)
