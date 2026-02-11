@@ -26,6 +26,16 @@ export function register(messageObserver) {
   const listUrls = new Set([
     "https://www.wsj.com/finance/commodities-futures?page=1",
     "https://www.wsj.com/finance/banking?page=1",
+    "https://www.wsj.com/finance/currencies?page=1",
+    "https://www.wsj.com/finance/investing?page=1",
+    "https://www.wsj.com/finance/regulation?page=1",
+    "https://www.wsj.com/finance/stocks?page=1",
+    "https://www.wsj.com/tech/ai?page=1",
+    "https://www.wsj.com/tech/biotech?page=1",
+    "https://www.wsj.com/tech/personal-tech?page=1",
+    "https://www.wsj.com/economy/central-banking?page=1",
+    "https://www.wsj.com/economy/trade?page=1",
+    "https://www.wsj.com/economy/global?page=1",
   ]);
   messageObserver.on("BATCH_LIST_SCRAPING", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
     let contentUrls = (await Promise.all(
