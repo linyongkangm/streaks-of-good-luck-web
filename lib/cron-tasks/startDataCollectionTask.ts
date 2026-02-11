@@ -44,7 +44,7 @@ export async function startDataCollectionTaskCallback() {
       collectTweetSummaries(context),
       collectWSJArticles(context)
     ]);
-    await new Promise(resolve => setTimeout(resolve, 5 * 60000)); // 等待300秒，确保数据采集完成
+    await new Promise(resolve => setTimeout(resolve, 15 * 60000)); // 等待15min，确保数据采集完成
     // 关闭浏览器
     await context.close();
   }
