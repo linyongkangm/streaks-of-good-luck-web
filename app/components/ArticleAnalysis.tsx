@@ -220,38 +220,6 @@ export default function ArticleAnalysis() {
     }
   }
 
-  const processArticles = async (articleRecords: any[]) => {
-    try {
-      setIsProcessing(true)
-      const response = await fetch('/api/process-articles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ articles: articleRecords }),
-      })
-
-      const data = await response.json()
-
-      if (data.success) {
-        alert(`成功处理 ${data.successful} 篇文章${data.failed > 0 ? `，${data.failed} 篇失败` : ''}`)
-        setPage(1)
-        fetchArticles()
-        document.dispatchEvent(new CustomEvent('MARK_RECORDED_SCRAPINGS', {
-          detail: {
-            host: 'https://www.qstheory.cn',
-            flags: (data.successfulSourceUrls || []).concat(data.existingSourceUrls || [])
-          }
-        }))
-      } else {
-        alert(data.message || '处理文章失败，请稍后重试')
-      }
-    } catch (error) {
-      console.error('Failed to process articles:', error)
-      alert('处理文章失败，请稍后重试')
-    } finally {
-      setIsProcessing(false)
-    }
-  }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
@@ -339,23 +307,18 @@ export default function ArticleAnalysis() {
         </div>
         <div className="flex gap-4 mt-4">
           <button
-            onClick={() => {
-              const callbackCode = 'CALLBACK_REDIRECT_TAB_SCRAPING_' + Math.random().toString(36).substring(2)
-              document.addEventListener(callbackCode, (e: any) => {
-                console.log('Redirect scraping completed.', e.detail.records)
-                if (e.detail.records && e.detail.records.length > 0) {
-                  processArticles(e.detail.records)
-                } else {
-                  alert('未获取到文章数据')
+            onClick={async () => {
+              try {
+                setIsProcessing(true)
+                const data = await ctools.collectLatestQIUSHIArticles()
+                if (data.success) {
+                  alert(`成功处理 ${data.successful} 篇文章${data.failed > 0 ? `，${data.failed} 篇失败` : ''}`)
                 }
-              }, { once: true })
-              document.dispatchEvent(new CustomEvent('REDIRECT_TAB_SCRAPING', {
-                detail: {
-                  // 一年改一次，当年链接
-                  target: 'https://www.qstheory.cn/20251231/2d916da295774130ac2fb223fd208895/c.html',
-                  callbackCode
-                }
-              }))
+              } catch (error) {
+                console.error('Failed to collect QIUSHI articles:', error)
+              } finally {
+                setIsProcessing(false)
+              }
             }}
             disabled={isProcessing}
             className="px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"

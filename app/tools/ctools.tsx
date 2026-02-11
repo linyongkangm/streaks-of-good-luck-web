@@ -59,6 +59,31 @@ export async function collectLatestTweets(collectFrom: string) {
   }
 }
 
+export async function collectLatestQIUSHIArticles() {
+  const qiushiUrl = 'https://www.qstheory.cn/20251231/2d916da295774130ac2fb223fd208895/c.html';
+  const response = await fetch('/api/article-summaries/existing?publication=qiushi');
+  const data = await response.json();
+  const existingSourceUrls: string[] = data.existingSourceUrls || [];
+  const callXSpiderResult: any = await callXSpider('REDIRECT_TAB_SCRAPING', {
+    target: qiushiUrl,
+    existingFlags: existingSourceUrls,
+  });
+  const records = callXSpiderResult.records || []
+  if (records && records.length > 0) {
+    const response = await fetch('/api/process-articles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ articles: records }),
+    })
+    const data = await response.json();
+    return data;
+  } else {
+    console.log('No new articles to process.')
+    alert('没有需要处理的新文章')
+    return { success: true, successful: 0, failed: 0 }
+  }
+}
+
 export async function collectLatestWSJArticles() {
   const listUrls = new Set([
     "https://www.wsj.com/finance/commodities-futures?page=1",
