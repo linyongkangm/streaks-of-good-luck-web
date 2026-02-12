@@ -60,22 +60,14 @@ export async function collectLatestTweets(collectFrom: string) {
 }
 
 export async function collectLatestQIUSHIArticles() {
-  const qiushiUrl = 'https://www.qstheory.cn/20251231/2d916da295774130ac2fb223fd208895/c.html'; // 每年一个链接
-  const response = await fetch('/api/article-summaries/existing?publication=qiushi');
+  const qiushiUrls = ['https://www.qstheory.cn/20251231/2d916da295774130ac2fb223fd208895/c.html']; // 每年一个链接
+  const response = await fetch('/api/article-summaries/existing?publication=求是');
   const data = await response.json();
   const existingSourceUrls: string[] = data.existingSourceUrls || [];
-  const callXSpiderResult: any = await callXSpider('REDIRECT_TAB_SCRAPING', {
-    target: qiushiUrl,
+  await callXSpider('BATCH_LIST_SCRAPING', {
+    urls: qiushiUrls,
     existingFlags: existingSourceUrls,
   });
-  const records = callXSpiderResult.records || []
-  if (records && records.length > 0) {
-    return processArticles(records);
-  } else {
-    console.log('No new articles to process.')
-    alert('没有需要处理的新文章')
-    return { success: true, successful: 0, failed: 0 }
-  }
 }
 
 export async function collectLatestWSJArticles() {

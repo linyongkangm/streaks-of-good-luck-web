@@ -14,16 +14,6 @@ export function register(messageObserver) {
     sendSuccessResponse({ records });
   });
 
-  messageObserver.on("MARK_RECORDED_SCRAPINGS", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
-    await markRecordedScrapings(request.host, request.flags);
-    sendSuccessResponse();
-  });
-
-  messageObserver.on("GET_RECORDED_SCRAPINGS", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
-    const recordedScrapings = await getRecordedScrapings(request.host);
-    sendSuccessResponse({ recordedScrapings });
-  });
-
   messageObserver.on("BATCH_LIST_SCRAPING", async (request, sender, sendSuccessResponse, sendFailedResponse) => {
     let contentUrls = (await Promise.all(
       Array.from(request.urls).map(async (url) => {
@@ -45,7 +35,6 @@ export function register(messageObserver) {
     const existingFlags = request.existingFlags || [];
     contentUrls = contentUrls.filter(url => !existingFlags.includes(url));
     console.log('URLs to scrape:', contentUrls);
-
     const hostTab = await getHostTab();
     const count = 3
     let index = 0;

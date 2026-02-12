@@ -306,12 +306,7 @@ export default function ArticleAnalysis() {
         </div>
         <div className="flex gap-4 mt-4">
           <Button onClick={async () => {
-            const data = await ctools.collectLatestQIUSHIArticles()
-            if (data.success) {
-              alert(`成功处理 ${data.successful} 篇文章${data.failed > 0 ? `，${data.failed} 篇失败` : ''}`)
-            } else {
-              alert('获取求是文章失败，请稍后重试')
-            }
+            await ctools.collectLatestQIUSHIArticles()
           }}>获取求是</Button>
           <Button onClick={async () => {
             await ctools.collectLatestWSJArticles()
