@@ -105,6 +105,9 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
       } else {
         params.append('board_id', selectedBoard.id.toString())
       }
+      
+      // 启用日期过滤：公司只获取最新财报之后的预测，板块只获取当天之后的预测
+      params.append('filter_by_date', 'true')
 
       const res = await fetch(`/api/financial-predictions?${params}`)
       if (res.ok) {

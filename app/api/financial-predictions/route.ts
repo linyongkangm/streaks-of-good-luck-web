@@ -6,21 +6,57 @@ import { prisma } from '@/lib/db'
  * 查询参数:
  * - company_id: 公司ID (可选)
  * - board_id: 板块ID (可选)
+ * - filter_by_date: 是否按日期过滤 (可选，为true时启用以下过滤规则)
+ *   - 公司：只返回最新财报日期之后的预测数据
+ *   - 板块：只返回当天之后的预测数据
  */
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const companyId = searchParams.get('company_id')
     const boardId = searchParams.get('board_id')
+    const filterByDate = searchParams.get('filter_by_date') === 'true'
 
     const where: any = {}
     
     if (companyId) {
-      where.company_id = parseInt(companyId)
+      const companyIdNum = parseInt(companyId)
+      where.company_id = companyIdNum
       where.board_id = null
+      
+      // 如果启用日期过滤，获取该公司最新的财报日期
+      if (filterByDate) {
+        const latestFinancialReport = await prisma.view_financial_statements.findFirst({
+          where: {
+            company_id: companyIdNum
+          },
+          orderBy: {
+            report_date: 'desc'
+          },
+          select: {
+            report_date: true
+          }
+        })
+        
+        // 只获取最新财报日期之后的预测数据
+        if (latestFinancialReport?.report_date) {
+          where.report_date = {
+            gt: latestFinancialReport.report_date
+          }
+        }
+      }
     } else if (boardId) {
       where.board_id = parseInt(boardId)
       where.company_id = null
+      
+      // 如果启用日期过滤，只获取当天之后的预测数据
+      if (filterByDate) {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        where.report_date = {
+          gt: today
+        }
+      }
     }
 
     // 获取预测数据，按报告日期排序
