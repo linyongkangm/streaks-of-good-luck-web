@@ -283,7 +283,10 @@ export async function GET(
         }
       })
 
-      return resultWithQuantiles
+      return {
+        results: resultWithQuantiles,
+        quantileData
+      }
     }
 
     // 组装返回数据

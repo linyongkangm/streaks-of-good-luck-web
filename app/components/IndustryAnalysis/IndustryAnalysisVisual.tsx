@@ -4,6 +4,34 @@ import { useState, useEffect, useRef } from 'react'
 import { Chart } from '@antv/g2'
 import type { StockBoardWithRelations } from '@/types'
 import * as tools from '@/app/tools'
+
+/**
+ * 单个复权类型下的财务指标数据结构
+ * 包含pe、pb、ps、pc四种指标，每种指标都是数值数组
+ */
+interface FinancialMetrics {
+  /** 市盈率 (Price-to-Earnings Ratio) */
+  pe: number[];
+  /** 市净率 (Price-to-Book Ratio) */
+  pb: number[];
+  /** 市销率 (Price-to-Sales Ratio) */
+  ps: number[];
+  /** 市现率 (Price-to-Cash Flow Ratio) */
+  pc: number[];
+}
+
+/**
+ * 完整的财务指标数据结构
+ * 包含三种复权类型：不复权(none)、前复权(qfq)、后复权(hfq)
+ */
+interface QuantileData {
+  /** 不复权 */
+  none: FinancialMetrics;
+  /** 前复权 (Forward Fill) */
+  qfq: FinancialMetrics;
+  /** 后复权 (Historical Fill) */
+  hfq: FinancialMetrics;
+}
 interface Props {
   selectedBoard: StockBoardWithRelations
   selectedCompanyId: number | null
@@ -31,7 +59,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
   const [loading, setLoading] = useState(false)
   const [adjustType, setAdjustType] = useState<AdjustType>('qfq')
   const [metric, setMetric] = useState<ValuationMetric>('pe')
-  const [data, setData] = useState<{ [key: string]: any[] }>({})
+  const [data, setData] = useState<{ [key: string]: { results: any[], quantileData: any } }>({})
   const [dateRange, setDateRange] = useState({
     start_date: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     end_date: new Date().toISOString().split('T')[0],
@@ -72,10 +100,9 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
 
     // 根据 selectedCompanyId 选择数据源
     const dataKey = selectedCompanyId ? selectedCompanyId.toString() : 'all'
-    const chartData = data[dataKey] || []
+    const chartData = data[dataKey]?.results || []
 
     if (chartData.length === 0) return
-
     // 准备图表数据
     const chartDatasource: any[] = []
     chartData.forEach((item) => {
@@ -99,10 +126,10 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
           dataPoint[`quantile_price_${key}`] = parseFloat(quantile_price[key].toFixed(2))
         }
       })
-
-
       chartDatasource.push(dataPoint)
     })
+    const quantileData: QuantileData = data[dataKey]?.quantileData || {}
+    console.log('Quantile data for chart:', quantileData)
 
     // 销毁旧图表
     if (chartInstance.current) {
@@ -115,7 +142,6 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
       autoFit: true,
       height: 500,
     })
-    console.log(chartDatasource)
     const ps = [10, 30, 50, 70, 90];
     const grayGradient = tools.genColorGradient(ps.length, '#edc29a', '#bca08e');
     chart.options({
