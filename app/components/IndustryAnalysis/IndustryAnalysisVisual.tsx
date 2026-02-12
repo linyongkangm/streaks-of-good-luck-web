@@ -466,7 +466,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
 
       {/* 预测弹窗 */}
       {showPredictModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowPredictModal(false)}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowPredictModal(false)}>
           <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-2xl font-bold text-slate-800 mb-6">添加财务预测</h2>
             <form onSubmit={handlePredictSubmit} className="space-y-4">
