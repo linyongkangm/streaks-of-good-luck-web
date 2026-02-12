@@ -54,6 +54,8 @@ const metricLabels = {
 }
 
 const Quantiles = [10, 30, 50, 70, 90];
+const GrayGradient = tools.genColorGradient(Quantiles.length, '#edc29a', '#bca08e');
+const YellowGradient = tools.genColorGradient(Quantiles.length, '#f3755c', '#f1c232');
 const PredictTestData = [{
   report_date: '2025-12-31',
   parent_netprofit_ttm: 95027341015.29,
@@ -138,7 +140,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
     })
 
     const quantileData: QuantileData = data[dataKey]?.quantileData || {}
-    PredictTestData.forEach((item) => {
+    PredictTestData.forEach((item, index, array) => {
       const dataPoint: any = {
         trade_date: new Date(item.report_date),
       }
@@ -148,6 +150,19 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
         dataPoint[`predict_quantile_price_p${q}`] = parseFloat(((item.parent_netprofit_ttm / totalShare) * quantile).toFixed(2))
       });
       chartDatasource.push(dataPoint)
+
+      const nextPredictData = array[index + 1]
+      const endTradeDate = nextPredictData ? new Date(nextPredictData.report_date) : new Date(item.report_date)
+      if (nextPredictData) {
+        endTradeDate.setDate(endTradeDate.getDate() - 1) // 预测数据的trade_date设置为report_date的前一天
+      } else {
+        endTradeDate.setDate(endTradeDate.getDate() + 3 * 30) // 最后一个预测数据的trade_date设置为report_date的后30天
+      }
+      const endDataPoint: any = {
+        ...dataPoint,
+        trade_date: endTradeDate,
+      }
+      chartDatasource.push(endDataPoint)
     });
     // 销毁旧图表
     if (chartInstance.current) {
@@ -161,8 +176,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
       height: 500,
     })
 
-    const grayGradient = tools.genColorGradient(Quantiles.length, '#edc29a', '#bca08e');
-    const yellowGradient = tools.genColorGradient(Quantiles.length, '#fff2cc', '#f1c232');
+
     chart.options({
       type: 'view',
       data: chartDatasource,
@@ -239,7 +253,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
             },
             style: {
               lineWidth: 1,
-              stroke: grayGradient[index],
+              stroke: GrayGradient[index],
             },
             tooltip: {
               name: `${q}分位价`,
@@ -255,7 +269,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
             },
             style: {
               lineWidth: 1,
-              stroke: yellowGradient[index],
+              stroke: YellowGradient[index],
             },
             tooltip: {
               name: `预测${q}分位价`,
