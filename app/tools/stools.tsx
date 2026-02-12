@@ -23,16 +23,17 @@ export async function launchBrowser(hostUrl: string = 'http://localhost:3000/') 
       });
     }
     const page = context.pages()[0] || await context.newPage();
-    // 隐藏webdriver特征
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator, 'webdriver', {
-        get: () => undefined,
+    if (!page.url().startsWith(hostUrl)) {
+      // 隐藏webdriver特征
+      await page.addInitScript(() => {
+        Object.defineProperty(navigator, 'webdriver', {
+          get: () => undefined,
+        });
       });
-    });
 
-    // 访问指定URL
-    const url = hostUrl;
-    await page.goto(url, { waitUntil: 'networkidle' });
+      // 访问指定URL
+      await page.goto(hostUrl, { waitUntil: 'networkidle' });
+    }
     return context;
   } catch (error) {
     console.error('Error launching browser with extensions:', error);
