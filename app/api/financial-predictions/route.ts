@@ -48,22 +48,34 @@ export async function GET(request: NextRequest) {
  * POST - 创建或更新财务预测数据
  * Body:
  * {
+ *   id?: string,  // 如果提供id则更新，否则创建
  *   company_id?: number,
  *   board_id?: number,
  *   report_date: string,
- *   metric_type: 'pe' | 'pb' | 'ps' | 'pc',
- *   metric_value: number
+ *   parent_netprofit?: number,
+ *   total_parent_equity?: number,
+ *   operate_income?: number,
+ *   netcash_operate?: number,
  * }
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { company_id, board_id, report_date, metric_type, metric_value } = body
+    const { 
+      id,
+      company_id, 
+      board_id, 
+      report_date, 
+      parent_netprofit,
+      total_parent_equity,
+      operate_income,
+      netcash_operate 
+    } = body
 
     // 验证必填字段
-    if (!report_date || !metric_type || metric_value === undefined) {
+    if (!report_date) {
       return NextResponse.json(
-        { success: false, error: '缺少必填字段' },
+        { success: false, error: '缺少报告期' },
         { status: 400 }
       )
     }
@@ -76,56 +88,35 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 验证metric_type
-    if (!['pe', 'pb', 'ps', 'pc'].includes(metric_type)) {
-      return NextResponse.json(
-        { success: false, error: '无效的metric_type' },
-        { status: 400 }
-      )
+    // 构建数据对象，只包含提供的字段
+    const dataFields: any = {
+      report_date: new Date(report_date)
     }
-
-    // 映射metric_type到字段名
-    const fieldMap: Record<string, string> = {
-      pe: 'parent_netprofit',
-      pb: 'total_parent_equity',
-      ps: 'operate_income',
-      pc: 'netcash_operate',
+    
+    if (parent_netprofit !== undefined && parent_netprofit !== null && parent_netprofit !== '') {
+      dataFields.parent_netprofit = parseFloat(parent_netprofit.toString())
     }
-
-    const fieldName = fieldMap[metric_type]
-
-    // 构建where条件
-    const where: any = {
-      report_date: new Date(report_date),
+    if (total_parent_equity !== undefined && total_parent_equity !== null && total_parent_equity !== '') {
+      dataFields.total_parent_equity = parseFloat(total_parent_equity.toString())
     }
-
-    if (company_id) {
-      where.company_id = parseInt(company_id)
-      where.board_id = null
-    } else {
-      where.board_id = parseInt(board_id)
-      where.company_id = null
+    if (operate_income !== undefined && operate_income !== null && operate_income !== '') {
+      dataFields.operate_income = parseFloat(operate_income.toString())
     }
-
-    // 查找是否存在该记录
-    const existing = await prisma.indicator__predict_financial_report.findFirst({
-      where
-    })
+    if (netcash_operate !== undefined && netcash_operate !== null && netcash_operate !== '') {
+      dataFields.netcash_operate = parseFloat(netcash_operate.toString())
+    }
 
     let prediction
-    if (existing) {
-      // 更新现有记录的指定字段
+    if (id) {
+      // 如果提供了id，则更新记录
       prediction = await prisma.indicator__predict_financial_report.update({
-        where: { id: existing.id },
-        data: {
-          [fieldName]: parseFloat(metric_value)
-        }
+        where: { id: BigInt(id) },
+        data: dataFields
       })
     } else {
-      // 创建新记录
+      // 否则创建新记录
       const data: any = {
-        report_date: new Date(report_date),
-        [fieldName]: parseFloat(metric_value)
+        ...dataFields
       }
 
       if (company_id) {

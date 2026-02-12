@@ -133,54 +133,52 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
 
     setSubmitting(true)
     try {
-      // 如果是编辑模式，需要先删除旧记录，再创建新记录（因为报告期可能变化）
+      // 构建请求数据
+      const body: any = {
+        report_date: formData.report_date,
+      }
+
+      // 如果是编辑模式，传递id
       if (editingRecord) {
-        await fetch('/api/financial-predictions', {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ id: editingRecord.id.toString() }),
-        })
+        body.id = editingRecord.id.toString()
       }
 
-      // 为每个非空的指标创建/更新记录
-      const metricKeys: MetricKey[] = ['parent_netprofit', 'total_parent_equity', 'operate_income', 'netcash_operate']
-      const metricTypeMap: Record<MetricKey, string> = {
-        parent_netprofit: 'pe',
-        total_parent_equity: 'pb',
-        operate_income: 'ps',
-        netcash_operate: 'pc',
+      // 添加非空的指标字段
+      if (formData.parent_netprofit && formData.parent_netprofit.trim() !== '') {
+        body.parent_netprofit = parseFloat(formData.parent_netprofit)
+      }
+      if (formData.total_parent_equity && formData.total_parent_equity.trim() !== '') {
+        body.total_parent_equity = parseFloat(formData.total_parent_equity)
+      }
+      if (formData.operate_income && formData.operate_income.trim() !== '') {
+        body.operate_income = parseFloat(formData.operate_income)
+      }
+      if (formData.netcash_operate && formData.netcash_operate.trim() !== '') {
+        body.netcash_operate = parseFloat(formData.netcash_operate)
       }
 
-      for (const key of metricKeys) {
-        const value = formData[key]
-        if (value && value.trim() !== '') {
-          const body: any = {
-            report_date: formData.report_date,
-            metric_type: metricTypeMap[key],
-            metric_value: parseFloat(value),
-          }
-
-          if (selectedCompanyId) {
-            body.company_id = selectedCompanyId
-          } else {
-            body.board_id = selectedBoard.id
-          }
-
-          await fetch('/api/financial-predictions', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(body),
-          })
-        }
+      if (selectedCompanyId) {
+        body.company_id = selectedCompanyId
+      } else {
+        body.board_id = selectedBoard.id
       }
 
-      alert(editingRecord ? '更新成功' : '添加成功')
-      setShowModal(false)
-      fetchPredictions()
+      const res = await fetch('/api/financial-predictions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      })
+
+      if (res.ok) {
+        alert(editingRecord ? '更新成功' : '添加成功')
+        setShowModal(false)
+        fetchPredictions()
+      } else {
+        const result = await res.json()
+        alert(`提交失败: ${result.error}`)
+      }
     } catch (error) {
       console.error('提交失败:', error)
       alert('提交失败')
