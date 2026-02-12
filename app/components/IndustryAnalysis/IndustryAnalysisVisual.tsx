@@ -105,7 +105,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
       } else {
         params.append('board_id', selectedBoard.id.toString())
       }
-      
+
       // 启用日期过滤：公司只获取最新财报之后的预测，板块只获取当天之后的预测
       params.append('filter_by_date', 'true')
 
@@ -185,9 +185,9 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
 
       // 如果该指标没有预测值，跳过
       if (!metricValue) return
-
+      const trade_date = new Date(item.report_date)
       const dataPoint: any = {
-        trade_date: new Date(item.report_date),
+        trade_date: trade_date,
       }
       const totalShare = chartData[chartData.length - 1].total_shares
       Quantiles.forEach((q, index) => {
@@ -195,8 +195,20 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
         // 使用对应字段的预测值
         dataPoint[`predict_quantile_price_p${q}`] = parseFloat(((metricValue / totalShare) * quantile).toFixed(2))
       });
+
+      if (index === 0 && dataPoint.trade_date > chartDatasource[chartDatasource.length - 1].trade_date) {
+        // 如果第一个预测数据的报告期在图表数据的最后一个交易日期之后，添加一个连接点
+        const lastChartDataPoint = chartDatasource[chartDatasource.length - 1]
+        const lastTradeDate = new Date(lastChartDataPoint.trade_date)
+        lastTradeDate.setDate(lastTradeDate.getDate() - 30) // 连接点的trade_date设置为图表数据最后一个交易日期的后一天
+        chartDatasource.push({
+          ...dataPoint,
+          trade_date: lastTradeDate,
+        })
+      }
       chartDatasource.push(dataPoint)
 
+      // 设置连接点：当前预测数据的trade_date设置为report_date，如果下一个预测数据的report_date与当前预测数据的report_date相同，则不设置连接点；如果下一个预测数据的report_date在当前预测数据的report_date之后，则设置连接点为下一个预测数据的report_date的前一天；如果没有下一个预测数据，则设置连接点为当前预测数据的report_date的后30天
       const nextPredictData = array[index + 1]
       const endTradeDate = nextPredictData ? new Date(nextPredictData.report_date) : new Date(item.report_date)
       if (nextPredictData) {
@@ -204,11 +216,10 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
       } else {
         endTradeDate.setDate(endTradeDate.getDate() + 3 * 30) // 最后一个预测数据的trade_date设置为report_date的后30天
       }
-      const endDataPoint: any = {
+      chartDatasource.push({
         ...dataPoint,
         trade_date: endTradeDate,
-      }
-      chartDatasource.push(endDataPoint)
+      })
     });
     // 销毁旧图表
     if (chartInstance.current) {
