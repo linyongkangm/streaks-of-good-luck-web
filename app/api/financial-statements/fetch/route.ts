@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import {prisma} from '@/lib/db'
+import { prisma } from '@/lib/db'
 import { fetchWebIntellCallAKShare } from '@/app/tools/stools'
 
 export async function POST(req: NextRequest) {
@@ -22,10 +22,15 @@ export async function POST(req: NextRequest) {
     const symbol = company.company_akshare_code
 
     // 1. 获取资产负债表数据
-    const balanceSheetRes = await fetchWebIntellCallAKShare(
-      'stock_balance_sheet_by_report_em',
-      { symbol }
-    )
+    const [
+      balanceSheetRes,
+      profitSheetRes,
+      cashFlowSheetRes,
+    ] = await Promise.all([
+      fetchWebIntellCallAKShare('stock_balance_sheet_by_report_em', { symbol }),
+      fetchWebIntellCallAKShare('stock_profit_sheet_by_quarterly_em', { symbol }),
+      fetchWebIntellCallAKShare('stock_cash_flow_sheet_by_quarterly_em', { symbol })
+    ])
     if (!balanceSheetRes.ok) {
       throw new Error('获取资产负债表数据失败')
     }
@@ -36,10 +41,6 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. 获取利润表数据
-    const profitSheetRes = await fetchWebIntellCallAKShare(
-      'stock_profit_sheet_by_quarterly_em',
-      { symbol }
-    )
     if (!profitSheetRes.ok) {
       throw new Error('获取利润表数据失败')
     }
@@ -49,10 +50,6 @@ export async function POST(req: NextRequest) {
       profitSheetData.push(...profitSheetResult.data)
     }
     // 3. 获取现金流量表数据
-    const cashFlowSheetRes = await fetchWebIntellCallAKShare(
-      'stock_cash_flow_sheet_by_quarterly_em',
-      { symbol }
-    )
     if (!cashFlowSheetRes.ok) {
       throw new Error('获取现金流量表数据失败')
     }
