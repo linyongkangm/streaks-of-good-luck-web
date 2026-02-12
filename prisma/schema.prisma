@@ -291,3 +291,21 @@ enum AssocType {
   article
   link
 }
+
+/// 财务报表预测指标表
+model indicator__predict_financial_report {
+  id                  BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  company_id          Int?      @db.UnsignedInt
+  board_id            Int?      @db.UnsignedInt
+  report_date         DateTime  @db.Date
+  parent_netprofit    Decimal?  @db.Decimal(20, 2)
+  total_parent_equity Decimal?  @db.Decimal(20, 2)
+  operate_income      Decimal?  @db.Decimal(20, 2)
+  netcash_operate     Decimal?  @db.Decimal(20, 2)
+  create_time         DateTime  @default(now()) @db.DateTime(0)
+  update_time         DateTime  @default(now()) @updatedAt @db.DateTime(0)
+
+  @@index([company_id], map: "idx_company_id")
+  @@index([board_id], map: "idx_board_id")
+  @@index([report_date], map: "idx_report_date")
+}
