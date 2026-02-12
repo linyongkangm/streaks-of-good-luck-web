@@ -57,13 +57,6 @@ const Quantiles = [10, 30, 50, 70, 90];
 const GrayGradient = tools.genColorGradient(Quantiles.length, '#edc29a', '#bca08e');
 const YellowGradient = tools.genColorGradient(Quantiles.length, '#f3755c', '#f1c232');
 
-// 根据metric类型映射字段标签
-const metricFieldLabels: Record<ValuationMetric, string> = {
-  pe: '归属母公司净利润',
-  pb: '归属母公司股东权益',
-  ps: '营业总收入',
-  pc: '经营活动现金流净额',
-}
 
 export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyId }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
@@ -76,14 +69,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
     start_date: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     end_date: new Date().toISOString().split('T')[0],
   })
-  const [showPredictModal, setShowPredictModal] = useState(false)
   const [predictData, setPredictData] = useState<any[]>([])
-  const [predictForm, setPredictForm] = useState({
-    report_date: '',
-    metric_value: '',
-  })
-  const [submitting, setSubmitting] = useState(false)
-
   // 获取数据
   const fetchData = async () => {
     if (!selectedBoard?.id) return
@@ -130,53 +116,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
     }
   }
 
-  // 提交预测数据
-  const handlePredictSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!predictForm.report_date || !predictForm.metric_value) {
-      alert('请填写所有字段')
-      return
-    }
 
-    setSubmitting(true)
-    try {
-      const body: any = {
-        report_date: predictForm.report_date,
-        metric_type: metric,
-        metric_value: parseFloat(predictForm.metric_value),
-      }
-
-      if (selectedCompanyId) {
-        body.company_id = selectedCompanyId
-      } else {
-        body.board_id = selectedBoard.id
-      }
-
-      const res = await fetch('/api/financial-predictions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      })
-
-      if (res.ok) {
-        alert('预测数据添加成功')
-        setShowPredictModal(false)
-        setPredictForm({ report_date: '', metric_value: '' })
-        // 刷新预测数据
-        fetchPredictData()
-      } else {
-        const result = await res.json()
-        alert(`添加失败: ${result.error}`)
-      }
-    } catch (error) {
-      console.error('提交预测数据失败:', error)
-      alert('提交失败')
-    } finally {
-      setSubmitting(false)
-    }
-  }
 
   useEffect(() => {
     if (selectedBoard) {
@@ -394,14 +334,6 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
     <div className="bg-white rounded-xl shadow-lg p-6">
       {/* 控制栏 */}
       <div className="flex gap-4 mb-6 items-end flex-wrap">
-        <div className="ml-auto">
-          <button
-            onClick={() => setShowPredictModal(true)}
-            className="px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all"
-          >
-            预测
-          </button>
-        </div>
         <div className="flex-1 min-w-[200px]">
           <label className="block text-sm font-medium text-slate-700 mb-2">开始日期</label>
           <input
@@ -462,63 +394,6 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
         <div className="text-center py-12 text-slate-500">暂无数据</div>
       ) : (
         <div ref={chartRef} className="w-full"></div>
-      )}
-
-      {/* 预测弹窗 */}
-      {showPredictModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowPredictModal(false)}>
-          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold text-slate-800 mb-6">添加财务预测</h2>
-            <form onSubmit={handlePredictSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  预测报告期
-                </label>
-                <input
-                  type="date"
-                  value={predictForm.report_date}
-                  onChange={(e) => setPredictForm({ ...predictForm, report_date: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  {metricFieldLabels[metric]}
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={predictForm.metric_value}
-                  onChange={(e) => setPredictForm({ ...predictForm, metric_value: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
-                  placeholder="请输入预测值"
-                  required
-                />
-              </div>
-              <div className="flex gap-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowPredictModal(false)
-                    setPredictForm({ report_date: '', metric_value: '' })
-                  }}
-                  className="flex-1 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-all"
-                  disabled={submitting}
-                >
-                  取消
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
-                  disabled={submitting}
-                >
-                  {submitting ? '提交中...' : '确定'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
       )}
     </div>
   )

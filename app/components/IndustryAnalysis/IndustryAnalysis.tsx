@@ -12,6 +12,7 @@ import IndustryAnalysisIndustryAnalysis from './IndustryAnalysisIndustryAnalysis
 import IndustryAnalysisLoading from './IndustryAnalysisLoading'
 import Loading from '@/app/widget/Loading'
 import IndustryAnalysisVisual from './IndustryAnalysisVisual'
+import IndustryAnalysisPredictions from './IndustryAnalysisPredictions'
 
 export default function IndustryAnalysis() {
   const [boards, setBoards] = useState<info__stock_board[]>([])
@@ -81,7 +82,8 @@ export default function IndustryAnalysis() {
               <IndustryAnalysisVisual selectedBoard={selectedBoard} selectedCompanyId={selectedCompanyId}></IndustryAnalysisVisual>
               {/* 关联公司 */}
               <IndustryAnalysisRelatedCompanies selectedBoard={selectedBoard} fetchBoards={fetchBoards} fetchBoardDetail={fetchBoardDetail} selectedCompanyId={selectedCompanyId} setSelectedCompanyId={setSelectedCompanyId}></IndustryAnalysisRelatedCompanies>
-
+              {/* 预测数据 */}
+              <IndustryAnalysisPredictions selectedBoard={selectedBoard} selectedCompanyId={selectedCompanyId}></IndustryAnalysisPredictions>
               {/* 行业分析报告 */}
               <IndustryAnalysisIndustryAnalysis selectedBoard={selectedBoard}></IndustryAnalysisIndustryAnalysis>
             </div>
