@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 from email import message
 import utils
@@ -67,7 +68,7 @@ async def gen_predicts(article_text: str, issue_date: str) -> list:
             }
         ]
         # logger.info("\n\n--- 发送给模型的消息 ---", messages)
-        responseText = agents.think(cast(List, messages))
+        responseText = await asyncio.to_thread(agents.think, cast(List, messages))
 
         if responseText:
             logger.info("\n\n--- 完整模型响应 ---")

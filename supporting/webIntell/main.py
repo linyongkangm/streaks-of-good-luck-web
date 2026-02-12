@@ -257,7 +257,7 @@ async def api_call_akshare(request: AkShareRequest):
         logger.info(f"参数: {request.params}")
 
         # 调用 akshare 方法
-        result = tasks.call_akshare(request.method, **request.params)
+        result = await tasks.call_akshare(request.method, **request.params)
 
         logger.info(f"✓ 调用完成，返回 {len(result)} 条数据")
 
