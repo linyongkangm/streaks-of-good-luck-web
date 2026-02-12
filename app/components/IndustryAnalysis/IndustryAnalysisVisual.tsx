@@ -182,11 +182,12 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
           nice: true,
         }
       },
-      // 添加interaction配置来过滤null值
       interaction: {
         tooltip: {
-          filter: (d) => d.value !== null && d.value !== undefined,
-        },
+          filter: (d) => {
+            return d.value !== 'undefined'
+          }, // 关闭默认tooltip
+        }
       },
       children: [
         {
