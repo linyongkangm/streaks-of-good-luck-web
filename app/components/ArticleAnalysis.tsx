@@ -313,7 +313,7 @@ export default function ArticleAnalysis() {
           }}>获取WSJ</Button>
           <Button onClick={async () => {
             await ctools.collectLatestEconomistArticles()
-          }}>获取Economist</Button>
+          }}>获取Economist Weekly Edition</Button>
         </div>
       </div>
 
