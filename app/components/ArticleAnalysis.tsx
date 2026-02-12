@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import type { summary__article } from '@/types'
 import * as tools from '@/app/tools'
 import * as ctools from '@/app/tools/ctools'
+import Button from '@/app/widget/Button'
 function appendPredictsSaved(articleId: string) {
   const predicts_saved = localStorage.getItem('PREDICTS_SAVED')?.split(',') || []
   predicts_saved.push(articleId)
@@ -22,8 +23,6 @@ export default function ArticleAnalysis() {
   const [searchContributor, setSearchContributor] = useState('')
   const [searchIssueDate, setSearchIssueDate] = useState('')
   const [publications, setPublications] = useState<string[]>([])
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [isProcessingWSJ, setIsProcessingWSJ] = useState(false)
   const [reanalyzing, setReanalyzing] = useState<string | null>(null)
   const [extractingPredicts, setExtractingPredicts] = useState<string | null>(null)
   const [predictPreview, setPredictPreview] = useState<{
@@ -306,54 +305,20 @@ export default function ArticleAnalysis() {
 
         </div>
         <div className="flex gap-4 mt-4">
-          <button
-            onClick={async () => {
-              try {
-                setIsProcessing(true)
-                const data = await ctools.collectLatestQIUSHIArticles()
-                if (data.success) {
-                  alert(`成功处理 ${data.successful} 篇文章${data.failed > 0 ? `，${data.failed} 篇失败` : ''}`)
-                }
-              } catch (error) {
-                console.error('Failed to collect QIUSHI articles:', error)
-              } finally {
-                setIsProcessing(false)
-              }
-            }}
-            disabled={isProcessing}
-            className="px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isProcessing ? (
-              <>
-                <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                处理中...
-              </>
-            ) : (
-              '获取求是'
-            )}
-          </button>
-          <button onClick={async () => {
-            try {
-              setIsProcessingWSJ(true)
-              await ctools.collectLatestWSJArticles()
-            } catch (error) {
-              console.error('Failed to collect WSJ articles:', error)
-            } finally {
-              setIsProcessingWSJ(false)
+          <Button onClick={async () => {
+            const data = await ctools.collectLatestQIUSHIArticles()
+            if (data.success) {
+              alert(`成功处理 ${data.successful} 篇文章${data.failed > 0 ? `，${data.failed} 篇失败` : ''}`)
+            } else {
+              alert('获取求是文章失败，请稍后重试')
             }
-          }}
-            disabled={isProcessingWSJ}
-            className="px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isProcessingWSJ ? (
-              <>
-                <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                处理中...
-              </>
-            ) : (
-              '获取WSJ'
-            )}
-          </button>
+          }}>获取求是</Button>
+          <Button onClick={async () => {
+            await ctools.collectLatestWSJArticles()
+          }}>获取WSJ</Button>
+          <Button onClick={async () => {
+            await ctools.collectLatestEconomistArticles()
+          }}>获取Economist</Button>
         </div>
       </div>
 

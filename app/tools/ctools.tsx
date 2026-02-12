@@ -101,3 +101,16 @@ export async function collectLatestWSJArticles() {
     existingFlags: existingSourceUrls,
   });
 }
+
+export async function collectLatestEconomistArticles() {
+  const listUrl = [
+    'https://www.economist.com/weeklyedition/'
+  ];
+  const response = await fetch('/api/article-summaries/existing?publication=The Economist');
+  const data = await response.json();
+  const existingSourceUrls: string[] = data.existingSourceUrls || [];
+  await callXSpider('BATCH_LIST_SCRAPING', {
+    urls: listUrl,
+    existingFlags: existingSourceUrls,
+  });
+}

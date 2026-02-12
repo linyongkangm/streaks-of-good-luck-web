@@ -1,5 +1,15 @@
 console.log('X-Spider economist-content script');
 
+// 抓Weekly edition的文章列表
+async function scrapeList() {
+  let urls = Array.from(document.querySelectorAll('#content [data-testid="teaser"] a')).map(a => {
+    const url = new URL(a.href, window.location.origin);
+    return url.origin + url.pathname;
+  });
+  urls = [...new Set(urls)];
+  return urls;
+}
+
 async function scrape() {
   const scrollY = window.scrollY;
   window.scrollTo(0, document.body.scrollHeight);
