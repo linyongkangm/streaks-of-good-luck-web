@@ -55,7 +55,7 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
     setLoading(true)
     try {
       const params = new URLSearchParams()
-      
+
       if (selectedCompanyId) {
         params.append('company_id', selectedCompanyId.toString())
       } else {
@@ -125,7 +125,7 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!formData.report_date) {
       alert('请填写报告期')
       return
@@ -199,25 +199,21 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
     {
       title: metricLabels.parent_netprofit,
       dataIndex: 'parent_netprofit',
-      align: 'right',
       render: (value) => formatNumber(value),
     },
     {
       title: metricLabels.total_parent_equity,
       dataIndex: 'total_parent_equity',
-      align: 'right',
       render: (value) => formatNumber(value),
     },
     {
       title: metricLabels.operate_income,
       dataIndex: 'operate_income',
-      align: 'right',
       render: (value) => formatNumber(value),
     },
     {
       title: metricLabels.netcash_operate,
       dataIndex: 'netcash_operate',
-      align: 'right',
       render: (value) => formatNumber(value),
     },
     {
@@ -247,8 +243,8 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
     <div className="bg-white rounded-xl shadow-lg p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold text-slate-800">
-          {selectedCompanyId 
-            ? selectedBoard.relation__stock_board_company.find(c => c.company_id === selectedCompanyId)?.info__stock_company?.company_name 
+          {selectedCompanyId
+            ? selectedBoard.relation__stock_board_company.find(c => c.company_id === selectedCompanyId)?.info__stock_company?.company_name
             : selectedBoard.board_name} - 财务预测数据
         </h2>
         <button
