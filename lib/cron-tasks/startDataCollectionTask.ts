@@ -2,59 +2,78 @@ import cron from 'node-cron';
 import { BrowserContext } from 'playwright';
 import * as stools from '@/app/tools/stools';
 
-async function collectTweetSummaries(context: BrowserContext) {
+type CollectType = 'collectTweetSummaries' | 'collectLatestQIUSHIArticles' | 'collectLatestWSJArticles' | 'collectLatestEconomistArticles';
+async function callCollect(context: BrowserContext, type: CollectType) {
   try {
     const page = context.pages()[0];
-    await page.evaluate(() => {
+    await page.evaluate((type) => {
       const event = new CustomEvent('EXTERNAL_EVENT', {
         detail: {
-          type: 'collectTweetSummaries',
+          type: type,
         }
       });
       document.dispatchEvent(event);
-    });
+    }, type);
   } catch (error) {
     console.error('Error in data collection task:', error);
   }
 }
 
+async function collectTweetSummaries(context: BrowserContext) {
+  return await callCollect(context, 'collectTweetSummaries');
+}
 
 async function collectWSJArticles(context: BrowserContext) {
-  try {
-    const page = context.pages()[0];
-    await page.evaluate(() => {
-      const event = new CustomEvent('EXTERNAL_EVENT', {
-        detail: {
-          type: 'collectWSJArticles',
-        }
-      });
-      document.dispatchEvent(event);
-    });
-  } catch (error) {
-    console.error('Error in data collection task:', error);
-  }
+  return await callCollect(context, 'collectLatestWSJArticles');
 }
 
-export async function startDataCollectionTaskCallback() {
-  // 启动浏览器并触发EXTERNAL_EVENT事件
+async function collectEconomistArticles(context: BrowserContext) {
+  return await callCollect(context, 'collectLatestEconomistArticles');
+}
+
+async function collectQIUSHIArticles(context: BrowserContext) {
+  return await callCollect(context, 'collectLatestQIUSHIArticles');
+}
+
+
+
+export async function startDataCollectionTaskEveryDayCallback() {
+  console.log('Starting every day data collection task...');
   const context = await stools.launchBrowser(process.env.HOST_URL);
-  console.log('Starting data collection task...');
   if (context) {
     await Promise.all([
       collectTweetSummaries(context),
-      collectWSJArticles(context)
+      collectWSJArticles(context),
     ]);
-    await new Promise(resolve => setTimeout(resolve, 15 * 60000)); // 等待15min，确保数据采集完成
-    // 关闭浏览器
-    await context.close();
   }
+}
+
+function startDataCollectionTaskEveryDay() {
+  const SEND_HOUR = 8;
+  const expression = `50 ${SEND_HOUR},${SEND_HOUR + 4} * * *`;
+  cron.schedule(expression, startDataCollectionTaskEveryDayCallback);
+  console.log(`Data collection task scheduled: every day at ${expression}`);
+}
+
+export async function startDataCollectionTaskHalfMonthCallback() {
+  console.log('Starting every half month data collection task...');
+  const context = await stools.launchBrowser(process.env.HOST_URL);
+  if (context) {
+    await Promise.all([
+      collectQIUSHIArticles(context),
+    ]);
+  }
+}
+
+function startDataCollectionTaskHalfMonth() {
+  const expression = `2 9 1,16 * *`;
+  cron.schedule(expression, startDataCollectionTaskHalfMonthCallback);
+  console.log(`Data collection task scheduled: every half month at ${expression}`);
 }
 
 // 定时任务：每天采集推文数据
 // 每天早上8点执行
 export function startDataCollectionTask() {
-  const SEND_HOUR = 8; // 发送摘要的小时（24小时制）
-  const expression = `50 ${SEND_HOUR},${SEND_HOUR + 4} * * *`;
-  cron.schedule(expression, startDataCollectionTaskCallback);
-  console.log(`Data collection task scheduled: every day at ${SEND_HOUR}:50,${SEND_HOUR + 4}:50 AM`);
+  startDataCollectionTaskEveryDay();
+  startDataCollectionTaskHalfMonth();
 }

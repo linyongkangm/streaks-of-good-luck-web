@@ -5,6 +5,7 @@ export default function useExternalEvent() {
   useEffect(() => {
     const handle = async (event: any) => {
       console.log('Received EXTERNAL_EVENT with detail:', event.detail);
+
       if (event.detail?.type === 'collectTweetSummaries') {
         const response = await fetch('/api/tweet-summaries?collect_from_only=true')
         const data = await response.json()
@@ -16,8 +17,13 @@ export default function useExternalEvent() {
             console.error('Error collecting tweets:', error);
           });
         });
-      } else if (event.detail?.type === 'collectWSJArticles') {
-        ctools.collectLatestWSJArticles()
+      } else {
+        const type: string = event.detail?.type;
+        (ctools as any)[type]?.().then((data: any) => {
+          console.log(`${type} collected successfully:`, data);
+        }).catch((error: any) => {
+          console.error(`Error collecting ${type}:`, error);
+        });
       }
     };
     document.addEventListener('EXTERNAL_EVENT', handle);

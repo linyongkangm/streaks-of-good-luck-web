@@ -26,10 +26,12 @@ export async function redirectToTargetTab(url) {
   if (!targetTab) {
     targetTab = await chrome.tabs.create({ url: url, active: false });
   }
+  let i = 0;
   do {
     targetTab = await chrome.tabs.get(targetTab.id);
+    console.log("Checking target tab status:", targetTab.status);
     await new Promise(resolve => setTimeout(resolve, 500));
-  } while (targetTab.status !== 'complete');
+  } while (targetTab.status !== 'complete' && i++ < 20);
   console.log("Redirected to target tab:", targetTab);
   return targetTab;
 }
