@@ -53,6 +53,14 @@ const metricLabels = {
   pc: 'PC (市现率)',
 }
 
+const Quantiles = [10, 30, 50, 70, 90];
+const PredictTestData = [{
+  report_date: '2025-12-31',
+  parent_netprofit_ttm: 95027341015.29,
+}, {
+  report_date: '2026-12-31',
+  parent_netprofit_ttm: 100027341015.29,
+}]
 export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyId }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
   const chartInstance = useRef<Chart | null>(null)
@@ -128,9 +136,19 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
       })
       chartDatasource.push(dataPoint)
     })
-    const quantileData: QuantileData = data[dataKey]?.quantileData || {}
-    console.log('Quantile data for chart:', quantileData)
 
+    const quantileData: QuantileData = data[dataKey]?.quantileData || {}
+    PredictTestData.forEach((item) => {
+      const dataPoint: any = {
+        trade_date: new Date(item.report_date),
+      }
+      const totalShare = chartData[chartData.length - 1].total_shares
+      Quantiles.forEach((q, index) => {
+        const quantile = quantileData[adjustType]?.[metric]?.[index]
+        dataPoint[`predict_quantile_price_p${q}`] = parseFloat(((item.parent_netprofit_ttm / totalShare) * quantile).toFixed(2))
+      });
+      chartDatasource.push(dataPoint)
+    });
     // 销毁旧图表
     if (chartInstance.current) {
       chartInstance.current.destroy()
@@ -142,8 +160,9 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
       autoFit: true,
       height: 500,
     })
-    const ps = [10, 30, 50, 70, 90];
-    const grayGradient = tools.genColorGradient(ps.length, '#edc29a', '#bca08e');
+
+    const grayGradient = tools.genColorGradient(Quantiles.length, '#edc29a', '#bca08e');
+    const yellowGradient = tools.genColorGradient(Quantiles.length, '#fff2cc', '#f1c232');
     chart.options({
       type: 'view',
       data: chartDatasource,
@@ -163,6 +182,12 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
           nice: true,
         }
       },
+      // 添加interaction配置来过滤null值
+      interaction: {
+        tooltip: {
+          filter: (d) => d.value !== null && d.value !== undefined,
+        },
+      },
       children: [
         {
           type: 'line',
@@ -180,7 +205,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
           tooltip: {
             name: `收盘价(${adjustTypeLabels[adjustType]})`,
             channel: 'y',
-          }
+          },
         },
         {
           type: 'line',
@@ -205,7 +230,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
             channel: 'y',
           }
         },
-        ...ps.map((q, index) => {
+        ...Quantiles.map((q, index) => {
           return {
             type: 'line',
             encode: {
@@ -220,7 +245,23 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
               channel: 'y',
             }
           }
-        })
+        }),
+        ...Quantiles.map((q, index) => {
+          return {
+            type: 'line',
+            encode: {
+              y: `predict_quantile_price_p${q}`,
+            },
+            style: {
+              lineWidth: 1,
+              stroke: yellowGradient[index],
+            },
+            tooltip: {
+              name: `预测${q}分位价`,
+              channel: 'y',
+            },
+          }
+        }),
       ],
     })
     chart.render()
