@@ -42,39 +42,38 @@ interface FormProps<T> {
   className?: string
 }
 
-export function Form<T extends Record<string, any>>({ 
-  onSubmit, 
-  initialValues = {} as T, 
+export function Form<T extends Record<string, any>>({
+  onSubmit,
+  initialValues = {} as T,
   values: controlledValues,
   onValuesChange,
-  children, 
-  className = '' 
+  children,
+  className = ''
 }: FormProps<T>) {
   const [internalValues, setInternalValues] = useState<T>(initialValues)
-  
+
   // 使用受控值或内部值
   const values = controlledValues !== undefined ? controlledValues : internalValues
-  
+
   const setFieldValue = (field: string, value: any) => {
     const newValues = { ...values, [field]: value }
-    if (controlledValues !== undefined) {
-      // 受控模式，通知外部
-      onValuesChange?.(newValues)
-    } else {
+    if (controlledValues === undefined) {
       // 非受控模式，更新内部状态
       setInternalValues(newValues)
     }
+    // 通知外部
+    onValuesChange?.(newValues)
   }
-  
+
   const getFieldValue = (field: string) => {
     return values[field]
   }
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSubmit(e, values)
   }
-  
+
   return (
     <FormContext.Provider value={{ values, setFieldValue, getFieldValue }}>
       <form onSubmit={handleSubmit} className={`space-y-4 ${className}`}>
@@ -118,12 +117,12 @@ interface FormItemProps {
 export function FormItem({ field, children, onChange }: FormItemProps) {
   const { getFieldValue, setFieldValue } = useFormContext()
   const value = getFieldValue(field)
-  
+
   const handleChange = (val: any) => {
     setFieldValue(field, val)
     onChange?.(val)
   }
-  
+
   // Clone the child and inject value and onChange
   return React.cloneElement(children, {
     value,
