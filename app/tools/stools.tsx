@@ -41,8 +41,10 @@ export async function launchBrowser(hostUrl: string = 'http://localhost:3000/') 
     }
 
     contextTimeout = setTimeout(() => {
-      console.log('Closing browser context after 15 minutes to free resources.');
-      context.close();
+      if (context?.browser()?.isConnected()) {
+        console.log('Closing browser context after 15 minutes to free resources.');
+        context.close();
+      }
     }, 15 * 60 * 1000); // 15分钟后关闭浏览器上下文
 
     return context;
