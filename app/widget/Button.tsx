@@ -7,6 +7,7 @@ interface ButtonProps {
   type?: 'button' | 'submit' | 'reset'
   look?: 'primary' | 'secondary' | 'danger' | 'cancel' | 'success'
   size?: 'tiny' | 'small' | 'medium' | 'large'
+  className?: string
 }
 
 function getButtonClass(look: ButtonProps['look'], size: ButtonProps['size']): string {
@@ -32,12 +33,12 @@ function getButtonClass(look: ButtonProps['look'], size: ButtonProps['size']): s
   return baseClass;
 }
 
-export default function Button({ onClick, children, disabled = false, type = 'button', look = 'primary', size = 'medium' }: ButtonProps) {
+export default function Button({ onClick, children, disabled = false, type = 'button', look = 'primary', size = 'medium', className = '' }: ButtonProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   return (
     <button
       type={type}
-      className={getButtonClass(look, size)}
+      className={`${getButtonClass(look, size)} ${className}`}
       onClick={async (e) => {
         if (isProcessing) return
         setIsProcessing(true)
