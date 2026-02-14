@@ -1,6 +1,7 @@
 import { BrowserContext, chromium } from 'playwright';
 
 let context: BrowserContext;
+let contextTimeout: NodeJS.Timeout;
 export async function launchBrowser(hostUrl: string = 'http://localhost:3000/') {
   try {
     if (!context || !context.browser()?.isConnected()) {
@@ -34,6 +35,16 @@ export async function launchBrowser(hostUrl: string = 'http://localhost:3000/') 
       // 访问指定URL
       await page.goto(hostUrl, { waitUntil: 'networkidle' });
     }
+
+    if (contextTimeout) {
+      clearTimeout(contextTimeout);
+    }
+
+    contextTimeout = setTimeout(() => {
+      console.log('Closing browser context after 15 minutes to free resources.');
+      context.close();
+    }, 15 * 60 * 1000); // 15分钟后关闭浏览器上下文
+
     return context;
   } catch (error) {
     console.error('Error launching browser with extensions:', error);
