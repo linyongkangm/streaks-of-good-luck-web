@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Table, { type Column } from '@/app/widget/Table'
 import type { StockBoardWithRelations } from '@/types'
 import { formatNumber } from '@/app/tools'
@@ -72,6 +72,12 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
     fetchLatestFinancial()
   }, [selectedBoard, selectedCompanyId])
 
+  const panelTitle = useMemo(() => {
+    return selectedCompanyId
+      ? selectedBoard.relation__stock_board_company.find(c => c.company_id === selectedCompanyId)?.info__stock_company?.company_name + ' - 财务预测数据'
+      : selectedBoard.board_name + ' - 财务预测数据'
+  }, [selectedCompanyId, selectedBoard])
+  
   const fetchPredictions = async () => {
     if (!selectedBoard?.id) return
 
@@ -424,9 +430,7 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
 
   return (
     <Panel
-      title={`${selectedCompanyId
-        ? selectedBoard.relation__stock_board_company.find(c => c.company_id === selectedCompanyId)?.info__stock_company?.company_name
-        : selectedBoard.board_name} - 财务预测数据`}
+      title={panelTitle}
       headerAction={
         <Button
           onClick={handleAdd}
