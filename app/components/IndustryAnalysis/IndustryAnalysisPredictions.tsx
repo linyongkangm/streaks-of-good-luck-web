@@ -9,6 +9,7 @@ import { DateTime } from 'luxon'
 import { NumberInput } from '@/app/widget/Input'
 import Button from '@/app/widget/Button'
 import Radio from '@/app/widget/Radio'
+import Modal from '@/app/widget/Modal'
 interface PredictRecord {
   id: string | bigint
   company_id: number | null
@@ -445,110 +446,107 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
       />
 
       {/* 添加/编辑弹窗 */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold text-slate-800 mb-6">
-              {editingRecord ? '编辑' : '添加'}财务预测
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  预测报告期 *
-                </label>
-                <div className="flex gap-4 items-center">
-                  <div className="flex-1">
-                    <DatePicker mode="quarter" value={formData.report_date} onChange={handleReportDateChange} />
-                  </div>
-                  {selectedCompanyId && latestFinancial && (
-                    <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-lg">
-                      <span className="text-sm text-slate-600">修改报告期时：</span>
-                      <Radio
-                        options={[
-                          { label: '保留数值', value: 'value' },
-                          { label: '保留增长率', value: 'rate' },
-                        ]}
-                        value={keepMode}
-                        onChange={setKeepMode}
-                      />
-                    </div>
-                  )}
-                </div>
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title={`${editingRecord ? '编辑' : '添加'}财务预测`}
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              预测报告期 *
+            </label>
+            <div className="flex gap-4 items-center">
+              <div className="flex-1">
+                <DatePicker mode="quarter" value={formData.report_date} onChange={handleReportDateChange} />
               </div>
-
-              {latestFinancial && (
-                <div className="bg-slate-50 p-4 rounded-lg mb-4">
-                  <div className="text-sm text-slate-600">
-                    <strong>基准：</strong>最新财报 {DateTime.fromISO(latestFinancial.report_date).toFormat('yyyy-Qq')}
-                  </div>
+              {selectedCompanyId && latestFinancial && (
+                <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-lg">
+                  <span className="text-sm text-slate-600">修改报告期时：</span>
+                  <Radio
+                    options={[
+                      { label: '保留数值', value: 'value' },
+                      { label: '保留增长率', value: 'rate' },
+                    ]}
+                    value={keepMode}
+                    onChange={setKeepMode}
+                  />
                 </div>
               )}
-
-              {(Object.keys(metricLabels) as MetricKey[]).map((key) => {
-                const baseValueMap: Record<MetricKey, number | null> = latestFinancial ? {
-                  parent_netprofit: latestFinancial.parent_netprofit_ttm,
-                  total_parent_equity: latestFinancial.total_parent_equity,
-                  operate_income: latestFinancial.operate_income_ttm,
-                  netcash_operate: latestFinancial.netcash_operate_ttm,
-                } : {
-                  parent_netprofit: null,
-                  total_parent_equity: null,
-                  operate_income: null,
-                  netcash_operate: null,
-                }
-                const baseValue = baseValueMap[key]
-
-                return (
-                  <div key={key}>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      {metricLabels[key]}
-                      {baseValue && (
-                        <span className="ml-2 text-xs text-slate-500">
-                          （最新: {formatNumber(baseValue)}）
-                        </span>
-                      )}
-                    </label>
-                    <div className='flex gap-4 items-center'>
-                      <NumberInput
-                        unit='亿'
-                        value={formData[key]}
-                        onChange={(value) => handleValueChange(key, value)}
-                        decimalPlaces={2}
-                        placeholder={`请输入${metricLabels[key]}`}
-                      />
-                      <NumberInput
-                        value={growthRates[key]}
-                        onChange={(value) => handleGrowthRateChange(key, value)}
-                        placeholder="年化增长率 %"
-                        decimalPlaces={2}
-                        disabled={!latestFinancial || !selectedCompanyId}
-                        suffix="%"
-                      />
-                    </div>
-                  </div>
-                )
-              })}
-
-              <div className="flex gap-10 mt-6 justify-center">
-                <Button
-                  look='cancel'
-                  onClick={() => setShowModal(false)}
-                  disabled={submitting}
-                >
-                  取消
-                </Button>
-                <Button
-                  type="submit"
-                  look='success'
-                  disabled={submitting}
-                >
-                  {submitting ? '提交中...' : '确定'}
-                </Button>
-              </div>
-            </form>
+            </div>
           </div>
-        </div>
-      )}
+
+          {latestFinancial && (
+            <div className="bg-slate-50 p-4 rounded-lg mb-4">
+              <div className="text-sm text-slate-600">
+                <strong>基准：</strong>最新财报 {DateTime.fromISO(latestFinancial.report_date).toFormat('yyyy-Qq')}
+              </div>
+            </div>
+          )}
+
+          {(Object.keys(metricLabels) as MetricKey[]).map((key) => {
+            const baseValueMap: Record<MetricKey, number | null> = latestFinancial ? {
+              parent_netprofit: latestFinancial.parent_netprofit_ttm,
+              total_parent_equity: latestFinancial.total_parent_equity,
+              operate_income: latestFinancial.operate_income_ttm,
+              netcash_operate: latestFinancial.netcash_operate_ttm,
+            } : {
+              parent_netprofit: null,
+              total_parent_equity: null,
+              operate_income: null,
+              netcash_operate: null,
+            }
+            const baseValue = baseValueMap[key]
+
+            return (
+              <div key={key}>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  {metricLabels[key]}
+                  {baseValue && (
+                    <span className="ml-2 text-xs text-slate-500">
+                      （最新: {formatNumber(baseValue)}）
+                    </span>
+                  )}
+                </label>
+                <div className='flex gap-4 items-center'>
+                  <NumberInput
+                    unit='亿'
+                    value={formData[key]}
+                    onChange={(value) => handleValueChange(key, value)}
+                    decimalPlaces={2}
+                    placeholder={`请输入${metricLabels[key]}`}
+                  />
+                  <NumberInput
+                    value={growthRates[key]}
+                    onChange={(value) => handleGrowthRateChange(key, value)}
+                    placeholder="年化增长率 %"
+                    decimalPlaces={2}
+                    disabled={!latestFinancial || !selectedCompanyId}
+                    suffix="%"
+                  />
+                </div>
+              </div>
+            )
+          })}
+
+          <div className="flex gap-10 mt-6 justify-center">
+            <Button
+              look='cancel'
+              onClick={() => setShowModal(false)}
+              disabled={submitting}
+            >
+              取消
+            </Button>
+            <Button
+              type="submit"
+              look='success'
+              disabled={submitting}
+            >
+              {submitting ? '提交中...' : '确定'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }
