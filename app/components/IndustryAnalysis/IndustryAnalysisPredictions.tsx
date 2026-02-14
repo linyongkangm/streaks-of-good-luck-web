@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react'
 import Table, { type Column } from '@/app/widget/Table'
 import type { StockBoardWithRelations } from '@/types'
-import { formatNumber, toUTC } from '@/app/tools'
+import { formatNumber } from '@/app/tools'
 import DatePicker from '@/app/widget/DatePicker'
-import { DateTime, MonthNumbers, QuarterNumbers } from 'luxon'
+import { DateTime } from 'luxon'
+import { NumberInput } from '@/app/widget/Input'
+import Button from '@/app/widget/Button'
 interface PredictRecord {
   id: string | bigint
   company_id: number | null
@@ -283,33 +285,31 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     {metricLabels[key]}
                   </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData[key]}
-                    onChange={(e) => setFormData({ ...formData, [key]: e.target.value })}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
+
+                  <NumberInput
+                    unit='亿'
+                    value={parseFloat(formData[key])}
+                    onChange={(value) => setFormData({ ...formData, [key]: value.toString() })}
                     placeholder={`请输入${metricLabels[key]}`}
                   />
                 </div>
               ))}
 
-              <div className="flex gap-3 mt-6">
-                <button
-                  type="button"
+              <div className="flex gap-10 mt-6 justify-center">
+                <Button
+                  look='cancel'
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-all"
                   disabled={submitting}
                 >
                   取消
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
+                  look='primary'
                   disabled={submitting}
                 >
                   {submitting ? '提交中...' : '确定'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>
