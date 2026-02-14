@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { info__stock_company, quote__stock_constituent_daily } from '@/types'
-import { formatNumber, formatVolume } from '@/app/tools'
+import { formatNumber } from '@/app/tools'
 import Table from '@/app/widget/Table'
 
 interface Props {
@@ -129,7 +129,7 @@ export default function SecuritiesMetadataQuotes({ selectedCompany }: Props) {
       key: 'volume',
       align: 'right' as const,
       className: 'font-mono',
-      render: (value: any) => formatVolume(value),
+      render: (value: any) => formatNumber(value),
     },
     {
       title: '成交额',
@@ -139,7 +139,7 @@ export default function SecuritiesMetadataQuotes({ selectedCompany }: Props) {
       className: 'font-mono',
       render: (_: any, record: any) => {
         const data = getDisplayData(record)
-        return formatVolume(data.turnover)
+        return formatNumber(data.turnover)
       },
     },
     {

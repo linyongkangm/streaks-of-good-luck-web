@@ -42,10 +42,10 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
   const [editingRecord, setEditingRecord] = useState<PredictRecord | null>(null)
   const [formData, setFormData] = useState({
     report_date: DateTime.utc() as DateTime,
-    parent_netprofit: '',
-    total_parent_equity: '',
-    operate_income: '',
-    netcash_operate: '',
+    parent_netprofit: undefined as number | undefined,
+    total_parent_equity: undefined as number | undefined,
+    operate_income: undefined as number | undefined,
+    netcash_operate: undefined as number | undefined,
   })
   const [submitting, setSubmitting] = useState(false)
   useEffect(() => {
@@ -81,10 +81,10 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
     setEditingRecord(null)
     setFormData({
       report_date: DateTime.now(),
-      parent_netprofit: '',
-      total_parent_equity: '',
-      operate_income: '',
-      netcash_operate: '',
+      parent_netprofit: undefined,
+      total_parent_equity: undefined,
+      operate_income: undefined,
+      netcash_operate: undefined,
     })
     setShowModal(true)
   }
@@ -93,10 +93,10 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
     setEditingRecord(record)
     setFormData({
       report_date: DateTime.fromISO(record.report_date),
-      parent_netprofit: record.parent_netprofit?.toString() || '',
-      total_parent_equity: record.total_parent_equity?.toString() || '',
-      operate_income: record.operate_income?.toString() || '',
-      netcash_operate: record.netcash_operate?.toString() || '',
+      parent_netprofit: record.parent_netprofit ?? undefined,
+      total_parent_equity: record.total_parent_equity ?? undefined,
+      operate_income: record.operate_income ?? undefined,
+      netcash_operate: record.netcash_operate ?? undefined,
     })
     setShowModal(true)
   }
@@ -147,17 +147,17 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
       }
 
       // 添加非空的指标字段
-      if (formData.parent_netprofit && formData.parent_netprofit.trim() !== '') {
-        body.parent_netprofit = parseFloat(formData.parent_netprofit)
+      if (formData.parent_netprofit !== undefined) {
+        body.parent_netprofit = formData.parent_netprofit
       }
-      if (formData.total_parent_equity && formData.total_parent_equity.trim() !== '') {
-        body.total_parent_equity = parseFloat(formData.total_parent_equity)
+      if (formData.total_parent_equity !== undefined) {
+        body.total_parent_equity = formData.total_parent_equity
       }
-      if (formData.operate_income && formData.operate_income.trim() !== '') {
-        body.operate_income = parseFloat(formData.operate_income)
+      if (formData.operate_income !== undefined) {
+        body.operate_income = formData.operate_income
       }
-      if (formData.netcash_operate && formData.netcash_operate.trim() !== '') {
-        body.netcash_operate = parseFloat(formData.netcash_operate)
+      if (formData.netcash_operate !== undefined) {
+        body.netcash_operate = formData.netcash_operate
       }
 
       if (selectedCompanyId) {
@@ -288,8 +288,8 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
 
                   <NumberInput
                     unit='亿'
-                    value={parseFloat(formData[key])}
-                    onChange={(value) => setFormData({ ...formData, [key]: value.toString() })}
+                    value={(formData[key])}
+                    onChange={(value) => setFormData({ ...formData, [key]: value })}
                     placeholder={`请输入${metricLabels[key]}`}
                   />
                 </div>

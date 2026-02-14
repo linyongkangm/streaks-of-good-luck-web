@@ -151,7 +151,7 @@ export function fromISOUseBeijing(dateTime: string): luxon.DateTime {
  * @param {number} decimals 小数位数，默认2位
  * @returns {string} 格式化后的字符串
  */
-export function formatNumber(value: any, decimals: number = 2): string {
+export function formatNumber(value: string | number | undefined | null, decimals: number = 2): string {
   if (value === null || value === undefined) return '-'
   const num = Number(value)
   const abs = Math.abs(num)
@@ -160,22 +160,6 @@ export function formatNumber(value: any, decimals: number = 2): string {
   if (abs >= 100000000) return `${sign}${(abs / 100000000).toFixed(2)}亿`
   if (abs >= 10000) return `${sign}${(abs / 10000).toFixed(2)}万`
   return num.toFixed(decimals)
-}
-
-/**
- * 格式化成交量，自动转换为亿/万单位
- * @param {any} value 数值
- * @returns {string} 格式化后的字符串
- */
-export function formatVolume(value: any): string {
-  if (value === null || value === undefined) return '-'
-  const num = Number(value)
-  const abs = Math.abs(num)
-  const sign = num < 0 ? '-' : ''
-
-  if (abs >= 100000000) return `${sign}${(abs / 100000000).toFixed(2)}亿`
-  if (abs >= 10000) return `${sign}${(abs / 10000).toFixed(2)}万`
-  return num.toString()
 }
 
 /**
