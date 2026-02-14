@@ -8,6 +8,7 @@ import DatePicker from '@/app/widget/DatePicker'
 import { DateTime } from 'luxon'
 import { NumberInput } from '@/app/widget/Input'
 import Button from '@/app/widget/Button'
+import Radio from '@/app/widget/Radio'
 interface PredictRecord {
   id: string | bigint
   company_id: number | null
@@ -461,30 +462,14 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
                   {selectedCompanyId && latestFinancial && (
                     <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-lg">
                       <span className="text-sm text-slate-600">修改报告期时：</span>
-                      <div className="flex rounded-lg overflow-hidden border border-slate-300">
-                        <button
-                          type="button"
-                          onClick={() => setKeepMode('value')}
-                          className={`px-3 py-1 text-sm transition-colors ${
-                            keepMode === 'value'
-                              ? 'bg-purple-500 text-white'
-                              : 'bg-white text-slate-700 hover:bg-slate-100'
-                          }`}
-                        >
-                          保留数值
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setKeepMode('rate')}
-                          className={`px-3 py-1 text-sm transition-colors border-l border-slate-300 ${
-                            keepMode === 'rate'
-                              ? 'bg-purple-500 text-white'
-                              : 'bg-white text-slate-700 hover:bg-slate-100'
-                          }`}
-                        >
-                          保留增长率
-                        </button>
-                      </div>
+                      <Radio
+                        options={[
+                          { label: '保留数值', value: 'value' },
+                          { label: '保留增长率', value: 'rate' },
+                        ]}
+                        value={keepMode}
+                        onChange={setKeepMode}
+                      />
                     </div>
                   )}
                 </div>
