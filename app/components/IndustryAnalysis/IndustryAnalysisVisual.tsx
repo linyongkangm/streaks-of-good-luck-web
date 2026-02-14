@@ -4,6 +4,9 @@ import { useState, useEffect, useRef } from 'react'
 import { Chart } from '@antv/g2'
 import type { StockBoardWithRelations } from '@/types'
 import * as tools from '@/app/tools'
+import Select from '@/app/widget/Select'
+import DatePicker from '@/app/widget/DatePicker'
+import { DateTime } from 'luxon'
 
 /**
  * 单个复权类型下的财务指标数据结构
@@ -66,8 +69,8 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
   const [metric, setMetric] = useState<ValuationMetric>('pe')
   const [data, setData] = useState<{ [key: string]: { results: any[], quantileData: any } }>({})
   const [dateRange, setDateRange] = useState({
-    start_date: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    end_date: new Date().toISOString().split('T')[0],
+    start_date: DateTime.now().minus({ months: 6 }),
+    end_date: DateTime.now(),
   })
   const [predictData, setPredictData] = useState<any[]>([])
   // 获取数据
@@ -77,8 +80,8 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
     setLoading(true)
     try {
       const params = new URLSearchParams({
-        start_date: dateRange.start_date,
-        end_date: dateRange.end_date,
+        start_date: dateRange.start_date.toISODate() || '',
+        end_date: dateRange.end_date.toISODate() || '',
       })
 
       const res = await fetch(`/api/board-companies/${selectedBoard.id}/valuation?${params}`)
@@ -350,21 +353,13 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
       <div className="flex gap-4 mb-6 items-end flex-wrap">
         <div className="flex-1 min-w-[200px]">
           <label className="block text-sm font-medium text-slate-700 mb-2">开始日期</label>
-          <input
-            type="date"
-            value={dateRange.start_date}
-            onChange={(e) => setDateRange({ ...dateRange, start_date: e.target.value })}
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-slate-900"
-          />
+          <DatePicker value={dateRange.start_date} onChange={(date) => setDateRange({ ...dateRange, start_date: date })}>
+          </DatePicker>
         </div>
         <div className="flex-1 min-w-[200px]">
           <label className="block text-sm font-medium text-slate-700 mb-2">结束日期</label>
-          <input
-            type="date"
-            value={dateRange.end_date}
-            onChange={(e) => setDateRange({ ...dateRange, end_date: e.target.value })}
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-slate-900"
-          />
+          <DatePicker value={dateRange.end_date} onChange={(date) => setDateRange({ ...dateRange, end_date: date })}>
+          </DatePicker>
         </div>
         <div className="flex-1 min-w-[200px]">
           <label className="block text-sm font-medium text-slate-700 mb-2">复权方式</label>
@@ -385,17 +380,14 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
         </div>
         <div className="flex-1 min-w-[200px]">
           <label className="block text-sm font-medium text-slate-700 mb-2">估值指标</label>
-          <select
+          <Select
+            options={Object.entries(metricLabels).map(([value, label]) => ({
+              value: value as ValuationMetric,
+              label
+            }))}
             value={metric}
-            onChange={(e) => setMetric(e.target.value as ValuationMetric)}
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-slate-900"
-          >
-            {(Object.keys(metricLabels) as ValuationMetric[]).map((m) => (
-              <option key={m} value={m}>
-                {metricLabels[m]}
-              </option>
-            ))}
-          </select>
+            onChange={setMetric}
+          />
         </div>
       </div>
 
