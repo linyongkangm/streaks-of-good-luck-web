@@ -428,12 +428,13 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
             ? selectedBoard.relation__stock_board_company.find(c => c.company_id === selectedCompanyId)?.info__stock_company?.company_name
             : selectedBoard.board_name} - 财务预测数据
         </h2>
-        <button
+        <Button
           onClick={handleAdd}
-          className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all"
+          look='primary'
+          size='small'
         >
           添加预测
-        </button>
+        </Button>
       </div>
 
       <Table
@@ -538,7 +539,7 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
                 </Button>
                 <Button
                   type="submit"
-                  look='primary'
+                  look='success'
                   disabled={submitting}
                 >
                   {submitting ? '提交中...' : '确定'}
