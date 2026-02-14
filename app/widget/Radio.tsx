@@ -38,10 +38,10 @@ export default function Radio<T extends string = string>({
           onClick={() => !disabled && onChange(option.value)}
           disabled={disabled}
           className={`
-            px-3 py-1 text-sm transition-colors
+            px-4 py-2 transition-colors
             ${index > 0 ? 'border-l border-slate-300' : ''}
             ${value === option.value
-              ? 'bg-purple-500 text-white'
+              ? 'bg-blue-500 text-white'
               : 'bg-white text-slate-700 hover:bg-slate-100'
             }
             ${disabled ? 'opacity-50 cursor-not-allowed' : ''}

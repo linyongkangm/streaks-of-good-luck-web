@@ -7,6 +7,7 @@ import * as tools from '@/app/tools'
 import Select from '@/app/widget/Select'
 import DatePicker from '@/app/widget/DatePicker'
 import { DateTime } from 'luxon'
+import { FormLabel } from '@/app/widget/Form'
 
 /**
  * 单个复权类型下的财务指标数据结构
@@ -351,35 +352,25 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
     <div className="bg-white rounded-xl shadow-lg p-6">
       {/* 控制栏 */}
       <div className="flex gap-4 mb-6 items-end flex-wrap">
-        <div className="flex-1 min-w-[200px]">
-          <label className="block text-sm font-medium text-slate-700 mb-2">开始日期</label>
+        <FormLabel className='flex-1' label="开始日期">
           <DatePicker value={dateRange.start_date} onChange={(date) => setDateRange({ ...dateRange, start_date: date })}>
           </DatePicker>
-        </div>
-        <div className="flex-1 min-w-[200px]">
-          <label className="block text-sm font-medium text-slate-700 mb-2">结束日期</label>
+        </FormLabel>
+        <FormLabel className='flex-1' label="结束日期">
           <DatePicker value={dateRange.end_date} onChange={(date) => setDateRange({ ...dateRange, end_date: date })}>
           </DatePicker>
-        </div>
-        <div className="flex-1 min-w-[200px]">
-          <label className="block text-sm font-medium text-slate-700 mb-2">复权方式</label>
-          <div className="flex gap-2">
-            {(Object.keys(adjustTypeLabels) as AdjustType[]).map((type) => (
-              <button
-                key={type}
-                onClick={() => setAdjustType(type)}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${adjustType === type
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-md'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                  }`}
-              >
-                {adjustTypeLabels[type]}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="flex-1 min-w-[200px]">
-          <label className="block text-sm font-medium text-slate-700 mb-2">估值指标</label>
+        </FormLabel>
+        <FormLabel className='flex-1' label="复权方式">
+          <Select
+            options={Object.entries(adjustTypeLabels).map(([value, label]) => ({
+              value: value as AdjustType,
+              label
+            }))}
+            value={adjustType}
+            onChange={setAdjustType}
+          />
+        </FormLabel>
+        <FormLabel className='flex-1' label="估值指标">
           <Select
             options={Object.entries(metricLabels).map(([value, label]) => ({
               value: value as ValuationMetric,
@@ -388,7 +379,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
             value={metric}
             onChange={setMetric}
           />
-        </div>
+        </FormLabel>
       </div>
 
       {/* 图表容器 */}
