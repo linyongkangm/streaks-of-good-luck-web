@@ -9,9 +9,9 @@ import { DateTime } from 'luxon'
 import { NumberInput } from '@/app/widget/Input'
 import Button from '@/app/widget/Button'
 import Radio from '@/app/widget/Radio'
-import Modal from '@/app/widget/Modal'
 import Panel from '@/app/widget/Panel'
-import { Form, FormItem, FormLabel } from '@/app/widget/Form'
+import ModalForm from '@/app/widget/ModalForm'
+import { FormItem, FormLabel } from '@/app/widget/Form'
 interface PredictRecord {
   id: string | bigint
   company_id: number | null
@@ -84,7 +84,7 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
     operate_income: undefined as number | undefined,
     netcash_operate: undefined as number | undefined,
   })
-  const [submitting, setSubmitting] = useState(false)
+  
   useEffect(() => {
     fetchPredictions()
     fetchLatestFinancial()
@@ -320,7 +320,6 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
       return
     }
 
-    setSubmitting(true)
     try {
       // 构建请求数据
       const body: any = {
@@ -371,8 +370,6 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
     } catch (error) {
       console.error('提交失败:', error)
       alert('提交失败')
-    } finally {
-      setSubmitting(false)
     }
   }
 
@@ -436,12 +433,14 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
       />
 
       {/* 添加/编辑弹窗 */}
-      <Modal
+      <ModalForm
+        key={editingRecord?.id?.toString() || 'new'}
         open={showModal}
         onClose={() => setShowModal(false)}
         title={`${editingRecord ? '编辑' : '添加'}财务预测`}
+        initialValues={formData}
+        onSubmit={handleSubmit}
       >
-        <Form values={formData} onSubmit={handleSubmit}>
           <FormLabel label="预测报告期" required>
             <div className="flex gap-4 items-center">
               <div className="flex-1">
@@ -521,27 +520,7 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
               </FormLabel>
             )
           })}
-
-          <FormLabel>
-            <div className="flex gap-10 mt-6 justify-center">
-              <Button
-                look='cancel'
-                onClick={() => setShowModal(false)}
-                disabled={submitting}
-              >
-                取消
-              </Button>
-              <Button
-                type="submit"
-                look='success'
-                disabled={submitting}
-              >
-                {submitting ? '提交中...' : '确定'}
-              </Button>
-            </div>
-          </FormLabel>
-        </Form>
-      </Modal>
+      </ModalForm>
     </Panel>
   )
 }
