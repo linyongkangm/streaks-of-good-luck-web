@@ -17,7 +17,7 @@ PREDICT_EXTRACTION_PROMPT_TEMPLATE = """
 - interval_end: 预测时间区间的结束日期（格式：YYYY-MM-DD）
 - content: 预测的具体内容（简洁明了地描述预测的核心内容）
 
-请严格按照以下 JSON 格式回应（不要添加任何额外的说明文字）:
+请严格按照以下 JSON 格式，用中文回应（不要添加任何额外的说明文字）:
 
 ```json
 [
