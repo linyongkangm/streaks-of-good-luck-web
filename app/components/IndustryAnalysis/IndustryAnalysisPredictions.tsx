@@ -10,6 +10,7 @@ import { NumberInput } from '@/app/widget/Input'
 import Button from '@/app/widget/Button'
 import Radio from '@/app/widget/Radio'
 import Modal from '@/app/widget/Modal'
+import Panel from '@/app/widget/Panel'
 interface PredictRecord {
   id: string | bigint
   company_id: number | null
@@ -422,13 +423,11 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
   ]
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-slate-800">
-          {selectedCompanyId
-            ? selectedBoard.relation__stock_board_company.find(c => c.company_id === selectedCompanyId)?.info__stock_company?.company_name
-            : selectedBoard.board_name} - 财务预测数据
-        </h2>
+    <Panel
+      title={`${selectedCompanyId
+        ? selectedBoard.relation__stock_board_company.find(c => c.company_id === selectedCompanyId)?.info__stock_company?.company_name
+        : selectedBoard.board_name} - 财务预测数据`}
+      headerAction={
         <Button
           onClick={handleAdd}
           look='primary'
@@ -436,8 +435,8 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
         >
           添加预测
         </Button>
-      </div>
-
+      }
+    >
       <Table
         columns={columns}
         dataSource={predictions}
@@ -547,6 +546,6 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
           </div>
         </form>
       </Modal>
-    </div>
+    </Panel>
   )
 }
