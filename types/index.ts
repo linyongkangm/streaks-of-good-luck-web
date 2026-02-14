@@ -9,6 +9,7 @@ import {
   relation__board_industry_analysis,
   summary__tweet,
   summary__article,
+  indicator__predict_financial_report,
 } from '@prisma/client'
 
 // 导出 Prisma 生成的所有类型
@@ -24,6 +25,7 @@ export {
   type relation__board_industry_analysis,
   type summary__tweet,
   type summary__article,
+  type indicator__predict_financial_report,
 } from '@prisma/client'
 
 // API 响应类型

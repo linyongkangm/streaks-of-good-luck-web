@@ -11,6 +11,7 @@ import Button from '@/app/widget/Button'
 import Radio from '@/app/widget/Radio'
 import Modal from '@/app/widget/Modal'
 import Panel from '@/app/widget/Panel'
+import { Form, FormItem, FormLabel } from '@/app/widget/Form'
 interface PredictRecord {
   id: string | bigint
   company_id: number | null
@@ -44,6 +45,23 @@ interface LatestFinancial {
   operate_income_ttm: number | null
   netcash_operate_ttm: number | null
   report_date: string
+}
+
+// 计算年化增长率
+function calculateGrowthRate(baseValue: number, predictValue: number, years: number): number {
+  if (baseValue === 0 || years === 0) return 0
+  return (Math.pow(predictValue / baseValue, 1 / years) - 1) * 100
+}
+
+// 根据增长率计算预测值
+function calculatePredictValue(baseValue: number, growthRate: number, years: number): number {
+  return baseValue * Math.pow(1 + growthRate / 100, years)
+}
+
+// 计算时间跨度（年）
+function calculateYears(baseDate: string, predictDate: DateTime): number {
+  const base = DateTime.fromISO(baseDate)
+  return predictDate.diff(base, 'years').years
 }
 
 export default function IndustryAnalysisPredictions({ selectedBoard, selectedCompanyId }: Props) {
@@ -125,22 +143,6 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
     }
   }
 
-  // 计算年化增长率
-  const calculateGrowthRate = (baseValue: number, predictValue: number, years: number): number => {
-    if (baseValue === 0 || years === 0) return 0
-    return (Math.pow(predictValue / baseValue, 1 / years) - 1) * 100
-  }
-
-  // 根据增长率计算预测值
-  const calculatePredictValue = (baseValue: number, growthRate: number, years: number): number => {
-    return baseValue * Math.pow(1 + growthRate / 100, years)
-  }
-
-  // 计算时间跨度（年）
-  const calculateYears = (baseDate: string, predictDate: DateTime): number => {
-    const base = DateTime.fromISO(baseDate)
-    return predictDate.diff(base, 'years').years
-  }
 
   // 更新具体数值时，同步更新增长率
   const handleValueChange = (key: MetricKey, value: number) => {
@@ -312,9 +314,7 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
+  const handleSubmit = async (e: React.FormEvent, values: Record<string, any>) => {
     if (!formData.report_date) {
       alert('请填写报告期')
       return
@@ -441,14 +441,13 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
         onClose={() => setShowModal(false)}
         title={`${editingRecord ? '编辑' : '添加'}财务预测`}
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              预测报告期 *
-            </label>
+        <Form values={formData} onSubmit={handleSubmit}>
+          <FormLabel label="预测报告期" required>
             <div className="flex gap-4 items-center">
               <div className="flex-1">
-                <DatePicker mode="quarter" value={formData.report_date} onChange={handleReportDateChange} />
+                <FormItem field="report_date" onChange={handleReportDateChange}>
+                  <DatePicker mode="quarter" />
+                </FormItem>
               </div>
               {selectedCompanyId && latestFinancial && (
                 <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-lg">
@@ -464,7 +463,7 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
                 </div>
               )}
             </div>
-          </div>
+          </FormLabel>
 
           {latestFinancial && (
             <div className="bg-slate-50 p-4 rounded-lg mb-4">
@@ -489,23 +488,27 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
             const baseValue = baseValueMap[key]
 
             return (
-              <div key={key}>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  {metricLabels[key]}
-                  {baseValue && (
-                    <span className="ml-2 text-xs text-slate-500">
-                      （最新: {formatNumber(baseValue)}）
-                    </span>
-                  )}
-                </label>
+              <FormLabel
+                key={key}
+                label={
+                  <>
+                    {metricLabels[key]}
+                    {baseValue && (
+                      <span className="ml-2 text-xs text-slate-500">
+                        （最新: {formatNumber(baseValue)}）
+                      </span>
+                    )}
+                  </>
+                }
+              >
                 <div className='flex gap-4 items-center'>
-                  <NumberInput
-                    unit='亿'
-                    value={formData[key]}
-                    onChange={(value) => handleValueChange(key, value)}
-                    decimalPlaces={2}
-                    placeholder={`请输入${metricLabels[key]}`}
-                  />
+                  <FormItem field={key} onChange={(value) => handleValueChange(key, value)}>
+                    <NumberInput
+                      unit='亿'
+                      decimalPlaces={2}
+                      placeholder={`请输入${metricLabels[key]}`}
+                    />
+                  </FormItem>
                   <NumberInput
                     value={growthRates[key]}
                     onChange={(value) => handleGrowthRateChange(key, value)}
@@ -515,27 +518,29 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
                     suffix="%"
                   />
                 </div>
-              </div>
+              </FormLabel>
             )
           })}
 
-          <div className="flex gap-10 mt-6 justify-center">
-            <Button
-              look='cancel'
-              onClick={() => setShowModal(false)}
-              disabled={submitting}
-            >
-              取消
-            </Button>
-            <Button
-              type="submit"
-              look='success'
-              disabled={submitting}
-            >
-              {submitting ? '提交中...' : '确定'}
-            </Button>
-          </div>
-        </form>
+          <FormLabel>
+            <div className="flex gap-10 mt-6 justify-center">
+              <Button
+                look='cancel'
+                onClick={() => setShowModal(false)}
+                disabled={submitting}
+              >
+                取消
+              </Button>
+              <Button
+                type="submit"
+                look='success'
+                disabled={submitting}
+              >
+                {submitting ? '提交中...' : '确定'}
+              </Button>
+            </div>
+          </FormLabel>
+        </Form>
       </Modal>
     </Panel>
   )
