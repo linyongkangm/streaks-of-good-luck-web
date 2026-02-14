@@ -1,7 +1,7 @@
 import React from 'react'
 
 interface PanelProps {
-  title: React.ReactNode
+  title?: React.ReactNode
   headerAction?: React.ReactNode
   children: React.ReactNode
   className?: string
@@ -11,9 +11,11 @@ export default function Panel({ title, headerAction, children, className = '' }:
   return (
     <div className={`bg-white rounded-xl shadow-lg p-6 ${className}`}>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-slate-800">
-          {title}
-        </h2>
+        {title && (
+          <h2 className="text-xl font-bold text-slate-800">
+            {title}
+          </h2>
+        )}
         {headerAction && (
           <div>{headerAction}</div>
         )}

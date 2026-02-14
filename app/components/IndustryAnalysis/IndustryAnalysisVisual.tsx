@@ -8,6 +8,8 @@ import Select from '@/app/widget/Select'
 import DatePicker from '@/app/widget/DatePicker'
 import { DateTime } from 'luxon'
 import { FormLabel } from '@/app/widget/Form'
+import Loading from '@/app/widget/Loading'
+import Panel from '@/app/widget/Panel'
 
 /**
  * 单个复权类型下的财务指标数据结构
@@ -349,7 +351,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
   }, [data, adjustType, metric, selectedCompanyId, predictData])
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
+    <Panel>
       {/* 控制栏 */}
       <div className="flex gap-4 mb-6 items-end flex-wrap">
         <FormLabel className='flex-1' label="开始日期">
@@ -384,14 +386,12 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
 
       {/* 图表容器 */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600"></div>
-        </div>
+        <Loading />
       ) : Object.keys(data).length === 0 ? (
         <div className="text-center py-12 text-slate-500">暂无数据</div>
       ) : (
         <div ref={chartRef} className="w-full"></div>
       )}
-    </div>
+    </Panel>
   )
 }
