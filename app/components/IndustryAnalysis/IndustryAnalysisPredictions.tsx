@@ -84,7 +84,7 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
     operate_income: undefined as number | undefined,
     netcash_operate: undefined as number | undefined,
   })
-  
+
   useEffect(() => {
     fetchPredictions()
     fetchLatestFinancial()
@@ -441,85 +441,85 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
         initialValues={formData}
         onSubmit={handleSubmit}
       >
-          <FormLabel label="预测报告期" required>
-            <div className="flex gap-4 items-center">
-              <div className="flex-1">
-                <FormItem field="report_date" onChange={handleReportDateChange}>
-                  <DatePicker mode="quarter" />
-                </FormItem>
-              </div>
-              {selectedCompanyId && latestFinancial && (
-                <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-lg">
-                  <span className="text-sm text-slate-600">修改报告期时：</span>
-                  <Radio
-                    options={[
-                      { label: '保留数值', value: 'value' },
-                      { label: '保留增长率', value: 'rate' },
-                    ]}
-                    value={keepMode}
-                    onChange={setKeepMode}
-                  />
-                </div>
-              )}
+        <FormLabel label="预测报告期" required>
+          <div className="flex gap-4 items-center">
+            <div className="flex-1">
+              <FormItem field="report_date" onChange={handleReportDateChange}>
+                <DatePicker mode="quarter" />
+              </FormItem>
             </div>
-          </FormLabel>
-
-          {latestFinancial && (
-            <div className="bg-slate-50 p-4 rounded-lg mb-4">
-              <div className="text-sm text-slate-600">
-                <strong>基准：</strong>最新财报 {DateTime.fromISO(latestFinancial.report_date).toFormat('yyyy-Qq')}
+            {selectedCompanyId && latestFinancial && (
+              <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-lg">
+                <span className="text-sm text-slate-600">修改报告期时：</span>
+                <Radio
+                  options={[
+                    { label: '保留数值', value: 'value' },
+                    { label: '保留增长率', value: 'rate' },
+                  ]}
+                  value={keepMode}
+                  onChange={setKeepMode}
+                />
               </div>
+            )}
+          </div>
+        </FormLabel>
+
+        {latestFinancial && (
+          <div className="bg-slate-50 p-4 rounded-lg mb-4">
+            <div className="text-sm text-slate-600">
+              <strong>基准：</strong>最新财报 {DateTime.fromISO(latestFinancial.report_date).toFormat('yyyy-Qq')}
             </div>
-          )}
+          </div>
+        )}
 
-          {(Object.keys(metricLabels) as MetricKey[]).map((key) => {
-            const baseValueMap: Record<MetricKey, number | null> = latestFinancial ? {
-              parent_netprofit: latestFinancial.parent_netprofit_ttm,
-              total_parent_equity: latestFinancial.total_parent_equity,
-              operate_income: latestFinancial.operate_income_ttm,
-              netcash_operate: latestFinancial.netcash_operate_ttm,
-            } : {
-              parent_netprofit: null,
-              total_parent_equity: null,
-              operate_income: null,
-              netcash_operate: null,
-            }
-            const baseValue = baseValueMap[key]
+        {(Object.keys(metricLabels) as MetricKey[]).map((key) => {
+          const baseValueMap: Record<MetricKey, number | null> = latestFinancial ? {
+            parent_netprofit: latestFinancial.parent_netprofit_ttm,
+            total_parent_equity: latestFinancial.total_parent_equity,
+            operate_income: latestFinancial.operate_income_ttm,
+            netcash_operate: latestFinancial.netcash_operate_ttm,
+          } : {
+            parent_netprofit: null,
+            total_parent_equity: null,
+            operate_income: null,
+            netcash_operate: null,
+          }
+          const baseValue = baseValueMap[key]
 
-            return (
-              <FormLabel
-                key={key}
-                label={
-                  <>
-                    {metricLabels[key]}
-                    {baseValue && (
-                      <span className="ml-2 text-xs text-slate-500">
-                        （最新: {formatNumber(baseValue)}）
-                      </span>
-                    )}
-                  </>
-                }
-              >
-                <div className='flex gap-4 items-center'>
-                  <FormItem field={key} onChange={(value) => handleValueChange(key, value)}>
-                    <NumberInput
-                      unit='亿'
-                      decimalPlaces={2}
-                      placeholder={`请输入${metricLabels[key]}`}
-                    />
-                  </FormItem>
+          return (
+            <FormLabel
+              key={key}
+              label={
+                <>
+                  {metricLabels[key]}
+                  {baseValue && (
+                    <span className="ml-2 text-xs text-slate-500">
+                      （最新: {formatNumber(baseValue)}）
+                    </span>
+                  )}
+                </>
+              }
+            >
+              <div className='flex gap-4 items-center'>
+                <FormItem field={key} onChange={(value) => handleValueChange(key, value)}>
                   <NumberInput
-                    value={growthRates[key]}
-                    onChange={(value) => handleGrowthRateChange(key, value)}
-                    placeholder="年化增长率 %"
+                    unit='亿'
                     decimalPlaces={2}
-                    disabled={!latestFinancial || !selectedCompanyId}
-                    suffix="%"
+                    placeholder={`请输入${metricLabels[key]}`}
                   />
-                </div>
-              </FormLabel>
-            )
-          })}
+                </FormItem>
+                <NumberInput
+                  value={growthRates[key]}
+                  onChange={(value) => handleGrowthRateChange(key, value)}
+                  placeholder="年化增长率 %"
+                  decimalPlaces={2}
+                  disabled={!latestFinancial || !selectedCompanyId}
+                  suffix="%"
+                />
+              </div>
+            </FormLabel>
+          )
+        })}
       </ModalForm>
     </Panel>
   )
