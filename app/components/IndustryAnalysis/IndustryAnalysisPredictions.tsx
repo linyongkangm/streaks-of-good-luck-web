@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import Table, { type Column } from '@/app/widget/Table'
 import type { StockBoardWithRelations } from '@/types'
-import { formatNumber } from '@/app/tools'
+import { formatNumber, toUTC } from '@/app/tools'
+import DatePicker from '@/app/widget/DatePicker'
+import { DateTime, MonthNumbers, QuarterNumbers } from 'luxon'
 interface PredictRecord {
   id: string | bigint
   company_id: number | null
@@ -37,14 +39,13 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
   const [showModal, setShowModal] = useState(false)
   const [editingRecord, setEditingRecord] = useState<PredictRecord | null>(null)
   const [formData, setFormData] = useState({
-    report_date: '',
+    report_date: DateTime.utc() as DateTime,
     parent_netprofit: '',
     total_parent_equity: '',
     operate_income: '',
     netcash_operate: '',
   })
   const [submitting, setSubmitting] = useState(false)
-
   useEffect(() => {
     fetchPredictions()
   }, [selectedBoard, selectedCompanyId])
@@ -77,7 +78,7 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
   const handleAdd = () => {
     setEditingRecord(null)
     setFormData({
-      report_date: '',
+      report_date: DateTime.now(),
       parent_netprofit: '',
       total_parent_equity: '',
       operate_income: '',
@@ -89,7 +90,7 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
   const handleEdit = (record: PredictRecord) => {
     setEditingRecord(record)
     setFormData({
-      report_date: new Date(record.report_date).toISOString().split('T')[0],
+      report_date: DateTime.fromISO(record.report_date),
       parent_netprofit: record.parent_netprofit?.toString() || '',
       total_parent_equity: record.total_parent_equity?.toString() || '',
       operate_income: record.operate_income?.toString() || '',
@@ -194,7 +195,7 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
       title: '报告期',
       dataIndex: 'report_date',
       width: '120px',
-      render: (value) => new Date(value).toISOString().split('T')[0],
+      render: (value: string) => DateTime.fromISO(value).toFormat('yyyy-Qq'),
     },
     {
       title: metricLabels.parent_netprofit,
@@ -274,13 +275,7 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   预测报告期 *
                 </label>
-                <input
-                  type="date"
-                  value={formData.report_date}
-                  onChange={(e) => setFormData({ ...formData, report_date: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
-                  required
-                />
+                <DatePicker mode="quarter" value={formData.report_date} onChange={(value) => setFormData({ ...formData, report_date: value })} />
               </div>
 
               {(Object.keys(metricLabels) as MetricKey[]).map((key) => (
