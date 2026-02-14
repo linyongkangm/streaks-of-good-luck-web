@@ -42,6 +42,8 @@ interface NumberInputProps extends BaseProps {
   max?: number
   step?: number
   unit?: NumberUnit
+  decimalPlaces?: number
+  suffix?: string
 }
 
 // 单位转换器
@@ -117,6 +119,8 @@ export function NumberInput({
   max,
   step,
   unit = 'none',
+  suffix,
+  decimalPlaces,
 }: NumberInputProps) {
   const [displayValue, setDisplayValue] = useState('')
 
@@ -130,6 +134,10 @@ export function NumberInput({
     const multiplier = unitMultipliers[unit]
     const displayNum = numValue / multiplier
     
+    if (decimalPlaces !== undefined) {
+      return displayNum.toFixed(decimalPlaces)
+    }
+
     return displayNum.toString()
   }
 
@@ -171,7 +179,11 @@ export function NumberInput({
     if (displayValue) {
       const numValue = parseFloat(displayValue)
       if (!isNaN(numValue)) {
-        setDisplayValue(numValue.toString())
+        if (decimalPlaces !== undefined) {
+          setDisplayValue(numValue.toFixed(decimalPlaces))
+        } else {
+          setDisplayValue(numValue.toString())
+        }
       }
     }
   }
@@ -191,9 +203,9 @@ export function NumberInput({
           className={inputClassName}
           inputMode="decimal"
         />
-        {unit !== 'none' && displayValue && (
+        {(unit !== 'none' || suffix) && (
           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
-            {unit}
+            {unit !== 'none' ? unit : suffix}
           </span>
         )}
       </div>

@@ -35,13 +35,28 @@ const metricLabels: Record<MetricKey, string> = {
   netcash_operate: '经营活动现金流净额',
 }
 
+interface LatestFinancial {
+  parent_netprofit_ttm: number | null
+  total_parent_equity: number | null
+  operate_income_ttm: number | null
+  netcash_operate_ttm: number | null
+  report_date: string
+}
+
 export default function IndustryAnalysisPredictions({ selectedBoard, selectedCompanyId }: Props) {
   const [loading, setLoading] = useState(false)
   const [predictions, setPredictions] = useState<PredictRecord[]>([])
   const [showModal, setShowModal] = useState(false)
   const [editingRecord, setEditingRecord] = useState<PredictRecord | null>(null)
+  const [latestFinancial, setLatestFinancial] = useState<LatestFinancial | null>(null)
   const [formData, setFormData] = useState({
     report_date: DateTime.utc() as DateTime,
+    parent_netprofit: undefined as number | undefined,
+    total_parent_equity: undefined as number | undefined,
+    operate_income: undefined as number | undefined,
+    netcash_operate: undefined as number | undefined,
+  })
+  const [growthRates, setGrowthRates] = useState({
     parent_netprofit: undefined as number | undefined,
     total_parent_equity: undefined as number | undefined,
     operate_income: undefined as number | undefined,
@@ -50,6 +65,7 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
   const [submitting, setSubmitting] = useState(false)
   useEffect(() => {
     fetchPredictions()
+    fetchLatestFinancial()
   }, [selectedBoard, selectedCompanyId])
 
   const fetchPredictions = async () => {
@@ -77,10 +93,101 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
     }
   }
 
+  const fetchLatestFinancial = async () => {
+    if (!selectedCompanyId) {
+      setLatestFinancial(null)
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/financial-statements/view?company_id=${selectedCompanyId}&limit=1`)
+      if (res.ok) {
+        const result = await res.json()
+        if (result.data && result.data.length > 0) {
+          setLatestFinancial(result.data[0])
+        } else {
+          setLatestFinancial(null)
+        }
+      }
+    } catch (error) {
+      console.error('获取最新财报失败:', error)
+      setLatestFinancial(null)
+    }
+  }
+
+  // 计算年化增长率
+  const calculateGrowthRate = (baseValue: number, predictValue: number, years: number): number => {
+    if (baseValue === 0 || years === 0) return 0
+    return (Math.pow(predictValue / baseValue, 1 / years) - 1) * 100
+  }
+
+  // 根据增长率计算预测值
+  const calculatePredictValue = (baseValue: number, growthRate: number, years: number): number => {
+    return baseValue * Math.pow(1 + growthRate / 100, years)
+  }
+
+  // 计算时间跨度（年）
+  const calculateYears = (baseDate: string, predictDate: DateTime): number => {
+    const base = DateTime.fromISO(baseDate)
+    return predictDate.diff(base, 'years').years
+  }
+
+  // 更新具体数值时，同步更新增长率
+  const handleValueChange = (key: MetricKey, value: number) => {
+    setFormData({ ...formData, [key]: value })
+
+    if (latestFinancial && formData.report_date) {
+      const baseValueMap: Record<MetricKey, number | null> = {
+        parent_netprofit: latestFinancial.parent_netprofit_ttm,
+        total_parent_equity: latestFinancial.total_parent_equity,
+        operate_income: latestFinancial.operate_income_ttm,
+        netcash_operate: latestFinancial.netcash_operate_ttm,
+      }
+
+      const baseValue = baseValueMap[key]
+      if (baseValue && baseValue > 0) {
+        const years = calculateYears(latestFinancial.report_date, formData.report_date)
+        if (years > 0) {
+          const rate = calculateGrowthRate(baseValue, value, years)
+          setGrowthRates({ ...growthRates, [key]: rate })
+        }
+      }
+    }
+  }
+
+  // 更新增长率时，同步更新具体数值
+  const handleGrowthRateChange = (key: MetricKey, rate: number) => {
+    setGrowthRates({ ...growthRates, [key]: rate })
+
+    if (latestFinancial && formData.report_date) {
+      const baseValueMap: Record<MetricKey, number | null> = {
+        parent_netprofit: latestFinancial.parent_netprofit_ttm,
+        total_parent_equity: latestFinancial.total_parent_equity,
+        operate_income: latestFinancial.operate_income_ttm,
+        netcash_operate: latestFinancial.netcash_operate_ttm,
+      }
+
+      const baseValue = baseValueMap[key]
+      if (baseValue && baseValue > 0) {
+        const years = calculateYears(latestFinancial.report_date, formData.report_date)
+        if (years > 0) {
+          const value = calculatePredictValue(baseValue, rate, years)
+          setFormData({ ...formData, [key]: value })
+        }
+      }
+    }
+  }
+
   const handleAdd = () => {
     setEditingRecord(null)
     setFormData({
       report_date: DateTime.now(),
+      parent_netprofit: undefined,
+      total_parent_equity: undefined,
+      operate_income: undefined,
+      netcash_operate: undefined,
+    })
+    setGrowthRates({
       parent_netprofit: undefined,
       total_parent_equity: undefined,
       operate_income: undefined,
@@ -91,13 +198,39 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
 
   const handleEdit = (record: PredictRecord) => {
     setEditingRecord(record)
-    setFormData({
+    const newFormData = {
       report_date: DateTime.fromISO(record.report_date),
       parent_netprofit: record.parent_netprofit ?? undefined,
       total_parent_equity: record.total_parent_equity ?? undefined,
       operate_income: record.operate_income ?? undefined,
       netcash_operate: record.netcash_operate ?? undefined,
-    })
+    }
+    setFormData(newFormData)
+
+    // 计算增长率
+    if (latestFinancial) {
+      const years = calculateYears(latestFinancial.report_date, newFormData.report_date)
+      const newGrowthRates: any = {}
+
+      const baseValueMap: Record<MetricKey, number | null> = {
+        parent_netprofit: latestFinancial.parent_netprofit_ttm,
+        total_parent_equity: latestFinancial.total_parent_equity,
+        operate_income: latestFinancial.operate_income_ttm,
+        netcash_operate: latestFinancial.netcash_operate_ttm,
+      }
+
+      Object.keys(metricLabels).forEach((key) => {
+        const metricKey = key as MetricKey
+        const baseValue = baseValueMap[metricKey]
+        const predictValue = newFormData[metricKey]
+        if (baseValue && baseValue > 0 && predictValue && years > 0) {
+          newGrowthRates[metricKey] = calculateGrowthRate(baseValue, predictValue, years)
+        }
+      })
+
+      setGrowthRates(newGrowthRates)
+    }
+
     setShowModal(true)
   }
 
@@ -277,25 +410,62 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   预测报告期 *
                 </label>
-                <DatePicker mode="quarter" value={formData.report_date} onChange={(value) => setFormData({ ...formData, report_date: value })} />
+                <DatePicker mode="quarter" value={formData.report_date} onChange={(value) => {
+                  setFormData({ ...formData, report_date: value })
+                }} />
               </div>
 
-              {(Object.keys(metricLabels) as MetricKey[]).map((key) => (
-                <div key={key}>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    {metricLabels[key]}
-                  </label>
-                  <div className='flex gap-10'>
-                    <NumberInput
-                      unit='亿'
-                      value={(formData[key])}
-                      onChange={(value) => setFormData({ ...formData, [key]: value })}
-                      placeholder={`请输入${metricLabels[key]}`}
-                    />
-                    <NumberInput />
+              {latestFinancial && (
+                <div className="bg-slate-50 p-4 rounded-lg mb-4">
+                  <div className="text-sm text-slate-600">
+                    <strong>基准：</strong>最新财报 {DateTime.fromISO(latestFinancial.report_date).toFormat('yyyy-Qq')}
                   </div>
                 </div>
-              ))}
+              )}
+
+              {(Object.keys(metricLabels) as MetricKey[]).map((key) => {
+                const baseValueMap: Record<MetricKey, number | null> = latestFinancial ? {
+                  parent_netprofit: latestFinancial.parent_netprofit_ttm,
+                  total_parent_equity: latestFinancial.total_parent_equity,
+                  operate_income: latestFinancial.operate_income_ttm,
+                  netcash_operate: latestFinancial.netcash_operate_ttm,
+                } : {
+                  parent_netprofit: null,
+                  total_parent_equity: null,
+                  operate_income: null,
+                  netcash_operate: null,
+                }
+                const baseValue = baseValueMap[key]
+
+                return (
+                  <div key={key}>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      {metricLabels[key]}
+                      {baseValue && (
+                        <span className="ml-2 text-xs text-slate-500">
+                          （最新: {formatNumber(baseValue)}）
+                        </span>
+                      )}
+                    </label>
+                    <div className='flex gap-4 items-center'>
+                      <NumberInput
+                        unit='亿'
+                        value={formData[key]}
+                        onChange={(value) => handleValueChange(key, value)}
+                        placeholder={`请输入${metricLabels[key]}`}
+                      />
+                      <NumberInput
+                        value={growthRates[key]}
+                        onChange={(value) => handleGrowthRateChange(key, value)}
+                        placeholder="年化增长率 %"
+                        decimalPlaces={2}
+                        disabled={!latestFinancial || !selectedCompanyId}
+                        suffix="%"
+                      />
+                    </div>
+                  </div>
+                )
+              })}
 
               <div className="flex gap-10 mt-6 justify-center">
                 <Button
