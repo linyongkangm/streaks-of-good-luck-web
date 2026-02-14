@@ -77,7 +77,7 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
       ? selectedBoard.relation__stock_board_company.find(c => c.company_id === selectedCompanyId)?.info__stock_company?.company_name + ' - 财务预测数据'
       : selectedBoard.board_name + ' - 财务预测数据'
   }, [selectedCompanyId, selectedBoard])
-  
+
   const fetchPredictions = async () => {
     if (!selectedBoard?.id) return
 
@@ -411,18 +411,20 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
       width: '150px',
       render: (_, record) => (
         <div className="flex gap-2">
-          <button
+          <Button
             onClick={() => handleEdit(record)}
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors text-sm"
+            look="primary"
+            size="small"
           >
             编辑
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => handleDelete(record)}
-            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors text-sm"
+            look="danger"
+            size="small"
           >
             删除
-          </button>
+          </Button>
         </div>
       ),
     },
