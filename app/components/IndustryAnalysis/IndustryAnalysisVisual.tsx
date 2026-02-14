@@ -60,8 +60,8 @@ const metricLabels = {
 }
 
 const Quantiles = [10, 30, 50, 70, 90];
-const GrayGradient = tools.genColorGradient(Quantiles.length, '#edc29a', '#bca08e');
-const YellowGradient = tools.genColorGradient(Quantiles.length, '#f3755c', '#f1c232');
+const GrayGradient = tools.genColorGradient(Quantiles.length, '#6e8a8d', '#2b677f');
+const YellowGradient = tools.genColorGradient(Quantiles.length, '#8f773a', '#d71a1a');
 
 
 export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyId }: Props) {
