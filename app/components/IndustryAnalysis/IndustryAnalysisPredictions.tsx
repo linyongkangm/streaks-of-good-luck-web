@@ -49,6 +49,7 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
   const [showModal, setShowModal] = useState(false)
   const [editingRecord, setEditingRecord] = useState<PredictRecord | null>(null)
   const [latestFinancial, setLatestFinancial] = useState<LatestFinancial | null>(null)
+  const [keepMode, setKeepMode] = useState<'value' | 'rate'>('value') // 'value': 保留数值更新增长率, 'rate': 保留增长率更新数值
   const [formData, setFormData] = useState({
     report_date: DateTime.utc() as DateTime,
     parent_netprofit: undefined as number | undefined,
@@ -175,6 +176,49 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
           setFormData({ ...formData, [key]: value })
         }
       }
+    }
+  }
+
+  // 更新报告期时，根据keepMode决定更新数值还是增长率
+  const handleReportDateChange = (newDate: DateTime) => {
+    setFormData({ ...formData, report_date: newDate })
+
+    if (!latestFinancial || !selectedCompanyId) return
+
+    const years = calculateYears(latestFinancial.report_date, newDate)
+    if (years <= 0) return
+
+    const baseValueMap: Record<MetricKey, number | null> = {
+      parent_netprofit: latestFinancial.parent_netprofit_ttm,
+      total_parent_equity: latestFinancial.total_parent_equity,
+      operate_income: latestFinancial.operate_income_ttm,
+      netcash_operate: latestFinancial.netcash_operate_ttm,
+    }
+
+    if (keepMode === 'value') {
+      // 保留数值，更新增长率
+      const newGrowthRates: any = { ...growthRates }
+      Object.keys(metricLabels).forEach((key) => {
+        const metricKey = key as MetricKey
+        const baseValue = baseValueMap[metricKey]
+        const predictValue = formData[metricKey]
+        if (baseValue && baseValue > 0 && predictValue) {
+          newGrowthRates[metricKey] = calculateGrowthRate(baseValue, predictValue, years)
+        }
+      })
+      setGrowthRates(newGrowthRates)
+    } else {
+      // 保留增长率，更新数值
+      const newFormData: any = { ...formData, report_date: newDate }
+      Object.keys(metricLabels).forEach((key) => {
+        const metricKey = key as MetricKey
+        const baseValue = baseValueMap[metricKey]
+        const rate = growthRates[metricKey]
+        if (baseValue && baseValue > 0 && rate !== undefined) {
+          newFormData[metricKey] = calculatePredictValue(baseValue, rate, years)
+        }
+      })
+      setFormData(newFormData)
     }
   }
 
@@ -410,9 +454,40 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   预测报告期 *
                 </label>
-                <DatePicker mode="quarter" value={formData.report_date} onChange={(value) => {
-                  setFormData({ ...formData, report_date: value })
-                }} />
+                <div className="flex gap-4 items-center">
+                  <div className="flex-1">
+                    <DatePicker mode="quarter" value={formData.report_date} onChange={handleReportDateChange} />
+                  </div>
+                  {selectedCompanyId && latestFinancial && (
+                    <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-lg">
+                      <span className="text-sm text-slate-600">修改报告期时：</span>
+                      <div className="flex rounded-lg overflow-hidden border border-slate-300">
+                        <button
+                          type="button"
+                          onClick={() => setKeepMode('value')}
+                          className={`px-3 py-1 text-sm transition-colors ${
+                            keepMode === 'value'
+                              ? 'bg-purple-500 text-white'
+                              : 'bg-white text-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          保留数值
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setKeepMode('rate')}
+                          className={`px-3 py-1 text-sm transition-colors border-l border-slate-300 ${
+                            keepMode === 'rate'
+                              ? 'bg-purple-500 text-white'
+                              : 'bg-white text-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          保留增长率
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {latestFinancial && (
@@ -452,6 +527,7 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
                         unit='亿'
                         value={formData[key]}
                         onChange={(value) => handleValueChange(key, value)}
+                        decimalPlaces={2}
                         placeholder={`请输入${metricLabels[key]}`}
                       />
                       <NumberInput

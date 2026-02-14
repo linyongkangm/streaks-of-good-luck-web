@@ -143,6 +143,8 @@ export function NumberInput({
 
   // 将显示值转换为实际值
   const convertToActualValue = (displayVal: string): number => {
+    if (!displayVal || displayVal === '') return 0
+    
     const numValue = parseFloat(displayVal)
     if (isNaN(numValue)) return 0
     
