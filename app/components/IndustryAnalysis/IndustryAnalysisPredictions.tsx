@@ -285,13 +285,15 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     {metricLabels[key]}
                   </label>
-
-                  <NumberInput
-                    unit='亿'
-                    value={(formData[key])}
-                    onChange={(value) => setFormData({ ...formData, [key]: value })}
-                    placeholder={`请输入${metricLabels[key]}`}
-                  />
+                  <div className='flex gap-10'>
+                    <NumberInput
+                      unit='亿'
+                      value={(formData[key])}
+                      onChange={(value) => setFormData({ ...formData, [key]: value })}
+                      placeholder={`请输入${metricLabels[key]}`}
+                    />
+                    <NumberInput />
+                  </div>
                 </div>
               ))}
 
