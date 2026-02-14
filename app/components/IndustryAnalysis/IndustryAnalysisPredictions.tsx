@@ -385,43 +385,28 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
       width: '120px',
       render: (value: string) => DateTime.fromISO(value).toFormat('yyyy-Qq'),
     },
-    {
-      title: metricLabels.parent_netprofit,
-      dataIndex: 'parent_netprofit',
-      render: (value) => formatNumber(value),
-    },
-    {
-      title: metricLabels.total_parent_equity,
-      dataIndex: 'total_parent_equity',
-      render: (value) => formatNumber(value),
-    },
-    {
-      title: metricLabels.operate_income,
-      dataIndex: 'operate_income',
-      render: (value) => formatNumber(value),
-    },
-    {
-      title: metricLabels.netcash_operate,
-      dataIndex: 'netcash_operate',
-      render: (value) => formatNumber(value),
-    },
+    ...(Object.keys(metricLabels) as MetricKey[]).map((key) => ({
+      title: metricLabels[key],
+      dataIndex: key,
+      render: (value: number | undefined) => formatNumber(value),
+    })),
     {
       title: '操作',
-      dataIndex: 'id',
+      dataIndex: 'operation',
       width: '150px',
       render: (_, record) => (
         <div className="flex gap-2">
           <Button
             onClick={() => handleEdit(record)}
             look="primary"
-            size="small"
+            size="tiny"
           >
             编辑
           </Button>
           <Button
             onClick={() => handleDelete(record)}
             look="danger"
-            size="small"
+            size="tiny"
           >
             删除
           </Button>
