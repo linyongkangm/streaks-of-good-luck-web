@@ -85,7 +85,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
     end_date: DateTime.now(),
   })
   const [predictData, setPredictData] = useState<any[]>([])
-  
+
   // 处理时间范围变化
   useEffect(() => {
     const years = parseInt(timeRange)
@@ -94,7 +94,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
       end_date: DateTime.now(),
     })
   }, [timeRange])
-  
+
   // 获取数据
   const fetchData = async () => {
     if (!selectedBoard?.id) return
@@ -297,33 +297,16 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
           style: {
             lineWidth: 2,
           },
-          tooltip: {
-            name: `收盘价(${adjustTypeLabels[adjustType]})`,
-            channel: 'y',
-          },
-        },
-        {
-          type: 'line',
-          encode: {
-            y: 'valuation',
-          },
-          scale: {
-            y: { independent: true },
-          },
-          axis: {
-            y: {
-              position: 'right',
-              title: metricLabels[metric],
+          tooltip: [
+            {
+              name: `收盘价(${adjustTypeLabels[adjustType]})`,
+              channel: 'y',
             },
-          },
-          style: {
-            lineWidth: 2,
-            stroke: '#EE6666',
-          },
-          tooltip: {
-            name: metricLabels[metric],
-            channel: 'y',
-          }
+            {
+              name: metricLabels[metric],
+              field: 'valuation',
+            }
+          ],
         },
         ...Quantiles.map((q, index) => {
           return {
@@ -336,7 +319,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
               stroke: GrayGradient[index],
             },
             tooltip: {
-              name: `${q}分位价`,
+              name: `${q}分位(${quantileData[adjustType]?.[metric]?.[index] ? `${quantileData[adjustType][metric][index].toFixed(2)}` : ''})`,
               channel: 'y',
             }
           }
