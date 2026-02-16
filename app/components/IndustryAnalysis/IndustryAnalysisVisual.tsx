@@ -5,11 +5,11 @@ import { Chart } from '@antv/g2'
 import type { StockBoardWithRelations } from '@/types'
 import * as tools from '@/app/tools'
 import Select from '@/app/widget/Select'
-import DatePicker from '@/app/widget/DatePicker'
 import { DateTime } from 'luxon'
 import { FormLabel } from '@/app/widget/Form'
 import Loading from '@/app/widget/Loading'
 import Panel from '@/app/widget/Panel'
+import Radio from '@/app/widget/Radio'
 
 /**
  * 单个复权类型下的财务指标数据结构
@@ -45,6 +45,7 @@ interface Props {
 
 type AdjustType = 'none' | 'qfq' | 'hfq'
 type ValuationMetric = 'pe' | 'pb' | 'ps' | 'pc'
+type TimeRange = '1' | '3' | '5' | '10'
 
 const adjustTypeLabels = {
   none: '不复权',
@@ -59,6 +60,13 @@ const metricLabels = {
   pc: 'PC (市现率)',
 }
 
+const timeRangeLabels = {
+  '1': '一年',
+  '3': '三年',
+  '5': '五年',
+  '10': '十年',
+}
+
 const Quantiles = [10, 30, 50, 70, 90];
 const GrayGradient = tools.genColorGradient(Quantiles.length, '#6e8a8d', '#2b677f');
 const YellowGradient = tools.genColorGradient(Quantiles.length, '#8f773a', '#d71a1a');
@@ -70,12 +78,23 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
   const [loading, setLoading] = useState(false)
   const [adjustType, setAdjustType] = useState<AdjustType>('qfq')
   const [metric, setMetric] = useState<ValuationMetric>('pe')
+  const [timeRange, setTimeRange] = useState<TimeRange>('3')
   const [data, setData] = useState<{ [key: string]: { results: any[], quantileData: any } }>({})
   const [dateRange, setDateRange] = useState({
-    start_date: DateTime.now().minus({ months: 6 }),
+    start_date: DateTime.now().minus({ years: 3 }),
     end_date: DateTime.now(),
   })
   const [predictData, setPredictData] = useState<any[]>([])
+  
+  // 处理时间范围变化
+  useEffect(() => {
+    const years = parseInt(timeRange)
+    setDateRange({
+      start_date: DateTime.now().minus({ years }),
+      end_date: DateTime.now(),
+    })
+  }, [timeRange])
+  
   // 获取数据
   const fetchData = async () => {
     if (!selectedBoard?.id) return
@@ -354,13 +373,15 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
     <Panel>
       {/* 控制栏 */}
       <div className="flex gap-4 mb-6 items-end flex-wrap">
-        <FormLabel className='flex-1' label="开始日期">
-          <DatePicker value={dateRange.start_date} onChange={(date) => setDateRange({ ...dateRange, start_date: date })}>
-          </DatePicker>
-        </FormLabel>
-        <FormLabel className='flex-1' label="结束日期">
-          <DatePicker value={dateRange.end_date} onChange={(date) => setDateRange({ ...dateRange, end_date: date })}>
-          </DatePicker>
+        <FormLabel label="时间范围">
+          <Radio
+            options={Object.entries(timeRangeLabels).map(([value, label]) => ({
+              value: value as TimeRange,
+              label
+            }))}
+            value={timeRange}
+            onChange={setTimeRange}
+          />
         </FormLabel>
         <FormLabel className='flex-1' label="复权方式">
           <Select
