@@ -352,7 +352,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
               stroke: YellowGradient[index],
             },
             tooltip: {
-              name: `预测${q}分位价`,
+              name: `${q}分位(${quantileData[adjustType]?.[metric]?.[index] ? `${quantileData[adjustType][metric][index].toFixed(2)}` : ''})`,
               channel: 'y',
             },
           }
