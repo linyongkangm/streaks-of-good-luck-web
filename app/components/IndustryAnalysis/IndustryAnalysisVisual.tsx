@@ -272,9 +272,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
         y: {
           nice: true,
         },
-        x: {
-          nice: true,
-        }
+
       },
       interaction: {
         tooltip: {
@@ -325,7 +323,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
           }
         }),
         ...(chartDatasource[chartDatasource.length - 1]?.predict_quantile_price_p10 ? Quantiles.map((q, index) => {
-          return {
+          return [{
             type: 'line',
             encode: {
               y: `predict_quantile_price_p${q}`,
@@ -338,8 +336,18 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
               name: `${q}分位(${quantileData[adjustType]?.[metric]?.[index] ? `${quantileData[adjustType][metric][index].toFixed(2)}` : ''})`,
               channel: 'y',
             },
-          }
-        }) : []),
+          }, {
+            type: 'point',
+            encode: {
+              y: `predict_quantile_price_p${q}`,
+            },
+            tooltip: false,
+            style: {
+              fill: YellowGradient[index],
+              stroke: YellowGradient[index],
+            },
+          }]
+        }).flat() : []),
       ],
     })
     chart.render()
