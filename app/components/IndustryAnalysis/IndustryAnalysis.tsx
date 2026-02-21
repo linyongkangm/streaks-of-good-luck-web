@@ -40,10 +40,14 @@ export default function IndustryAnalysis() {
 
   const fetchBoardDetail = async (boardId: number) => {
     setDetailLoading(true)
-    setSelectedCompanyId(null) // 切换板块时重置选中的公司
     try {
       const response = await fetch(`/api/stock-boards/${boardId}`)
       const data = await response.json()
+      if (data.data.relation__stock_board_company.length === 1) {
+        setSelectedCompanyId(data.data.relation__stock_board_company[0].company_id)
+      } else {
+        setSelectedCompanyId(null) // 切换板块时重置选中的公司
+      }
       setSelectedBoard(data.data)
     } catch (error) {
       console.error('Failed to fetch board detail:', error)
