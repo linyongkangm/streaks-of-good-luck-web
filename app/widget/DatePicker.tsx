@@ -249,7 +249,7 @@ export default function DatePicker({
     return (
       <div className="text-slate-700 p-4">
         <div className="flex justify-between items-center mb-4">
-          <button
+          <span
             onClick={() => {
               if (selectedMonth === 1) {
                 setSelectedMonth(12)
@@ -258,14 +258,14 @@ export default function DatePicker({
                 setSelectedMonth((selectedMonth - 1) as MonthNumbers)
               }
             }}
-            className="px-2 py-1 hover:bg-slate-100 rounded"
+            className="px-2 py-1 hover:bg-slate-100 rounded cursor-pointer"
           >
             «
-          </button>
+          </span>
           <span className="font-medium">
             {selectedYear}年 {selectedMonth}月
           </span>
-          <button
+          <span
             onClick={() => {
               if (selectedMonth === 12) {
                 setSelectedMonth(1)
@@ -274,10 +274,10 @@ export default function DatePicker({
                 setSelectedMonth((selectedMonth + 1) as MonthNumbers)
               }
             }}
-            className="px-2 py-1 hover:bg-slate-100 rounded"
+            className="px-2 py-1 hover:bg-slate-100 rounded cursor-pointer"
           >
             »
-          </button>
+          </span>
         </div>
         <div className="grid grid-cols-7 gap-1 mb-2">
           {['日', '一', '二', '三', '四', '五', '六'].map((day) => (
