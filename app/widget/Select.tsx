@@ -41,8 +41,8 @@ export interface SelectOption<T extends string | number> {
  */
 interface SelectProps<T extends string | number> {
   options: SelectOption<T>[]
-  value: T
-  onChange: (value: T) => void
+  value?: T
+  onChange?: (value: T) => void
   placeholder?: string
   disabled?: boolean
   className?: string
@@ -58,7 +58,7 @@ export default function Select<T extends string | number>({
 }: SelectProps<T>) {
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedValue = e.target.value as T
-    onChange(selectedValue)
+    onChange?.(selectedValue)
   }
 
   return (
