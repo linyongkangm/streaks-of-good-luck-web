@@ -13,6 +13,7 @@ import { useState, useRef, useEffect } from 'react'
 import { DateTime, MonthNumbers, QuarterNumbers } from 'luxon'
 
 type DatePickerMode = 'year' | 'month' | 'quarter' | 'date'
+type DatePanelView = 'date' | 'year' | 'month'
 
 interface DatePickerProps {
   mode?: DatePickerMode
@@ -35,6 +36,7 @@ export default function DatePicker({
   const [selectedMonth, setSelectedMonth] = useState<MonthNumbers>(now.month)
   const [selectedQuarter, setSelectedQuarter] = useState<QuarterNumbers>(now.quarter)
   const [selectedDate, setSelectedDate] = useState(now)
+  const [datePanelView, setDatePanelView] = useState<DatePanelView>('date')
   const containerRef = useRef<HTMLDivElement>(null)
 
   // 从value初始化选中的值
@@ -82,6 +84,11 @@ export default function DatePicker({
     if (mode === 'year') {
       onChange?.(DateTime.fromObject({ year, month: 1, day: 1 }))
       setIsOpen(false)
+      return
+    }
+
+    if (mode === 'date') {
+      setDatePanelView('date')
     }
   }
 
@@ -91,6 +98,11 @@ export default function DatePicker({
     if (mode === 'month') {
       onChange?.(DateTime.fromObject({ year: selectedYear, month, day: 1 }))
       setIsOpen(false)
+      return
+    }
+
+    if (mode === 'date') {
+      setDatePanelView('date')
     }
   }
 
@@ -131,19 +143,19 @@ export default function DatePicker({
     return (
       <div className="text-slate-700 p-4">
         <div className="flex justify-between items-center mb-4">
-          <button
+          <span
             onClick={() => setSelectedYear(selectedYear - 12)}
-            className="px-2 py-1 hover:bg-slate-100 rounded"
+            className="px-2 py-1 hover:bg-slate-100 rounded cursor-pointer"
           >
             «
-          </button>
+          </span>
           <span className="font-medium">{startYear} - {startYear + 11}</span>
-          <button
+          <span
             onClick={() => setSelectedYear(selectedYear + 12)}
-            className="px-2 py-1 hover:bg-slate-100 rounded"
+            className="px-2 py-1 hover:bg-slate-100 rounded cursor-pointer"
           >
             »
-          </button>
+          </span>
         </div>
         <div className="grid grid-cols-3 gap-2">
           {years.map((year) => (
@@ -168,19 +180,19 @@ export default function DatePicker({
     return (
       <div className="text-slate-700 p-4">
         <div className="flex justify-between items-center mb-4">
-          <button
+          <span
             onClick={() => setSelectedYear(selectedYear - 1)}
-            className="px-2 py-1 hover:bg-slate-100 rounded"
+            className="px-2 py-1 hover:bg-slate-100 rounded cursor-pointer"
           >
             «
-          </button>
+          </span>
           <span className="font-medium">{selectedYear}</span>
-          <button
+          <span
             onClick={() => setSelectedYear(selectedYear + 1)}
-            className="px-2 py-1 hover:bg-slate-100 rounded"
+            className="px-2 py-1 hover:bg-slate-100 rounded cursor-pointer"
           >
             »
-          </button>
+          </span>
         </div>
         <div className="grid grid-cols-3 gap-2">
           {months.map((month) => (
@@ -263,7 +275,18 @@ export default function DatePicker({
             «
           </span>
           <span className="font-medium">
-            {selectedYear}年 {selectedMonth}月
+            <button
+              onClick={() => setDatePanelView('year')}
+              className="px-2 py-1 hover:bg-slate-100 rounded"
+            >
+              {selectedYear}年
+            </button>
+            <button
+              onClick={() => setDatePanelView('month')}
+              className="px-2 py-1 hover:bg-slate-100 rounded ml-1"
+            >
+              {selectedMonth}月
+            </button>
           </span>
           <span
             onClick={() => {
@@ -324,6 +347,12 @@ export default function DatePicker({
       case 'quarter':
         return renderQuarterPicker()
       case 'date':
+        if (datePanelView === 'year') {
+          return renderYearPicker()
+        }
+        if (datePanelView === 'month') {
+          return renderMonthPicker()
+        }
         return renderDatePicker()
       default:
         return null
@@ -336,7 +365,15 @@ export default function DatePicker({
         type="text"
         readOnly
         value={getDisplayText()}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          setIsOpen((open) => {
+            const nextOpen = !open
+            if (nextOpen && mode === 'date') {
+              setDatePanelView('date')
+            }
+            return nextOpen
+          })
+        }}
         className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer text-slate-900 bg-white"
       />
       {isOpen && (
