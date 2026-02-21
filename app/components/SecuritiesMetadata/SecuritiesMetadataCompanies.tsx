@@ -12,6 +12,7 @@ import ModalForm from '@/app/widget/ModalForm'
 import { FormItem, FormLabel } from '@/app/widget/Form'
 import Loading from '@/app/widget/Loading'
 import Panel from '@/app/widget/Panel'
+import Pagination from '@/app/widget/Pagination'
 import * as tools from '@/app/tools'
 interface Props {
   selectedCompany: info__stock_company | null
@@ -36,11 +37,11 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
     company_akshare_exchange: 'sz',
   })
   const [fetchingMetadata, setFetchingMetadata] = useState(false)
-  const [showQuoteForm, setShowQuoteForm] = useState(false)
-  const [quoteParams, setQuoteParams] = useState({
-    start_date: '',
-    end_date: '',
-  })
+  const [quoteParams, setQuoteParams] = useState<{
+    company: info__stock_company,
+    start_date: DateTime,
+    end_date: DateTime,
+  }>()
   const [fetchingQuotes, setFetchingQuotes] = useState(false)
   const [fetchingFinancials, setFetchingFinancials] = useState(false)
 
@@ -181,10 +182,11 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
       alert('删除失败')
     }
   }
-  const handleFetchQuotes = async () => {
-    if (!selectedCompany) return
 
-    if (!quoteParams.start_date || !quoteParams.end_date) {
+  const handleFetchQuotes = async (values: typeof quoteParams) => {
+    if (!values) return
+
+    if (!values.start_date || !values.end_date) {
       alert('请选择开始和结束日期')
       return
     }
@@ -195,18 +197,16 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          company_id: selectedCompany.id,
-          start_date: quoteParams.start_date,
-          end_date: quoteParams.end_date,
+          company_id: values.company.id,
+          start_date: values.start_date.toFormat('yyyy-MM-dd'),
+          end_date: values.end_date.toFormat('yyyy-MM-dd'),
         }),
       })
 
       if (res.ok) {
         const result = await res.json()
         alert(result.message || '行情数据获取成功')
-        setShowQuoteForm(false)
-        onSelectCompany(null)
-        setQuoteParams({ start_date: '', end_date: '' })
+        setQuoteParams(undefined)
       } else {
         const error = await res.json()
         alert(error.error || '获取行情数据失败')
@@ -298,46 +298,41 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
           <Button
             onClick={async (e) => {
               e.stopPropagation()
-              onSelectCompany(company)
-
               // 获取公司的最新行情日期
               try {
                 const res = await fetch(`/api/stock-quotes?company_id=${company.id}&limit=1`)
                 if (res.ok) {
                   const data = await res.json()
-                  let startDate: string
+                  let startDate: DateTime
 
                   if (data.data && data.data.length > 0) {
                     // 有历史数据，从最新日期的下一天开始
                     const latestDate = new Date(data.data[0].trade_date)
                     latestDate.setDate(latestDate.getDate() + 1)
-                    startDate = latestDate.toISOString().split('T')[0]
+                    startDate = DateTime.fromJSDate(latestDate)
                   } else {
                     // 没有历史数据，从30天前开始
-                    startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                    startDate = DateTime.now().minus({ days: 30 })
                   }
 
                   setQuoteParams({
+                    company: company,
                     start_date: startDate,
-                    end_date: new Date().toISOString().split('T')[0],
+                    end_date: DateTime.now(),
                   })
                 } else {
                   // 查询失败，使用默认值
-                  setQuoteParams({
-                    start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                    end_date: new Date().toISOString().split('T')[0],
-                  })
+                  throw new Error('查询最新行情日期失败')
                 }
               } catch (error) {
                 console.error('获取最新行情日期失败:', error)
                 // 出错使用默认值
                 setQuoteParams({
-                  start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                  end_date: new Date().toISOString().split('T')[0],
+                  company: company,
+                  start_date: DateTime.now().minus({ days: 30 }),
+                  end_date: DateTime.now(),
                 })
               }
-
-              setShowQuoteForm(true)
             }}
             look="success"
             size="tiny"
@@ -416,30 +411,11 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
         >
         </Table>
 
-        {/* 分页 */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-6">
-            <Button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              look="cancel"
-              size="small"
-            >
-              ← 上一页
-            </Button>
-            <span className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg font-medium shadow-md">
-              {page} / {totalPages}
-            </span>
-            <Button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              look="cancel"
-              size="small"
-            >
-              下一页 →
-            </Button>
-          </div>
-        )}
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
       </div>
 
       {/* 表单弹窗 */}
@@ -542,39 +518,33 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
 
       {/* 行情获取弹窗 */}
       <ModalForm
-        open={showQuoteForm && !!selectedCompany}
+        open={!!quoteParams}
         onClose={() => {
-          setShowQuoteForm(false)
-          onSelectCompany(null)
+          setQuoteParams(undefined)
         }}
         title="获取历史行情"
         maxWidth="md"
-        values={quoteParams}
-        onValuesChange={setQuoteParams}
-        onSubmit={async () => {
-          await handleFetchQuotes()
+        initialValues={quoteParams}
+        onSubmit={async (e, values) => {
+          await handleFetchQuotes(values)
         }}
       >
-        <h2 className='text-slate-800'>{selectedCompany?.company_name} ({selectedCompany?.company_code})</h2>
-
+        <h2 className='text-slate-800'>{quoteParams?.company?.company_name} ({quoteParams?.company?.company_code})</h2>
         <FormLabel label="开始日期" required>
-          <DatePicker
-            mode="date"
-            value={quoteParams.start_date ? DateTime.fromISO(quoteParams.start_date) : undefined}
-            onChange={(value) => setQuoteParams({ ...quoteParams, start_date: value.toFormat('yyyy-MM-dd') })}
-            className="w-full"
-          />
-        </FormLabel>
+          <FormItem field="start_date">
+            <DatePicker
+              mode="date"
 
+            />
+          </FormItem>
+        </FormLabel>
         <FormLabel label="结束日期" required>
-          <DatePicker
-            mode="date"
-            value={quoteParams.end_date ? DateTime.fromISO(quoteParams.end_date) : undefined}
-            onChange={(value) => setQuoteParams({ ...quoteParams, end_date: value.toFormat('yyyy-MM-dd') })}
-            className="w-full"
-          />
+          <FormItem field="end_date">
+            <DatePicker
+              mode="date"
+            />
+          </FormItem>
         </FormLabel>
-
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
           <p className="font-medium mb-1">💡 说明</p>
           <p>将获取该时间段内的历史行情数据，包含不复权、前复权、后复权三种数据。</p>
