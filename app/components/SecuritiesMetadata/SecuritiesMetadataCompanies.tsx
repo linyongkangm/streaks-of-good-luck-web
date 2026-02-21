@@ -8,7 +8,8 @@ import Button from '@/app/widget/Button'
 import { TextInput } from '@/app/widget/Input'
 import Select from '@/app/widget/Select'
 import DatePicker from '@/app/widget/DatePicker'
-import Modal from '@/app/widget/Modal'
+import ModalForm from '@/app/widget/ModalForm'
+import { FormItem, FormLabel } from '@/app/widget/Form'
 import Loading from '@/app/widget/Loading'
 import Panel from '@/app/widget/Panel'
 import * as tools from '@/app/tools'
@@ -450,7 +451,7 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
         </div>
 
         {/* 表单弹窗 */}
-        <Modal
+        <ModalForm
           open={showForm}
           onClose={() => {
             setShowForm(false)
@@ -459,29 +460,47 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
           }}
           title={editingCompany ? '编辑公司' : '添加公司'}
           maxWidth="2xl"
+          values={formData}
+          onValuesChange={setFormData}
+          onSubmit={async () => {
+            await handleSubmit()
+          }}
+          submitText={editingCompany ? '更新' : '创建'}
+          footer={(submitting, onClose) => (
+            <div className="border-t border-slate-200 pt-4 mt-6 flex justify-end gap-3">
+              <Button
+                onClick={() => {
+                  onClose()
+                  setEditingCompany(null)
+                  resetForm()
+                }}
+                look="cancel"
+                size="small"
+                disabled={submitting}
+              >
+                取消
+              </Button>
+              <Button type="submit" size="small" disabled={submitting}>
+                {editingCompany ? '更新' : '创建'}
+              </Button>
+            </div>
+          )}
         >
           <div className="space-y-4">
-            {/* AKShare代码和获取元数据 */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                AKShare代码 <span className="text-red-500">*</span>
-              </label>
+            <FormLabel label="AKShare代码" required>
               <div className="flex gap-2">
-                <Select
-                  options={[
-                    { label: '深交所', value: 'sz' },
-                    { label: '上交所', value: 'sh' },
-                  ]}
-                  value={formData.company_akshare_exchange}
-                  onChange={(value) => setFormData({ ...formData, company_akshare_exchange: value })}
-                  className="w-40"
-                />
-                <TextInput
-                  value={formData.company_code}
-                  onChange={(value) => setFormData({ ...formData, company_code: value })}
-                  className="flex-1"
-                  placeholder="例如: 000001"
-                />
+                <FormItem field="company_akshare_exchange">
+                  <Select
+                    options={[
+                      { label: '深交所', value: 'sz' },
+                      { label: '上交所', value: 'sh' },
+                    ]}
+                    className="w-40"
+                  />
+                </FormItem>
+                <FormItem field="company_code">
+                  <TextInput className="flex-1" placeholder="例如: 000001" />
+                </FormItem>
                 <Button
                   onClick={handleFetchMetadata}
                   disabled={fetchingMetadata || !formData.company_code}
@@ -492,77 +511,45 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
                   {fetchingMetadata ? '获取中...' : '获取元数据'}
                 </Button>
               </div>
-            </div>
+            </FormLabel>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  公司名称 <span className="text-red-500">*</span>
-                </label>
-                <TextInput
-                  value={formData.company_name}
-                  onChange={(value) => setFormData({ ...formData, company_name: value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">行业</label>
-                <TextInput
-                  value={formData.industry}
-                  onChange={(value) => setFormData({ ...formData, industry: value })}
-                />
-              </div>
+              <FormLabel label="公司名称" required>
+                <FormItem field="company_name">
+                  <TextInput />
+                </FormItem>
+              </FormLabel>
+              <FormLabel label="行业">
+                <FormItem field="industry">
+                  <TextInput />
+                </FormItem>
+              </FormLabel>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">上市日期</label>
+              <FormLabel label="上市日期">
                 <DatePicker
                   mode="date"
                   value={formData.ipo_date ? DateTime.fromISO(formData.ipo_date) : undefined}
                   onChange={(value) => setFormData({ ...formData, ipo_date: value.toFormat('yyyy-MM-dd') })}
                   className="w-full"
                 />
-              </div>
-              <div></div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">总股本</label>
-                <TextInput
-                  value={formData.total_shares}
-                  onChange={(value) => setFormData({ ...formData, total_shares: value })}
-                />
-              </div>
+              </FormLabel>
+              <FormLabel label="总股本">
+                <FormItem field="total_shares">
+                  <TextInput />
+                </FormItem>
+              </FormLabel>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">流通股</label>
-                <TextInput
-                  value={formData.circulating_shares}
-                  onChange={(value) => setFormData({ ...formData, circulating_shares: value })}
-                />
-              </div>
+              <FormLabel label="流通股">
+                <FormItem field="circulating_shares">
+                  <TextInput />
+                </FormItem>
+              </FormLabel>
             </div>
           </div>
-
-          <div className="border-t border-slate-200 pt-4 mt-6 flex justify-end gap-3">
-            <Button
-              onClick={() => {
-                setShowForm(false)
-                setEditingCompany(null)
-                resetForm()
-              }}
-              look="cancel"
-              size="small"
-            >
-              取消
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              size="small"
-            >
-              {editingCompany ? '更新' : '创建'}
-            </Button>
-          </div>
-        </Modal>
+        </ModalForm>
 
         {/* 行情获取弹窗 */}
-        <Modal
+        <ModalForm
           open={showQuoteForm && !!selectedCompany}
           onClose={() => {
             setShowQuoteForm(false)
@@ -570,65 +557,61 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
           }}
           title="获取历史行情"
           maxWidth="md"
+          values={quoteParams}
+          onValuesChange={setQuoteParams}
+          onSubmit={async () => {
+            await handleFetchQuotes()
+          }}
+          submitText="开始获取"
+          footer={(submitting, onClose) => (
+            <div className="border-t border-slate-200 pt-4 mt-6 flex justify-end gap-3">
+              <Button
+                onClick={() => {
+                  onClose()
+                  onSelectCompany(null)
+                }}
+                look="cancel"
+                size="small"
+                disabled={submitting}
+              >
+                取消
+              </Button>
+              <Button type="submit" disabled={submitting} look="success" size="small">
+                {submitting ? '获取中...' : '开始获取'}
+              </Button>
+            </div>
+          )}
         >
           {selectedCompany && (
             <>
               <p className="text-sm text-slate-600 mb-4">{selectedCompany.company_name} ({selectedCompany.company_code})</p>
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    开始日期 <span className="text-red-500">*</span>
-                  </label>
+                <FormLabel label="开始日期" required>
                   <DatePicker
                     mode="date"
                     value={quoteParams.start_date ? DateTime.fromISO(quoteParams.start_date) : undefined}
                     onChange={(value) => setQuoteParams({ ...quoteParams, start_date: value.toFormat('yyyy-MM-dd') })}
                     className="w-full"
                   />
-                </div>
+                </FormLabel>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    结束日期 <span className="text-red-500">*</span>
-                  </label>
+                <FormLabel label="结束日期" required>
                   <DatePicker
                     mode="date"
                     value={quoteParams.end_date ? DateTime.fromISO(quoteParams.end_date) : undefined}
                     onChange={(value) => setQuoteParams({ ...quoteParams, end_date: value.toFormat('yyyy-MM-dd') })}
                     className="w-full"
                   />
-                </div>
+                </FormLabel>
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
                   <p className="font-medium mb-1">💡 说明</p>
                   <p>将获取该时间段内的历史行情数据，包含不复权、前复权、后复权三种数据。</p>
                 </div>
               </div>
-
-              <div className="border-t border-slate-200 pt-4 mt-6 flex justify-end gap-3">
-                <Button
-                  onClick={() => {
-                    setShowQuoteForm(false)
-                    onSelectCompany(null)
-                  }}
-                  look="cancel"
-                  size="small"
-                  disabled={fetchingQuotes}
-                >
-                  取消
-                </Button>
-                <Button
-                  onClick={handleFetchQuotes}
-                  disabled={fetchingQuotes}
-                  look="success"
-                  size="small"
-                >
-                  {fetchingQuotes ? '获取中...' : '开始获取'}
-                </Button>
-              </div>
             </>
           )}
-        </Modal>
+        </ModalForm>
       </div>
     </Panel>
   )
