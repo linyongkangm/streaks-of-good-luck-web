@@ -2,7 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import type { info__stock_company } from '@/types'
+import { DateTime } from 'luxon'
 import Table, { Column } from '@/app/widget/Table'
+import Button from '@/app/widget/Button'
+import { TextInput } from '@/app/widget/Input'
+import Select from '@/app/widget/Select'
+import DatePicker from '@/app/widget/DatePicker'
+import Modal from '@/app/widget/Modal'
+import Loading from '@/app/widget/Loading'
+import Panel from '@/app/widget/Panel'
 import * as tools from '@/app/tools'
 interface Props {
   selectedCompany: info__stock_company | null
@@ -275,17 +283,18 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
       title: '操作',
       dataIndex: 'operations',
       render(_, company) {
-        return <>
-          <button
+        return <div className="flex gap-2">
+          <Button
             onClick={(e) => {
               e.stopPropagation()
               handleEdit(company)
             }}
-            className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-xs font-medium mr-2"
+            size="tiny"
+            className="mr-2"
           >
             编辑
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={async (e) => {
               e.stopPropagation()
               onSelectCompany(company)
@@ -329,69 +338,72 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
               
               setShowQuoteForm(true)
             }}
-            className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors text-xs font-medium mr-2"
+            look="success"
+            size="tiny"
+            className="mr-2"
           >
             获取行情
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={(e) => {
               e.stopPropagation()
               handleFetchFinancials(company)
             }}
             disabled={fetchingFinancials}
-            className="px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors text-xs font-medium mr-2 disabled:opacity-50"
+            look="secondary"
+            size="tiny"
+            className="mr-2"
           >
             {fetchingFinancials ? '获取中...' : '获取财报'}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={(e) => {
               e.stopPropagation()
               handleDelete(company.id)
             }}
-            className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-xs font-medium"
+            look="danger"
+            size="tiny"
           >
             删除
-          </button>
-        </>
+          </Button>
+        </div>
       }
     }
   ]
   return (
+    <Panel title="📊 证券元数据管理">
     <div className="mx-auto">
       <div className="w-full">
         {/* 搜索和操作栏 */}
         <div className="flex gap-4 mb-6">
-          <input
-            type="text"
+          <TextInput
             placeholder="搜索公司名称..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && fetchCompanies()}
-            className="flex-1 px-4 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-slate-900"
+            onChange={setSearch}
+            className="flex-1 py-3"
           />
-          <button
+          <Button
             onClick={fetchCompanies}
-            className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg font-medium"
+            size="medium"
           >
             搜索
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => {
               resetForm()
               setEditingCompany(null)
               setShowForm(true)
             }}
-            className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-md hover:shadow-lg font-medium"
+            look="success"
+            size="medium"
           >
             + 添加公司
-          </button>
+          </Button>
         </div>
 
         {/* 公司列表 */}
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
-          </div>
+          <Loading />
         ) : companies.length === 0 ? (
           <div className="text-center py-12 text-slate-500">暂无数据</div>
         ) : (
@@ -414,64 +426,71 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
         {/* 分页 */}
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-2 mt-6">
-            <button
+            <Button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-4 py-2 rounded-lg border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-all font-medium text-slate-900"
+              look="cancel"
+              size="small"
             >
               ← 上一页
-            </button>
+            </Button>
             <span className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg font-medium shadow-md">
               {page} / {totalPages}
             </span>
-            <button
+            <Button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="px-4 py-2 rounded-lg border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-all font-medium text-slate-900"
+              look="cancel"
+              size="small"
             >
               下一页 →
-            </button>
+            </Button>
           </div>
         )}
       </div>
 
       {/* 表单弹窗 */}
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white">
-              <h3 className="text-2xl font-bold">{editingCompany ? '编辑公司' : '添加公司'}</h3>
-            </div>
-
-            <div className="p-6 space-y-4">
+      <Modal
+        open={showForm}
+        onClose={() => {
+          setShowForm(false)
+          setEditingCompany(null)
+          resetForm()
+        }}
+        title={editingCompany ? '编辑公司' : '添加公司'}
+        maxWidth="2xl"
+      >
+        <div className="space-y-4">
               {/* AKShare代码和获取元数据 */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   AKShare代码 <span className="text-red-500">*</span>
                 </label>
                 <div className="flex gap-2">
-                  <select
+                  <Select
+                    options={[
+                      { label: '深交所', value: 'sz' },
+                      { label: '上交所', value: 'sh' },
+                    ]}
                     value={formData.company_akshare_exchange}
-                    onChange={(e) => setFormData({ ...formData, company_akshare_exchange: e.target.value })}
-                    className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
-                  >
-                    <option value="sz">深交所</option>
-                    <option value="sh">上交所</option>
-                  </select>
-                  <input
-                    type="text"
+                    onChange={(value) => setFormData({ ...formData, company_akshare_exchange: value })}
+                    className="w-40"
+                  />
+                  <TextInput
                     value={formData.company_code}
-                    onChange={(e) => setFormData({ ...formData, company_code: e.target.value })}
-                    className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
+                    onChange={(value) => setFormData({ ...formData, company_code: value })}
+                    className="flex-1"
                     placeholder="例如: 000001"
                   />
-                  <button
+                  <Button
                     onClick={handleFetchMetadata}
                     disabled={fetchingMetadata || !formData.company_code}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium whitespace-nowrap"
+                    look="secondary"
+                    size="small"
+                    className="whitespace-nowrap"
                   >
                     {fetchingMetadata ? '获取中...' : '获取元数据'}
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -480,98 +499,91 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     公司名称 <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
+                  <TextInput
                     value={formData.company_name}
-                    onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
+                    onChange={(value) => setFormData({ ...formData, company_name: value })}
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">行业</label>
-                  <input
-                    type="text"
+                  <TextInput
                     value={formData.industry}
-                    onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
+                    onChange={(value) => setFormData({ ...formData, industry: value })}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">上市日期</label>
-                  <input
-                    type="date"
-                    value={formData.ipo_date}
-                    onChange={(e) => setFormData({ ...formData, ipo_date: e.target.value })}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
+                  <DatePicker
+                    mode="date"
+                    value={formData.ipo_date ? DateTime.fromISO(formData.ipo_date) : undefined}
+                    onChange={(value) => setFormData({ ...formData, ipo_date: value.toFormat('yyyy-MM-dd') })}
+                    className="w-full"
                   />
                 </div>
                 <div></div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">总股本</label>
-                  <input
-                    type="number"
-                    step="0.01"
+                  <TextInput
                     value={formData.total_shares}
-                    onChange={(e) => setFormData({ ...formData, total_shares: e.target.value })}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
+                    onChange={(value) => setFormData({ ...formData, total_shares: value })}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">流通股</label>
-                  <input
-                    type="number"
-                    step="0.01"
+                  <TextInput
                     value={formData.circulating_shares}
-                    onChange={(e) => setFormData({ ...formData, circulating_shares: e.target.value })}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
+                    onChange={(value) => setFormData({ ...formData, circulating_shares: value })}
                   />
                 </div>
               </div>
-            </div>
+        </div>
 
-            <div className="border-t border-slate-200 p-4 flex justify-end gap-3">
-              <button
+            <div className="border-t border-slate-200 pt-4 mt-6 flex justify-end gap-3">
+              <Button
                 onClick={() => {
                   setShowForm(false)
                   setEditingCompany(null)
                   resetForm()
                 }}
-                className="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-medium"
+                look="cancel"
+                size="small"
               >
                 取消
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleSubmit}
-                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg font-medium"
+                size="small"
               >
                 {editingCompany ? '更新' : '创建'}
-              </button>
+              </Button>
             </div>
-          </div>
-        </div>
-      )}
+      </Modal>
 
       {/* 行情获取弹窗 */}
-      {showQuoteForm && selectedCompany && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-            <div className="bg-gradient-to-r from-green-600 to-teal-600 p-6 text-white">
-              <h3 className="text-2xl font-bold">获取历史行情</h3>
-              <p className="text-sm text-green-100 mt-1">{selectedCompany.company_name} ({selectedCompany.company_code})</p>
-            </div>
-
-            <div className="p-6 space-y-4">
+      <Modal
+        open={showQuoteForm && !!selectedCompany}
+        onClose={() => {
+          setShowQuoteForm(false)
+          onSelectCompany(null)
+        }}
+        title="获取历史行情"
+        maxWidth="md"
+      >
+        {selectedCompany && (
+          <>
+            <p className="text-sm text-slate-600 mb-4">{selectedCompany.company_name} ({selectedCompany.company_code})</p>
+            <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   开始日期 <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="date"
-                  value={quoteParams.start_date}
-                  onChange={(e) => setQuoteParams({ ...quoteParams, start_date: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-slate-900"
+                <DatePicker
+                  mode="date"
+                  value={quoteParams.start_date ? DateTime.fromISO(quoteParams.start_date) : undefined}
+                  onChange={(value) => setQuoteParams({ ...quoteParams, start_date: value.toFormat('yyyy-MM-dd') })}
+                  className="w-full"
                 />
               </div>
 
@@ -579,11 +591,11 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   结束日期 <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="date"
-                  value={quoteParams.end_date}
-                  onChange={(e) => setQuoteParams({ ...quoteParams, end_date: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-slate-900"
+                <DatePicker
+                  mode="date"
+                  value={quoteParams.end_date ? DateTime.fromISO(quoteParams.end_date) : undefined}
+                  onChange={(value) => setQuoteParams({ ...quoteParams, end_date: value.toFormat('yyyy-MM-dd') })}
+                  className="w-full"
                 />
               </div>
 
@@ -593,35 +605,31 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
               </div>
             </div>
 
-            <div className="border-t border-slate-200 p-4 flex justify-end gap-3">
-              <button
+            <div className="border-t border-slate-200 pt-4 mt-6 flex justify-end gap-3">
+              <Button
                 onClick={() => {
                   setShowQuoteForm(false)
                   onSelectCompany(null)
                 }}
-                className="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-medium"
+                look="cancel"
+                size="small"
                 disabled={fetchingQuotes}
               >
                 取消
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleFetchQuotes}
                 disabled={fetchingQuotes}
-                className="px-6 py-2 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-lg hover:from-green-700 hover:to-teal-700 transition-all shadow-md hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                look="success"
+                size="small"
               >
-                {fetchingQuotes ? (
-                  <>
-                    <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                    获取中...
-                  </>
-                ) : (
-                  '开始获取'
-                )}
-              </button>
+                {fetchingQuotes ? '获取中...' : '开始获取'}
+              </Button>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
     </div>
+    </Panel>
   )
 }

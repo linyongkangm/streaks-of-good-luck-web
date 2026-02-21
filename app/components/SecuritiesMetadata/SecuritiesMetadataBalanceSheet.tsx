@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import type { info__stock_company } from '@/types'
 import Table from '@/app/widget/Table'
+import Panel from '@/app/widget/Panel'
 import { formatNumber } from '@/app/tools'
 
 interface Props {
@@ -55,6 +56,7 @@ export default function SecuritiesMetadataBalanceSheet({ selectedCompany }: Prop
   ]
 
   return (
+    <Panel>
     <div className="w-full">
       <h3 className="text-xl font-semibold mb-4 text-slate-800">资产负债表（按报告期）</h3>
       <Table 
@@ -64,5 +66,6 @@ export default function SecuritiesMetadataBalanceSheet({ selectedCompany }: Prop
         emptyText="暂无资产负债表数据"
       />
     </div>
+    </Panel>
   )
 }

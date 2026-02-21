@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import type { info__stock_company } from '@/types'
 import Table from '@/app/widget/Table'
+import Button from '@/app/widget/Button'
+import Panel from '@/app/widget/Panel'
 import { formatNumber } from '@/app/tools'
 
 interface Props {
@@ -166,6 +168,7 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
   ]
 
   return (
+    <Panel>
     <div className="w-full">
       <h3 className="text-xl font-semibold mb-4 text-slate-800">📊 财务报表综合视图（滚动四季度）</h3>
 
@@ -179,25 +182,28 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
       {/* 分页 */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-6">
-          <button
+          <Button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-4 py-2 rounded-lg border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-all font-medium text-slate-900"
+            look="cancel"
+            size="small"
           >
             ← 上一页
-          </button>
+          </Button>
           <span className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg font-medium shadow-md">
             {page} / {totalPages}
           </span>
-          <button
+          <Button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="px-4 py-2 rounded-lg border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-all font-medium text-slate-900"
+            look="cancel"
+            size="small"
           >
             下一页 →
-          </button>
+          </Button>
         </div>
       )}
     </div>
+    </Panel>
   )
 }

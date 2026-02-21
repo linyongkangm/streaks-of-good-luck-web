@@ -2,8 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import type { info__stock_company, quote__stock_constituent_daily } from '@/types'
+import { DateTime } from 'luxon'
 import { formatNumber } from '@/app/tools'
 import Table from '@/app/widget/Table'
+import Button from '@/app/widget/Button'
+import Select from '@/app/widget/Select'
+import DatePicker from '@/app/widget/DatePicker'
+import Panel from '@/app/widget/Panel'
 
 interface Props {
   selectedCompany: info__stock_company
@@ -188,45 +193,47 @@ export default function SecuritiesMetadataQuotes({ selectedCompany }: Props) {
   ]
 
   return (
+    <Panel title="📈 历史行情数据">
     <div className="w-full">
       {/* 筛选栏 */}
       <div className="flex gap-4 mb-6 items-end">
         <div className="flex-1">
           <label className="block text-sm font-medium text-slate-700 mb-2">开始日期</label>
-          <input
-            type="date"
-            value={dateRange.start_date}
-            onChange={(e) => setDateRange({ ...dateRange, start_date: e.target.value })}
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-slate-900"
+          <DatePicker
+            mode="date"
+            value={dateRange.start_date ? DateTime.fromISO(dateRange.start_date) : undefined}
+            onChange={(value) => setDateRange({ ...dateRange, start_date: value.toFormat('yyyy-MM-dd') })}
+            className="w-full"
           />
         </div>
         <div className="flex-1">
           <label className="block text-sm font-medium text-slate-700 mb-2">结束日期</label>
-          <input
-            type="date"
-            value={dateRange.end_date}
-            onChange={(e) => setDateRange({ ...dateRange, end_date: e.target.value })}
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-slate-900"
+          <DatePicker
+            mode="date"
+            value={dateRange.end_date ? DateTime.fromISO(dateRange.end_date) : undefined}
+            onChange={(value) => setDateRange({ ...dateRange, end_date: value.toFormat('yyyy-MM-dd') })}
+            className="w-full"
           />
         </div>
         <div className="flex-1">
           <label className="block text-sm font-medium text-slate-700 mb-2">复权方式</label>
-          <select
+          <Select
+            options={[
+              { label: '不复权', value: 'none' },
+              { label: '前复权', value: 'qfq' },
+              { label: '后复权', value: 'hfq' },
+            ]}
             value={adjustType}
-            onChange={(e) => setAdjustType(e.target.value as any)}
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-slate-900"
-          >
-            <option value="none">不复权</option>
-            <option value="qfq">前复权</option>
-            <option value="hfq">后复权</option>
-          </select>
+            onChange={(value) => setAdjustType(value)}
+          />
         </div>
-        <button
+        <Button
           onClick={fetchQuotes}
-          className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg hover:from-purple-600 hover:to-pink-700 transition-all shadow-md hover:shadow-lg font-medium"
+          size="small"
+          className="mb-[1px]"
         >
           查询
-        </button>
+        </Button>
       </div>
 
       {/* 行情数据表格 */}
@@ -240,25 +247,28 @@ export default function SecuritiesMetadataQuotes({ selectedCompany }: Props) {
       {/* 分页 */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-6">
-          <button
+          <Button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-4 py-2 rounded-lg border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-all font-medium text-slate-900"
+            look="cancel"
+            size="small"
           >
             ← 上一页
-          </button>
+          </Button>
           <span className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg font-medium shadow-md">
             {page} / {totalPages}
           </span>
-          <button
+          <Button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="px-4 py-2 rounded-lg border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-all font-medium text-slate-900"
+            look="cancel"
+            size="small"
           >
             下一页 →
-          </button>
+          </Button>
         </div>
       )}
     </div>
+    </Panel>
   )
 }
