@@ -14,10 +14,9 @@ async function scrape() {
   const scrollY = window.scrollY;
   window.scrollTo(0, document.body.scrollHeight);
   await new Promise(resolve => setTimeout(resolve, 1000)); // 等待页面加载
-  let header = document.querySelector('.article-container .article-header h1')
-  if (!header) {
-    header = document.querySelector('.bigTop h1');
-  }
+  const header = document.querySelector('.article-container .article-header h1') ||
+    document.querySelector('.bigTop h1') ||
+    { textContent: document.title.replace(' - WSJ', '') };
   const title = header.textContent;
   const source_url = window.location.origin + window.location.pathname;
   const publication = 'wsj';
