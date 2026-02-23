@@ -171,7 +171,7 @@ export default function IndustryAnalysisRelatedCompanies({ selectedBoard, fetchB
   return <Panel
     title={`关联公司 (${selectedBoard.relation__stock_board_company.length})`}
     headerAction={[
-      <Button size='small' onClick={() => setShowAddCompanyModal(true)}>添加公司</Button>
+      <Button key="add-company" size='small' onClick={() => setShowAddCompanyModal(true)}>添加公司</Button>
     ]}>
     <Table
       columns={columns}
