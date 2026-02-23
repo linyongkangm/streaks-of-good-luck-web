@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import type {
   StockBoardWithRelations,
 } from '@/types'
+import Panel from '@/app/widget/Panel';
 
 interface Props {
   selectedBoard: StockBoardWithRelations;
@@ -11,13 +12,7 @@ interface Props {
 
 /* 板块标题编辑 */
 export default function IndustryAnalysisIndustryAnalysis({ selectedBoard }: Props) {
-  return <div className="bg-white rounded-xl shadow-lg p-6">
-    <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-2">
-      <span>行业分析报告</span>
-      <span className="text-lg text-slate-500 font-normal">
-        ({selectedBoard.relation__board_industry_analysis.length})
-      </span>
-    </h3>
+  return <Panel title="分析报告">
     <div className="space-y-4">
       {selectedBoard.relation__board_industry_analysis.map((relation) => (
         <div key={relation.id} className="border border-slate-200 rounded-lg p-5 hover:shadow-md transition-shadow bg-gradient-to-br from-white to-slate-50">
@@ -64,5 +59,5 @@ export default function IndustryAnalysisIndustryAnalysis({ selectedBoard }: Prop
         <p className="text-center text-slate-500 py-8">暂无行业分析报告</p>
       )}
     </div>
-  </div>
+  </Panel>
 }
