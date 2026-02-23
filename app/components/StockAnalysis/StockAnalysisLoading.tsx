@@ -9,7 +9,7 @@ interface Props {
 }
 
 /* 个股选择占位 */
-export default function IndustryAnalysisLoading({ selectedCompany, children }: Props) {
+export default function StockAnalysisLoading({ selectedCompany, children }: Props) {
   if (!selectedCompany) {
     return <div className="flex flex-col items-center justify-center h-[60vh] bg-white rounded-xl shadow-lg">
       <div className="text-6xl mb-4">📋</div>

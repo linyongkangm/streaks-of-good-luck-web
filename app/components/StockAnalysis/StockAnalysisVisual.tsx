@@ -11,31 +11,16 @@ import Loading from '@/app/widget/Loading'
 import Panel from '@/app/widget/Panel'
 import Radio from '@/app/widget/Radio'
 
-/**
- * 单个复权类型下的财务指标数据结构
- * 包含pe、pb、ps、pc四种指标，每种指标都是数值数组
- */
 interface FinancialMetrics {
-  /** 市盈率 (Price-to-Earnings Ratio) */
   pe: number[];
-  /** 市净率 (Price-to-Book Ratio) */
   pb: number[];
-  /** 市销率 (Price-to-Sales Ratio) */
   ps: number[];
-  /** 市现率 (Price-to-Cash Flow Ratio) */
   pc: number[];
 }
 
-/**
- * 完整的财务指标数据结构
- * 包含三种复权类型：不复权(none)、前复权(qfq)、后复权(hfq)
- */
 interface QuantileData {
-  /** 不复权 */
   none: FinancialMetrics;
-  /** 前复权 (Forward Fill) */
   qfq: FinancialMetrics;
-  /** 后复权 (Historical Fill) */
   hfq: FinancialMetrics;
 }
 interface Props {
@@ -71,7 +56,7 @@ const GrayGradient = tools.genColorGradient(Quantiles.length, '#6e8a8d', '#2b677
 const YellowGradient = tools.genColorGradient(Quantiles.length, '#8f773a', '#d71a1a');
 
 
-export default function IndustryAnalysisVisual({ selectedCompany }: Props) {
+export default function StockAnalysisVisual({ selectedCompany }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
   const chartInstance = useRef<Chart | null>(null)
   const [loading, setLoading] = useState(false)
@@ -85,7 +70,6 @@ export default function IndustryAnalysisVisual({ selectedCompany }: Props) {
   })
   const [predictData, setPredictData] = useState<any[]>([])
 
-  // 处理时间范围变化
   useEffect(() => {
     const years = parseInt(timeRange)
     setDateRange({
@@ -94,7 +78,6 @@ export default function IndustryAnalysisVisual({ selectedCompany }: Props) {
     })
   }, [timeRange])
 
-  // 获取数据
   const fetchData = async () => {
     if (!selectedCompany?.id) return
 
@@ -117,7 +100,6 @@ export default function IndustryAnalysisVisual({ selectedCompany }: Props) {
     }
   }
 
-  // 获取预测数据
   const fetchPredictData = async () => {
     if (!selectedCompany?.id) return
 
@@ -125,11 +107,9 @@ export default function IndustryAnalysisVisual({ selectedCompany }: Props) {
       const params = new URLSearchParams()
 
       params.append('company_id', selectedCompany.id.toString())
-
-      // 启用日期过滤：只获取最新财报之后的预测
       params.append('filter_by_date', 'true')
 
-      const res = await fetch(`/api/financial-predictions?${params}`)
+      const res = await fetch(`/api/stock-predictions?${params}`)
       if (res.ok) {
         const result = await res.json()
         setPredictData(result.data || [])
@@ -139,8 +119,6 @@ export default function IndustryAnalysisVisual({ selectedCompany }: Props) {
     }
   }
 
-
-
   useEffect(() => {
     if (selectedCompany) {
       fetchData()
@@ -148,14 +126,12 @@ export default function IndustryAnalysisVisual({ selectedCompany }: Props) {
     }
   }, [selectedCompany, dateRange])
 
-  // 绘制图表
   useEffect(() => {
     if (!chartRef.current || !data) return
 
     const chartData = data.results || []
 
     if (chartData.length === 0) return
-    // 准备图表数据
     const chartDatasource: any[] = []
     chartData.forEach((item) => {
       const valuation = item[`${adjustType}_valuation`]?.[metric]
@@ -183,19 +159,16 @@ export default function IndustryAnalysisVisual({ selectedCompany }: Props) {
 
     const quantileData: QuantileData = data.quantileData || {}
 
-    // 字段名映射
     const fieldMap: Record<ValuationMetric, string> = {
       pe: 'parent_netprofit',
       pb: 'total_parent_equity',
       ps: 'operate_income',
       pc: 'netcash_operate',
     }
-    // 使用从API获取的预测数据
     predictData.forEach((item, index, array) => {
       const fieldName = fieldMap[metric]
       const metricValue = item[fieldName]
 
-      // 如果该指标没有预测值，跳过
       if (!metricValue) return
       const trade_date = new Date(item.report_date)
       const dataPoint: any = {
@@ -204,15 +177,13 @@ export default function IndustryAnalysisVisual({ selectedCompany }: Props) {
       const totalShare = chartData[chartData.length - 1].total_shares
       Quantiles.forEach((q, index) => {
         const quantile = quantileData[adjustType]?.[metric]?.[index]
-        // 使用对应字段的预测值
         dataPoint[`predict_quantile_price_p${q}`] = parseFloat(((metricValue / totalShare) * quantile).toFixed(2))
       });
 
       if (index === 0 && dataPoint.trade_date > chartDatasource[chartDatasource.length - 1].trade_date) {
-        // 如果第一个预测数据的报告期在图表数据的最后一个交易日期之后，添加一个连接点
         const lastChartDataPoint = chartDatasource[chartDatasource.length - 1]
         const lastTradeDate = new Date(lastChartDataPoint.trade_date)
-        lastTradeDate.setDate(lastTradeDate.getDate() - 30) // 连接点的trade_date设置为图表数据最后一个交易日期的后一天
+        lastTradeDate.setDate(lastTradeDate.getDate() - 30)
         chartDatasource.push({
           ...dataPoint,
           trade_date: lastTradeDate,
@@ -220,25 +191,23 @@ export default function IndustryAnalysisVisual({ selectedCompany }: Props) {
       }
       chartDatasource.push(dataPoint)
 
-      // 设置连接点：当前预测数据的trade_date设置为report_date，如果下一个预测数据的report_date与当前预测数据的report_date相同，则不设置连接点；如果下一个预测数据的report_date在当前预测数据的report_date之后，则设置连接点为下一个预测数据的report_date的前一天；如果没有下一个预测数据，则设置连接点为当前预测数据的report_date的后30天
       const nextPredictData = array[index + 1]
       const endTradeDate = nextPredictData ? new Date(nextPredictData.report_date) : new Date(item.report_date)
       if (nextPredictData) {
-        endTradeDate.setDate(endTradeDate.getDate() - 1) // 预测数据的trade_date设置为report_date的前一天
+        endTradeDate.setDate(endTradeDate.getDate() - 1)
       } else {
-        endTradeDate.setDate(endTradeDate.getDate() + 3 * 30) // 最后一个预测数据的trade_date设置为report_date的后30天
+        endTradeDate.setDate(endTradeDate.getDate() + 3 * 30)
       }
       chartDatasource.push({
         ...dataPoint,
         trade_date: endTradeDate,
       })
     });
-    // 销毁旧图表
+
     if (chartInstance.current) {
       chartInstance.current.destroy()
     }
 
-    // 创建新图表
     const chart = new Chart({
       container: chartRef.current,
       autoFit: true,
@@ -265,7 +234,7 @@ export default function IndustryAnalysisVisual({ selectedCompany }: Props) {
         tooltip: {
           filter: (d) => {
             return d.value !== 'undefined'
-          }, // 关闭默认tooltip
+          },
         }
       },
       children: [
@@ -349,7 +318,6 @@ export default function IndustryAnalysisVisual({ selectedCompany }: Props) {
 
   return (
     <Panel>
-      {/* 控制栏 */}
       <div className="flex gap-4 mb-6 items-end flex-wrap">
         <FormLabel label="时间范围">
           <Radio
@@ -383,7 +351,6 @@ export default function IndustryAnalysisVisual({ selectedCompany }: Props) {
         </FormLabel>
       </div>
 
-      {/* 图表容器 */}
       {loading ? (
         <Loading />
       ) : !data || data.results.length === 0 ? (

@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react'
 import type {
   info__stock_company,
 } from '@/types'
-import IndustryAnalysisStockBoards from './IndustryAnalysisStockBoards'
-import IndustryAnalysisLoading from './IndustryAnalysisLoading'
+import StockAnalysisStockList from './StockAnalysisStockList'
+import StockAnalysisLoading from './StockAnalysisLoading'
 import Loading from '@/app/widget/Loading'
-import IndustryAnalysisVisual from './IndustryAnalysisVisual'
-import IndustryAnalysisPredictions from './IndustryAnalysisPredictions'
+import StockAnalysisVisual from './StockAnalysisVisual'
+import StockAnalysisPredictions from './StockAnalysisPredictions'
 
-export default function IndustryAnalysis() {
+export default function StockAnalysis() {
   const [companies, setCompanies] = useState<info__stock_company[]>([])
   const [selectedCompany, setSelectedCompany] = useState<info__stock_company | null>(null)
   const [loading, setLoading] = useState(true)
@@ -38,30 +38,29 @@ export default function IndustryAnalysis() {
   return (
     <div className="grid grid-cols-12 gap-6 p-6 max-w-[1800px] mx-auto">
       {/* 左侧：个股列表 */}
-      <div className="col-span-3">
-        <IndustryAnalysisStockBoards
+      <div className="col-span-2">
+        <StockAnalysisStockList
           companies={companies}
           selectedCompany={selectedCompany}
           onSelectCompany={setSelectedCompany}
-        ></IndustryAnalysisStockBoards>
+        ></StockAnalysisStockList>
       </div>
 
       {/* 右侧：详细信息 */}
-      <div className="col-span-9">
-        <IndustryAnalysisLoading selectedCompany={selectedCompany}>
+      <div className="col-span-10">
+        <StockAnalysisLoading selectedCompany={selectedCompany}>
           {
             selectedCompany && <div className="space-y-6">
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  {selectedCompany.company_name}
+                  {selectedCompany.company_name} - {selectedCompany.company_code}
                 </h2>
-                <div className="mt-2 text-slate-500">{selectedCompany.company_code}</div>
               </div>
-              <IndustryAnalysisVisual selectedCompany={selectedCompany}></IndustryAnalysisVisual>
-              <IndustryAnalysisPredictions selectedCompany={selectedCompany}></IndustryAnalysisPredictions>
+              <StockAnalysisVisual selectedCompany={selectedCompany}></StockAnalysisVisual>
+              <StockAnalysisPredictions selectedCompany={selectedCompany}></StockAnalysisPredictions>
             </div>
           }
-        </IndustryAnalysisLoading>
+        </StockAnalysisLoading>
       </div>
     </div>
   )

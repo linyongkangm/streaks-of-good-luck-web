@@ -11,7 +11,7 @@ interface Props {
 }
 
 /* 个股列表 */
-export default function IndustryAnalysisStockBoards({ companies, selectedCompany, onSelectCompany }: Props) {
+export default function StockAnalysisStockList({ companies, selectedCompany, onSelectCompany }: Props) {
   return <div className="bg-white rounded-xl shadow-lg p-6 sticky">
     <div className="flex items-center justify-between mb-4">
       <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">

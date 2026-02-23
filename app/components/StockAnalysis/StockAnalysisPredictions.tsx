@@ -46,30 +46,27 @@ interface LatestFinancial {
   report_date: string
 }
 
-// 计算年化增长率
 function calculateGrowthRate(baseValue: number, predictValue: number, years: number): number {
   if (baseValue === 0 || years === 0) return 0
   return (Math.pow(predictValue / baseValue, 1 / years) - 1) * 100
 }
 
-// 根据增长率计算预测值
 function calculatePredictValue(baseValue: number, growthRate: number, years: number): number {
   return baseValue * Math.pow(1 + growthRate / 100, years)
 }
 
-// 计算时间跨度（年）
 function calculateYears(baseDate: string, predictDate: DateTime): number {
   const base = DateTime.fromISO(baseDate)
   return predictDate.diff(base, 'years').years
 }
 
-export default function IndustryAnalysisPredictions({ selectedCompany }: Props) {
+export default function StockAnalysisPredictions({ selectedCompany }: Props) {
   const [loading, setLoading] = useState(false)
   const [predictions, setPredictions] = useState<PredictRecord[]>([])
   const [showModal, setShowModal] = useState(false)
   const [editingRecord, setEditingRecord] = useState<PredictRecord | null>(null)
   const [latestFinancial, setLatestFinancial] = useState<LatestFinancial | null>(null)
-  const [keepMode, setKeepMode] = useState<'value' | 'rate'>('value') // 'value': 保留数值更新增长率, 'rate': 保留增长率更新数值
+  const [keepMode, setKeepMode] = useState<'value' | 'rate'>('value')
   const [formData, setFormData] = useState({
     report_date: DateTime.utc() as DateTime,
     parent_netprofit: undefined as number | undefined,
@@ -101,7 +98,7 @@ export default function IndustryAnalysisPredictions({ selectedCompany }: Props) 
       const params = new URLSearchParams()
       params.append('company_id', selectedCompany.id.toString())
 
-      const res = await fetch(`/api/financial-predictions?${params}`)
+      const res = await fetch(`/api/stock-predictions?${params}`)
       if (res.ok) {
         const result = await res.json()
         setPredictions(result.data || [])
@@ -135,8 +132,6 @@ export default function IndustryAnalysisPredictions({ selectedCompany }: Props) 
     }
   }
 
-
-  // 更新具体数值时，同步更新增长率
   const handleValueChange = (key: MetricKey, value: number) => {
     setFormData({ ...formData, [key]: value })
 
@@ -159,7 +154,6 @@ export default function IndustryAnalysisPredictions({ selectedCompany }: Props) 
     }
   }
 
-  // 更新增长率时，同步更新具体数值
   const handleGrowthRateChange = (key: MetricKey, rate: number) => {
     setGrowthRates({ ...growthRates, [key]: rate })
 
@@ -182,7 +176,6 @@ export default function IndustryAnalysisPredictions({ selectedCompany }: Props) 
     }
   }
 
-  // 更新报告期时，根据keepMode决定更新数值还是增长率
   const handleReportDateChange = (newDate: DateTime) => {
     setFormData({ ...formData, report_date: newDate })
 
@@ -199,7 +192,6 @@ export default function IndustryAnalysisPredictions({ selectedCompany }: Props) 
     }
 
     if (keepMode === 'value') {
-      // 保留数值，更新增长率
       const newGrowthRates: any = { ...growthRates }
       Object.keys(metricLabels).forEach((key) => {
         const metricKey = key as MetricKey
@@ -211,7 +203,6 @@ export default function IndustryAnalysisPredictions({ selectedCompany }: Props) 
       })
       setGrowthRates(newGrowthRates)
     } else {
-      // 保留增长率，更新数值
       const newFormData: any = { ...formData, report_date: newDate }
       Object.keys(metricLabels).forEach((key) => {
         const metricKey = key as MetricKey
@@ -254,7 +245,6 @@ export default function IndustryAnalysisPredictions({ selectedCompany }: Props) 
     }
     setFormData(newFormData)
 
-    // 计算增长率
     if (latestFinancial) {
       const years = calculateYears(latestFinancial.report_date, newFormData.report_date)
       const newGrowthRates: any = {}
@@ -285,7 +275,7 @@ export default function IndustryAnalysisPredictions({ selectedCompany }: Props) 
     if (!confirm('确定要删除这条预测数据吗？')) return
 
     try {
-      const res = await fetch('/api/financial-predictions', {
+      const res = await fetch('/api/stock-predictions', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -313,17 +303,14 @@ export default function IndustryAnalysisPredictions({ selectedCompany }: Props) 
     }
 
     try {
-      // 构建请求数据
       const body: any = {
         report_date: formData.report_date,
       }
 
-      // 如果是编辑模式，传递id
       if (editingRecord) {
         body.id = editingRecord.id.toString()
       }
 
-      // 添加非空的指标字段
       if (formData.parent_netprofit !== undefined) {
         body.parent_netprofit = formData.parent_netprofit
       }
@@ -339,7 +326,7 @@ export default function IndustryAnalysisPredictions({ selectedCompany }: Props) 
 
       body.company_id = selectedCompany.id
 
-      const res = await fetch('/api/financial-predictions', {
+      const res = await fetch('/api/stock-predictions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -360,8 +347,6 @@ export default function IndustryAnalysisPredictions({ selectedCompany }: Props) 
       alert('提交失败')
     }
   }
-
-
 
   const columns: Column<PredictRecord>[] = [
     {
@@ -420,7 +405,6 @@ export default function IndustryAnalysisPredictions({ selectedCompany }: Props) 
         emptyText="暂无预测数据"
       />
 
-      {/* 添加/编辑弹窗 */}
       <ModalForm
         key={editingRecord?.id?.toString() || 'new'}
         open={showModal}
