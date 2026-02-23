@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Table, { type Column } from '@/app/widget/Table'
-import type { StockBoardWithRelations } from '@/types'
+import type { info__stock_company } from '@/types'
 import { formatNumber } from '@/app/tools'
 import DatePicker from '@/app/widget/DatePicker'
 import { DateTime } from 'luxon'
@@ -26,8 +26,7 @@ interface PredictRecord {
 }
 
 interface Props {
-  selectedBoard: StockBoardWithRelations
-  selectedCompanyId: number | null
+  selectedCompany: info__stock_company
 }
 
 type MetricKey = 'parent_netprofit' | 'total_parent_equity' | 'operate_income' | 'netcash_operate'
@@ -64,7 +63,7 @@ function calculateYears(baseDate: string, predictDate: DateTime): number {
   return predictDate.diff(base, 'years').years
 }
 
-export default function IndustryAnalysisPredictions({ selectedBoard, selectedCompanyId }: Props) {
+export default function IndustryAnalysisPredictions({ selectedCompany }: Props) {
   const [loading, setLoading] = useState(false)
   const [predictions, setPredictions] = useState<PredictRecord[]>([])
   const [showModal, setShowModal] = useState(false)
@@ -88,26 +87,19 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
   useEffect(() => {
     fetchPredictions()
     fetchLatestFinancial()
-  }, [selectedBoard, selectedCompanyId])
+  }, [selectedCompany])
 
   const panelTitle = useMemo(() => {
-    return selectedCompanyId
-      ? selectedBoard.relation__stock_board_company.find(c => c.company_id === selectedCompanyId)?.info__stock_company?.company_name + ' - 财务预测数据'
-      : selectedBoard.board_name + ' - 财务预测数据'
-  }, [selectedCompanyId, selectedBoard])
+    return selectedCompany.company_name + ' - 财务预测数据'
+  }, [selectedCompany])
 
   const fetchPredictions = async () => {
-    if (!selectedBoard?.id) return
+    if (!selectedCompany?.id) return
 
     setLoading(true)
     try {
       const params = new URLSearchParams()
-
-      if (selectedCompanyId) {
-        params.append('company_id', selectedCompanyId.toString())
-      } else {
-        params.append('board_id', selectedBoard.id.toString())
-      }
+      params.append('company_id', selectedCompany.id.toString())
 
       const res = await fetch(`/api/financial-predictions?${params}`)
       if (res.ok) {
@@ -122,13 +114,13 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
   }
 
   const fetchLatestFinancial = async () => {
-    if (!selectedCompanyId) {
+    if (!selectedCompany?.id) {
       setLatestFinancial(null)
       return
     }
 
     try {
-      const res = await fetch(`/api/financial-statements/view?company_id=${selectedCompanyId}&limit=1`)
+      const res = await fetch(`/api/financial-statements/view?company_id=${selectedCompany.id}&limit=1`)
       if (res.ok) {
         const result = await res.json()
         if (result.data && result.data.length > 0) {
@@ -194,7 +186,7 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
   const handleReportDateChange = (newDate: DateTime) => {
     setFormData({ ...formData, report_date: newDate })
 
-    if (!latestFinancial || !selectedCompanyId) return
+    if (!latestFinancial || !selectedCompany?.id) return
 
     const years = calculateYears(latestFinancial.report_date, newDate)
     if (years <= 0) return
@@ -345,11 +337,7 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
         body.netcash_operate = formData.netcash_operate
       }
 
-      if (selectedCompanyId) {
-        body.company_id = selectedCompanyId
-      } else {
-        body.board_id = selectedBoard.id
-      }
+      body.company_id = selectedCompany.id
 
       const res = await fetch('/api/financial-predictions', {
         method: 'POST',
@@ -448,7 +436,7 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
                 <DatePicker mode="quarter" />
               </FormItem>
             </div>
-            {selectedCompanyId && latestFinancial && (
+            {latestFinancial && (
               <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-lg">
                 <span className="text-sm text-slate-600">修改报告期时：</span>
                 <Radio
@@ -513,7 +501,7 @@ export default function IndustryAnalysisPredictions({ selectedBoard, selectedCom
                   onChange={(value) => handleGrowthRateChange(key, value)}
                   placeholder="年化增长率 %"
                   decimalPlaces={2}
-                  disabled={!latestFinancial || !selectedCompanyId}
+                  disabled={!latestFinancial}
                   suffix="%"
                 />
               </div>

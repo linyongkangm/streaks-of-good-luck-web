@@ -22,7 +22,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="flex px-6">
             {([
-              { id: 'industry' as const, icon: '🏢', label: '行业分析' },
+              { id: 'industry' as const, icon: '📊', label: '个股分析' },
               { id: 'tweet' as const, icon: '💬', label: '推文分析' },
               { id: 'article' as const, icon: '📄', label: '文章分析' },
               { id: 'predicts' as const, icon: '📈', label: '预测记录' },

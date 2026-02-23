@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Chart } from '@antv/g2'
-import type { StockBoardWithRelations } from '@/types'
+import type { info__stock_company } from '@/types'
 import * as tools from '@/app/tools'
 import Select from '@/app/widget/Select'
 import { DateTime } from 'luxon'
@@ -39,8 +39,7 @@ interface QuantileData {
   hfq: FinancialMetrics;
 }
 interface Props {
-  selectedBoard: StockBoardWithRelations
-  selectedCompanyId: number | null
+  selectedCompany: info__stock_company
 }
 
 type AdjustType = 'none' | 'qfq' | 'hfq'
@@ -72,14 +71,14 @@ const GrayGradient = tools.genColorGradient(Quantiles.length, '#6e8a8d', '#2b677
 const YellowGradient = tools.genColorGradient(Quantiles.length, '#8f773a', '#d71a1a');
 
 
-export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyId }: Props) {
+export default function IndustryAnalysisVisual({ selectedCompany }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
   const chartInstance = useRef<Chart | null>(null)
   const [loading, setLoading] = useState(false)
   const [adjustType, setAdjustType] = useState<AdjustType>('qfq')
   const [metric, setMetric] = useState<ValuationMetric>('pe')
   const [timeRange, setTimeRange] = useState<TimeRange>('3')
-  const [data, setData] = useState<{ [key: string]: { results: any[], quantileData: any } }>({})
+  const [data, setData] = useState<{ results: any[]; quantileData: any } | null>(null)
   const [dateRange, setDateRange] = useState({
     start_date: DateTime.now().minus({ years: 3 }),
     end_date: DateTime.now(),
@@ -97,7 +96,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
 
   // 获取数据
   const fetchData = async () => {
-    if (!selectedBoard?.id) return
+    if (!selectedCompany?.id) return
 
     setLoading(true)
     try {
@@ -106,7 +105,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
         end_date: dateRange.end_date.toISODate() || '',
       })
 
-      const res = await fetch(`/api/board-companies/${selectedBoard.id}/valuation?${params}`)
+      const res = await fetch(`/api/stock-companies/${selectedCompany.id}/valuation?${params}`)
       if (res.ok) {
         const result = await res.json()
         setData(result.data)
@@ -120,18 +119,14 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
 
   // 获取预测数据
   const fetchPredictData = async () => {
-    if (!selectedBoard?.id) return
+    if (!selectedCompany?.id) return
 
     try {
       const params = new URLSearchParams()
 
-      if (selectedCompanyId) {
-        params.append('company_id', selectedCompanyId.toString())
-      } else {
-        params.append('board_id', selectedBoard.id.toString())
-      }
+      params.append('company_id', selectedCompany.id.toString())
 
-      // 启用日期过滤：公司只获取最新财报之后的预测，板块只获取当天之后的预测
+      // 启用日期过滤：只获取最新财报之后的预测
       params.append('filter_by_date', 'true')
 
       const res = await fetch(`/api/financial-predictions?${params}`)
@@ -147,25 +142,17 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
 
 
   useEffect(() => {
-    if (selectedBoard) {
+    if (selectedCompany) {
       fetchData()
       fetchPredictData()
     }
-  }, [selectedBoard, dateRange])
-
-  useEffect(() => {
-    if (selectedBoard) {
-      fetchPredictData()
-    }
-  }, [selectedCompanyId])
+  }, [selectedCompany, dateRange])
 
   // 绘制图表
   useEffect(() => {
-    if (!chartRef.current || !data || Object.keys(data).length === 0) return
+    if (!chartRef.current || !data) return
 
-    // 根据 selectedCompanyId 选择数据源
-    const dataKey = selectedCompanyId ? selectedCompanyId.toString() : 'all'
-    const chartData = data[dataKey]?.results || []
+    const chartData = data.results || []
 
     if (chartData.length === 0) return
     // 准备图表数据
@@ -194,7 +181,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
       chartDatasource.push(dataPoint)
     })
 
-    const quantileData: QuantileData = data[dataKey]?.quantileData || {}
+    const quantileData: QuantileData = data.quantileData || {}
 
     // 字段名映射
     const fieldMap: Record<ValuationMetric, string> = {
@@ -265,7 +252,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
       },
       axis: {
         x: {
-          title: (selectedBoard.relation__stock_board_company.find(company => company.company_id === selectedCompanyId)?.info__stock_company?.company_name || 'All') + ' - 交易日期',
+          title: selectedCompany.company_name + ' - 交易日期',
         },
       },
       scale: {
@@ -358,7 +345,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
         chartInstance.current.destroy()
       }
     }
-  }, [data, adjustType, metric, selectedCompanyId, predictData])
+  }, [data, adjustType, metric, predictData, selectedCompany])
 
   return (
     <Panel>
@@ -399,7 +386,7 @@ export default function IndustryAnalysisVisual({ selectedBoard, selectedCompanyI
       {/* 图表容器 */}
       {loading ? (
         <Loading />
-      ) : Object.keys(data).length === 0 ? (
+      ) : !data || data.results.length === 0 ? (
         <div className="text-center py-12 text-slate-500">暂无数据</div>
       ) : (
         <div ref={chartRef} className="w-full"></div>
