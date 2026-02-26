@@ -37,6 +37,7 @@ const metricLabels: Record<MetricKey, string> = {
   total_parent_equity: '归属母公司股东权益',
   operate_income: '营业总收入',
   netcash_operate: '经营活动现金流净额',
+
 }
 
 interface LatestFinancial {
@@ -368,9 +369,14 @@ export default function StockAnalysisPredictions({ selectedCompany }: Props) {
       render: (value: number | undefined) => formatNumber(value),
     })),
     {
-      title: '派现总额',
+      title: '股利支付率',
       dataIndex: 'dividend_payout_ratio',
-      render: (value: number | undefined, row: PredictRecord) => !!value && !!row.parent_netprofit ? formatNumber(row.parent_netprofit * (value / 100)) : '-',
+      render: (value: number | undefined) => value !== undefined ? `${value}%` : '-',
+    },
+    {
+      title: '派现总额',
+      dataIndex: 'parent_netprofit_dividend_payout_ratio',
+      render: (_: number | undefined, row: PredictRecord) => !!row.parent_netprofit && !!row.dividend_payout_ratio ? formatNumber(row.parent_netprofit * (row.dividend_payout_ratio / 100)) : '-',
     },
     {
       title: '操作',
