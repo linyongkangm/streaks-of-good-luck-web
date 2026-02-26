@@ -132,21 +132,44 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
     const chartData = data.results || []
 
     if (chartData.length === 0) return
+
+    const q4PredictByYear = new Map<number, any>()
+    predictData.forEach((item) => {
+      const reportDate = DateTime.fromISO(item.report_date)
+      if (!reportDate.isValid || reportDate.quarter !== 4) return
+      q4PredictByYear.set(reportDate.year, item)
+    })
+
     const chartDatasource: any[] = []
     chartData.forEach((item) => {
       const valuation = item[`${adjustType}_valuation`]?.[metric]
       if (!valuation) return
-
+      const closePrice = item[`${adjustType}_close_price`]
+      const totalShares = Number(item.total_shares)
+      const marketValue = Number(closePrice) * totalShares
+      const predictDividendYieldTexts = new Map<string, string>()
+      q4PredictByYear.forEach((predict, year) => {
+        if (
+          predict &&
+          Number.isFinite(Number(predict.parent_netprofit)) &&
+          Number.isFinite(Number(predict.dividend_payout_ratio))) {
+          const dividendYield = ((Number(predict.parent_netprofit) * (Number(predict.dividend_payout_ratio) / 100)) / marketValue) * 100
+          predictDividendYieldTexts.set(`predictDividendYieldText${year}Q4`, `${dividendYield.toFixed(2)}%`)
+        } else {
+          predictDividendYieldTexts.set(`predictDividendYieldText${year}Q4`, '--')
+        }
+      })
       const dataPoint: any = {
         trade_date: new Date(item.trade_date),
         valuation: parseFloat(valuation.toFixed(2)),
+        total_market_value: Number.isFinite(marketValue) ? marketValue : undefined,
+        ...Object.fromEntries(predictDividendYieldTexts),
       }
       if (item.company_id) {
         dataPoint.company_name = item.company_name
         dataPoint.company_code = item.company_code
         dataPoint.company_id = item.company_id
       }
-      const closePrice = item[`${adjustType}_close_price`]
       dataPoint.closePrice = parseFloat(closePrice.toFixed(2))
       const quantile_price = item.quantile_prices?.[adjustType]?.[metric] || {}
       Object.keys(quantile_price).forEach((key) => {
@@ -207,7 +230,6 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
     if (chartInstance.current) {
       chartInstance.current.destroy()
     }
-
     const chart = new Chart({
       container: chartRef.current,
       autoFit: true,
@@ -259,7 +281,24 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
             {
               name: metricLabels[metric],
               field: 'valuation',
-            }
+            },
+            {
+              name: '总市值',
+              field: 'total_market_value',
+              valueFormatter: (value) => {
+                if (value === undefined || value === null || Number.isNaN(Number(value))) {
+                  return undefined
+                }
+                return tools.formatNumber(Number(value))
+              },
+            },
+            ...q4PredictByYear.size > 0 ? Array.from(q4PredictByYear.keys()).map(year => {
+              return {
+                name: `${year}股息率`,
+                field: `predictDividendYieldText${year}Q4`,
+              }
+            }) : []
+
           ],
         },
         ...Quantiles.map((q, index) => {
