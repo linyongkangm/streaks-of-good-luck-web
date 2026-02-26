@@ -18,6 +18,7 @@ interface PredictRecord {
   board_id: number | null
   report_date: string
   parent_netprofit: number | null
+  dividend_payout_ratio: number | null
   total_parent_equity: number | null
   operate_income: number | null
   netcash_operate: number | null
@@ -70,6 +71,7 @@ export default function StockAnalysisPredictions({ selectedCompany }: Props) {
   const [formData, setFormData] = useState({
     report_date: DateTime.utc() as DateTime,
     parent_netprofit: undefined as number | undefined,
+    dividend_payout_ratio: undefined as number | undefined,
     total_parent_equity: undefined as number | undefined,
     operate_income: undefined as number | undefined,
     netcash_operate: undefined as number | undefined,
@@ -221,6 +223,7 @@ export default function StockAnalysisPredictions({ selectedCompany }: Props) {
     setFormData({
       report_date: DateTime.now(),
       parent_netprofit: undefined,
+      dividend_payout_ratio: undefined,
       total_parent_equity: undefined,
       operate_income: undefined,
       netcash_operate: undefined,
@@ -239,6 +242,7 @@ export default function StockAnalysisPredictions({ selectedCompany }: Props) {
     const newFormData = {
       report_date: DateTime.fromISO(record.report_date),
       parent_netprofit: record.parent_netprofit ?? undefined,
+      dividend_payout_ratio: record.dividend_payout_ratio ?? undefined,
       total_parent_equity: record.total_parent_equity ?? undefined,
       operate_income: record.operate_income ?? undefined,
       netcash_operate: record.netcash_operate ?? undefined,
@@ -314,6 +318,9 @@ export default function StockAnalysisPredictions({ selectedCompany }: Props) {
       if (formData.parent_netprofit !== undefined) {
         body.parent_netprofit = formData.parent_netprofit
       }
+      if (formData.dividend_payout_ratio !== undefined) {
+        body.dividend_payout_ratio = formData.dividend_payout_ratio
+      }
       if (formData.total_parent_equity !== undefined) {
         body.total_parent_equity = formData.total_parent_equity
       }
@@ -361,9 +368,13 @@ export default function StockAnalysisPredictions({ selectedCompany }: Props) {
       render: (value: number | undefined) => formatNumber(value),
     })),
     {
+      title: '派现总额',
+      dataIndex: 'dividend_payout_ratio',
+      render: (value: number | undefined, row: PredictRecord) => !!value && !!row.parent_netprofit ? formatNumber(row.parent_netprofit * (value / 100)) : '-',
+    },
+    {
       title: '操作',
       dataIndex: 'operation',
-      width: '150px',
       render: (_, record) => (
         <div className="flex gap-2">
           <Button
@@ -488,6 +499,16 @@ export default function StockAnalysisPredictions({ selectedCompany }: Props) {
                   disabled={!latestFinancial}
                   suffix="%"
                 />
+                {key === 'parent_netprofit' && (
+                  <NumberInput
+                    value={formData.dividend_payout_ratio}
+                    onChange={(value) => setFormData({ ...formData, dividend_payout_ratio: value })}
+                    placeholder="股利支付率 %"
+                    decimalPlaces={2}
+                    suffix="%"
+                  />
+                )}
+
               </div>
             </FormLabel>
           )

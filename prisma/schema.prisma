@@ -299,6 +299,7 @@ model indicator__predict_financial_report {
   board_id            Int?      @db.UnsignedInt
   report_date         DateTime  @db.Date
   parent_netprofit    Decimal?  @db.Decimal(20, 2)
+  dividend_payout_ratio Decimal? @db.Decimal(8, 4)
   total_parent_equity Decimal?  @db.Decimal(20, 2)
   operate_income      Decimal?  @db.Decimal(20, 2)
   netcash_operate     Decimal?  @db.Decimal(20, 2)

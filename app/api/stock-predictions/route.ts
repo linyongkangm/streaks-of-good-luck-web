@@ -89,6 +89,7 @@ export async function GET(request: NextRequest) {
  *   board_id?: number,
  *   report_date: string,
  *   parent_netprofit?: number,
+ *   dividend_payout_ratio?: number,
  *   total_parent_equity?: number,
  *   operate_income?: number,
  *   netcash_operate?: number,
@@ -103,6 +104,7 @@ export async function POST(request: NextRequest) {
       board_id, 
       report_date, 
       parent_netprofit,
+      dividend_payout_ratio,
       total_parent_equity,
       operate_income,
       netcash_operate 
@@ -131,6 +133,9 @@ export async function POST(request: NextRequest) {
     
     if (parent_netprofit !== undefined && parent_netprofit !== null && parent_netprofit !== '') {
       dataFields.parent_netprofit = parseFloat(parent_netprofit.toString())
+    }
+    if (dividend_payout_ratio !== undefined && dividend_payout_ratio !== null && dividend_payout_ratio !== '') {
+      dataFields.dividend_payout_ratio = parseFloat(dividend_payout_ratio.toString())
     }
     if (total_parent_equity !== undefined && total_parent_equity !== null && total_parent_equity !== '') {
       dataFields.total_parent_equity = parseFloat(total_parent_equity.toString())
