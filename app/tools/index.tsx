@@ -157,8 +157,8 @@ export function formatNumber(value: string | number | undefined | null, decimals
   const abs = Math.abs(num)
   const sign = num < 0 ? '-' : ''
 
-  if (abs >= 100000000) return `${sign}${(abs / 100000000).toFixed(2)}亿`
-  if (abs >= 10000) return `${sign}${(abs / 10000).toFixed(2)}万`
+  if (abs >= 100000000) return `${sign}${(abs / 100000000).toFixed(decimals)}亿`
+  if (abs >= 10000) return `${sign}${(abs / 10000).toFixed(decimals)}万`
   return num.toFixed(decimals)
 }
 

@@ -9,6 +9,7 @@ import StockAnalysisLoading from './StockAnalysisLoading'
 import Loading from '@/app/widget/Loading'
 import StockAnalysisVisual from './StockAnalysisVisual'
 import StockAnalysisPredictions from './StockAnalysisPredictions'
+import StockAnalysisFinancialViewChart from './StockAnalysisFinancialViewChart'
 
 export default function StockAnalysis() {
   const [companies, setCompanies] = useState<info__stock_company[]>([])
@@ -58,6 +59,7 @@ export default function StockAnalysis() {
               </div>
               <StockAnalysisVisual selectedCompany={selectedCompany}></StockAnalysisVisual>
               <StockAnalysisPredictions selectedCompany={selectedCompany}></StockAnalysisPredictions>
+              <StockAnalysisFinancialViewChart selectedCompany={selectedCompany}></StockAnalysisFinancialViewChart>
             </div>
           }
         </StockAnalysisLoading>
