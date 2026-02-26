@@ -16,6 +16,7 @@ interface Props {
 
 type FinancialViewField =
   | 'total_parent_equity'
+  | 'cashflow_ratio_ttm'
   | 'parent_netprofit_ttm'
   | 'parent_netprofit_last_year'
   | 'operate_income_ttm'
@@ -31,6 +32,7 @@ type FinancialViewField =
 
 const fieldLabels: Record<FinancialViewField, string> = {
   total_parent_equity: '归母权益',
+  cashflow_ratio_ttm: '现金流量比率',
   parent_netprofit_ttm: '归母净利(TTM)',
   parent_netprofit_last_year: '归母净利(去年)',
   operate_income_ttm: '营收(TTM)',
@@ -97,7 +99,18 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
     const chartData = [...records]
       .reverse()
       .map((item) => {
-        const metricValue = Number(item[field])
+        const metricValue =
+          field === 'cashflow_ratio_ttm'
+            ? (() => {
+                const netcashOperateTtm = Number(item.netcash_operate_ttm)
+                const parentNetprofitTtm = Number(item.parent_netprofit_ttm)
+                if (!Number.isFinite(netcashOperateTtm) || !Number.isFinite(parentNetprofitTtm) || parentNetprofitTtm === 0) {
+                  return Number.NaN
+                }
+                return netcashOperateTtm / parentNetprofitTtm
+              })()
+            : Number(item[field])
+
         if (!Number.isFinite(metricValue)) return null
 
         return {
@@ -128,6 +141,9 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
         y: {
           title: fieldLabels[field],
           labelFormatter: (value: number) => {
+            if (field === 'cashflow_ratio_ttm') {
+              return Number(value).toFixed(2)
+            }
             return formatNumber(value, 0)
           }
         },
@@ -155,7 +171,10 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
             {
               name: fieldLabels[field],
               channel: 'y',
-              valueFormatter: (value) => formatNumber(Number(value)),
+              valueFormatter: (value) =>
+                field === 'cashflow_ratio_ttm'
+                  ? Number(value).toFixed(2)
+                  : formatNumber(Number(value)),
             },
           ],
         },
