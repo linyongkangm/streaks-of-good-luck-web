@@ -371,7 +371,7 @@ export default function StockAnalysisPredictions({ selectedCompany }: Props) {
     {
       title: '股利支付率',
       dataIndex: 'dividend_payout_ratio',
-      render: (value: number | undefined) => value !== undefined ? `${value}%` : '-',
+      render: (value: number | undefined) => !!value ? `${value}%` : '-',
     },
     {
       title: '派现总额',
