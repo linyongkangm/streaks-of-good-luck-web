@@ -7,6 +7,7 @@ import type {
 
 interface StockValuationSummary {
   company_id: number;
+  latest_trade_date: string | null;
   qfq_close_price: number | null;
   pe: number | null;
   pe_percentile_3y: number | null;
@@ -83,6 +84,12 @@ export default function StockAnalysisStockList({ companies, selectedCompany, onS
         if (value === null || value === undefined || Number.isNaN(value)) return '--'
         return `${value.toFixed(1)}%`
       },
+      date: (value: string | null | undefined) => {
+        if (!value) return '--'
+        const date = new Date(value)
+        if (Number.isNaN(date.getTime())) return '--'
+        return date.toISOString().slice(0, 10)
+      },
     }
   }, [])
 
@@ -114,7 +121,10 @@ export default function StockAnalysisStockList({ companies, selectedCompany, onS
                   </div>
                 </div>
                 <div>
-                  <span className="font-semibold text-sm leading-5">{formatter.price(summary?.qfq_close_price)}</span>
+                  <div className="font-medium text-sm leading-5 line-clamp-1 text-right">{formatter.price(summary?.qfq_close_price)}</div>
+                  <div className={`text-[10px] leading-4 text-right ${isSelected ? 'text-blue-100/90' : 'text-slate-500'}`}>
+                    {formatter.date(summary?.latest_trade_date)}
+                  </div>
                 </div>
               </div>
               <div className={`mt-1.5 text-[11px] leading-4 ${isSelected ? 'text-blue-100' : 'text-slate-600'}`}>
