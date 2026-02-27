@@ -58,29 +58,20 @@ const calculatePercentile = (values: number[], target: number | null): number | 
   const sorted = values.filter((v) => Number.isFinite(v)).sort((a, b) => a - b)
   if (sorted.length === 0) return null
 
-  const quantileValues = calculateQuantiles(sorted, QUANTILE_LEVELS)
-  if (quantileValues.some((value) => value === null)) return null
+  let lessCount = 0
+  let equalCount = 0
 
-  const first = quantileValues[0] as number
-  const last = quantileValues[quantileValues.length - 1] as number
-
-  if (target <= first) return 10
-  if (target >= last) return 90
-
-  for (let i = 0; i < quantileValues.length - 1; i += 1) {
-    const left = quantileValues[i] as number
-    const right = quantileValues[i + 1] as number
-    const leftPct = QUANTILE_LEVELS[i] * 100
-    const rightPct = QUANTILE_LEVELS[i + 1] * 100
-
-    if (target >= left && target <= right) {
-      if (right === left) return leftPct
-      const ratio = (target - left) / (right - left)
-      return leftPct + ratio * (rightPct - leftPct)
+  sorted.forEach((value) => {
+    if (value < target) {
+      lessCount += 1
+      return
     }
-  }
+    if (value === target) {
+      equalCount += 1
+    }
+  })
 
-  return null
+  return ((lessCount + 0.5 * equalCount) / sorted.length) * 100
 }
 
 export async function POST(request: NextRequest) {
