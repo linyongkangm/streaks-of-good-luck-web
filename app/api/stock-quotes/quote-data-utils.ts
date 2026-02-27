@@ -1,17 +1,23 @@
 import * as stools from '@/app/tools/stools'
 import { prisma } from '@/lib/db'
 
+enum StockHist {
+  DF = 'stock_zh_a_hist',
+  TX = 'stock_zh_a_hist_tx',
+}
+
 // 获取指定复权方式的行情数据
 export async function fetchQuoteData(
   symbol: string,
+  akSymbol: string,
   startDate: string,
   endDate: string,
   adjust: string
 ): Promise<any[] | null> {
   try {
+    const method: StockHist = StockHist.TX as StockHist;
     const params: any = {
-      symbol,
-      period: 'daily',
+      symbol: method === StockHist.DF ? symbol : akSymbol,
       start_date: startDate.replace(/-/g, ''),
       end_date: endDate.replace(/-/g, ''),
     }
@@ -19,8 +25,11 @@ export async function fetchQuoteData(
     if (adjust) {
       params.adjust = adjust
     }
+    if (method === StockHist.DF) {
+      params.period = 'daily';
+    }
 
-    const response = await stools.fetchWebIntellCallAKShare('stock_zh_a_hist', params)
+    const response = await stools.fetchWebIntellCallAKShare(method, params)
 
     if (!response.ok) {
       console.error(`获取${adjust || 'none'}复权数据失败`)
@@ -28,7 +37,24 @@ export async function fetchQuoteData(
     }
 
     const result = await response.json()
-    return result.success ? result.data : null
+    if (result.success) {
+      if (method === StockHist.DF) {
+        return result.data;
+      } else {
+        return result.data.map((item: any) => ({
+          '日期': item.date,
+          '开盘': item.open,
+          '收盘': item.close,
+          '最高': item.high,
+          '最低': item.low,
+          '成交量': item.amount,
+          '振幅': ((item.high - item.low) / item.open) * 100,
+          '涨跌幅': ((item.close - item.open) / item.open) * 100,
+        }));
+      }
+    }
+    return null
+
   } catch (error) {
     console.error(`获取${adjust || 'none'}复权数据异常:`, error)
     return null
@@ -163,14 +189,15 @@ export async function saveQuoteData(companyId: number, data: any[]): Promise<num
 export async function fetchAndSaveQuoteData(
   companyId: number,
   companyCode: string,
+  akCompanyCode: string,
   startDate: string,
   endDate: string
 ): Promise<number> {
   // 分别获取三种复权方式的数据
   const [noneData, qfqData, hfqData] = await Promise.all([
-    fetchQuoteData(companyCode, startDate, endDate, ''), // 不复权
-    fetchQuoteData(companyCode, startDate, endDate, 'qfq'), // 前复权
-    fetchQuoteData(companyCode, startDate, endDate, 'hfq'), // 后复权
+    fetchQuoteData(companyCode, akCompanyCode, startDate, endDate, ''), // 不复权
+    fetchQuoteData(companyCode, akCompanyCode, startDate, endDate, 'qfq'), // 前复权
+    fetchQuoteData(companyCode, akCompanyCode, startDate, endDate, 'hfq'), // 后复权
   ])
 
   if (!noneData || !qfqData || !hfqData) {

@@ -11,6 +11,7 @@ export async function POST(req: NextRequest) {
         id: true,
         company_code: true,
         company_name: true,
+        company_akshare_code: true,
       },
     })
 
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
           console.log(`正在同步 ${company.company_name} (${company.company_code}) 从 ${startDateStr} 到 ${todayStr}`)
           
           // 获取并保存数据
-          const savedCount = await fetchAndSaveQuoteData(company.id, company.company_code, startDateStr, todayStr)
+          const savedCount = await fetchAndSaveQuoteData(company.id, company.company_code, company.company_akshare_code, startDateStr, todayStr)
           
           syncResults.push({
             company_id: company.id,

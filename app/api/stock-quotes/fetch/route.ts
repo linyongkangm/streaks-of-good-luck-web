@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 获取并保存数据
-    const savedCount = await fetchAndSaveQuoteData(company.id, company.company_code, start_date, end_date);
+    const savedCount = await fetchAndSaveQuoteData(company.id, company.company_code, company.company_akshare_code, start_date, end_date);
 
     return NextResponse.json({
       success: true,
