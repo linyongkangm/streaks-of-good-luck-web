@@ -93,6 +93,21 @@ export default function StockAnalysisStockList({ companies, selectedCompany, onS
     }
   }, [])
 
+  const sortedCompanies = useMemo(() => {
+    return [...companies].sort((a, b) => {
+      const aValue = valuationMap[a.id]?.pe_percentile_3y
+      const bValue = valuationMap[b.id]?.pe_percentile_3y
+      const aInvalid = aValue === null || aValue === undefined || Number.isNaN(aValue)
+      const bInvalid = bValue === null || bValue === undefined || Number.isNaN(bValue)
+
+      if (aInvalid && bInvalid) return 0
+      if (aInvalid) return 1
+      if (bInvalid) return -1
+
+      return aValue - bValue
+    })
+  }, [companies, valuationMap])
+
   return <div className="bg-white rounded-xl shadow-lg p-4 sticky">
     <div className="flex items-center justify-between mb-3">
       <h2 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
@@ -100,7 +115,7 @@ export default function StockAnalysisStockList({ companies, selectedCompany, onS
       </h2>
     </div>
     <div className="space-y-1.5 max-h-[calc(100vh-230px)] overflow-y-auto scrollbar-thin pr-1">
-      {companies.map((company) => {
+      {sortedCompanies.map((company) => {
         const summary = valuationMap[company.id]
         const isSelected = selectedCompany?.id === company.id
 
