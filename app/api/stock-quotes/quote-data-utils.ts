@@ -47,7 +47,7 @@ export async function fetchQuoteData(
           '收盘': item.close,
           '最高': item.high,
           '最低': item.low,
-          '成交量': item.amount,
+          '成交量':  parseInt(item.amount),
           '振幅': ((item.high - item.low) / item.open) * 100,
           '涨跌幅': ((item.close - item.open) / item.open) * 100,
         }));
