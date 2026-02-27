@@ -12,7 +12,7 @@ import useExternalEvent from "@/app/hooks/useExternalEvent";
 type TabType = 'stock' | 'tweet' | 'article' | 'predicts' | 'securities';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<TabType>('tweet');
+  const [activeTab, setActiveTab] = useState<TabType>('stock');
   const { articleResults, showArticlePopup, setShowArticlePopup, saveArticleDirectly, retryArticle } = useStoreArticle();
   useExternalEvent();
   return (
