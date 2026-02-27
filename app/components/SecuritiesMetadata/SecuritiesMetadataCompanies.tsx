@@ -44,6 +44,7 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
   }>()
   const [fetchingQuotes, setFetchingQuotes] = useState(false)
   const [fetchingFinancials, setFetchingFinancials] = useState(false)
+  const [syncingAllQuotes, setSyncingAllQuotes] = useState(false)
 
   useEffect(() => {
     fetchCompanies()
@@ -245,6 +246,37 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
     }
   }
 
+  const handleSyncAllQuotes = async () => {
+    if (!confirm('确定要同步所有公司的行情数据吗？')) return
+
+    setSyncingAllQuotes(true)
+    try {
+      const res = await fetch('/api/stock-quotes/sync', {
+        method: 'POST',
+      })
+
+      if (res.ok) {
+        const result = await res.json()
+        const summary = result?.data
+        alert(
+          `${result.message || '同步完成'}\n` +
+          `总公司数: ${summary?.total_companies ?? '-'}\n` +
+          `成功: ${summary?.success_count ?? '-'}\n` +
+          `失败: ${summary?.fail_count ?? '-'}`
+        )
+        fetchCompanies()
+      } else {
+        const error = await res.json()
+        alert(error.error || '同步失败')
+      }
+    } catch (error) {
+      console.error('同步行情数据失败:', error)
+      alert('同步行情数据失败')
+    } finally {
+      setSyncingAllQuotes(false)
+    }
+  }
+
   const resetForm = () => {
     setFormData({
       company_name: '',
@@ -393,6 +425,14 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
             size="medium"
           >
             + 添加公司
+          </Button>
+          <Button
+            onClick={handleSyncAllQuotes}
+            look="secondary"
+            size="medium"
+            disabled={syncingAllQuotes}
+          >
+            {syncingAllQuotes ? '同步中...' : '同步全部行情'}
           </Button>
         </div>
 
