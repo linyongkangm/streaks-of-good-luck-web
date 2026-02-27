@@ -106,15 +106,18 @@ export default function StockAnalysisStockList({ companies, selectedCompany, onS
                 : 'bg-slate-50 text-slate-700 border-slate-100 hover:bg-slate-100 hover:border-slate-200 hover:shadow-sm'
                 }`}
             >
-              <div className="font-medium text-sm leading-5 line-clamp-1">{company.company_name}</div>
-              <div className={`text-[11px] leading-4 ${isSelected ? 'text-blue-100' : 'text-slate-500'}`}>
-                {company.company_code}
-              </div>
-              <div className={`mt-1.5 text-[11px] leading-4 ${isSelected ? 'text-blue-100' : 'text-slate-600'}`}>
-                <div className="flex items-baseline justify-between">
-                  <span className={`${isSelected ? 'text-blue-100/90' : 'text-slate-500'}`}>前复权</span>
+              <div className='flex'>
+                <div className='flex-1'>
+                  <div className="font-medium text-sm leading-5 line-clamp-1">{company.company_name}</div>
+                  <div className={`text-[11px] leading-4 ${isSelected ? 'text-blue-100' : 'text-slate-500'}`}>
+                    {company.company_code}
+                  </div>
+                </div>
+                <div>
                   <span className="font-semibold text-sm leading-5">{formatter.price(summary?.qfq_close_price)}</span>
                 </div>
+              </div>
+              <div className={`mt-1.5 text-[11px] leading-4 ${isSelected ? 'text-blue-100' : 'text-slate-600'}`}>
                 <div className="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5">
                   <div className="flex items-center justify-between">
                     <span className={`${isSelected ? 'text-blue-100/90' : 'text-slate-500'}`}>PE</span>
