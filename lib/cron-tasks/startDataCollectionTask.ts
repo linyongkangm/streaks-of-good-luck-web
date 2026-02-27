@@ -41,7 +41,7 @@ export async function startDataCollectionTaskEveryDayCallback() {
   console.log('Starting every day data collection task...');
   const context = await stools.launchBrowser(process.env.HOST_URL);
   if (context) {
-    await Promise.all([
+    Promise.all([
       collectTweetSummaries(context),
       collectWSJArticles(context),
     ]);
@@ -59,7 +59,7 @@ export async function startDataCollectionTaskHalfMonthCallback() {
   console.log('Starting every half month data collection task...');
   const context = await stools.launchBrowser(process.env.HOST_URL);
   if (context) {
-    await Promise.all([
+    Promise.all([
       collectQIUSHIArticles(context),
     ]);
   }
