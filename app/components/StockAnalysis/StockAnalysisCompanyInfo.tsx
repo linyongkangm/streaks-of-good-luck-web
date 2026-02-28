@@ -122,7 +122,7 @@ export default function StockAnalysisCompanyInfo({ selectedCompany, sinkCompanyI
         value: formatPercent(netProfitMarginTtm),
       },
       {
-        label: '最近股息率',
+        label: '预测最近股息率',
         value: formatPercent(latestDividendYield),
       },
     ]
