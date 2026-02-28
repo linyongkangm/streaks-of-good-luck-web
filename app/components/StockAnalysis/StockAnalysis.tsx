@@ -81,7 +81,7 @@ export default function StockAnalysis() {
 
       {/* 右侧：详细信息 */}
       <div className="col-span-10 space-y-6">
-        <Placeholder selected={!!selectedCompany} icon="📋" message="请从左侧选择一只股票">
+        <Placeholder selected={!!selectedCompany} icon="👈" message="请从左侧选择一只股票">
           {selectedCompany && (
             <>
               <StockAnalysisCompanyInfo
