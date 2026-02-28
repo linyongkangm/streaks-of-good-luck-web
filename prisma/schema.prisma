@@ -143,21 +143,47 @@ model relation__stock_board_company {
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model summary__article {
-  id             BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
-  title          String          @db.VarChar(255)
-  summary        String          @db.Text
-  source_url     String          @unique(map: "uk_source_url") @db.VarChar(512)
-  tags           String?         @db.VarChar(255)
-  create_time    DateTime        @default(now()) @db.DateTime(0)
-  update_time    DateTime        @default(now()) @updatedAt @db.DateTime(0)
-  publication    String?         @db.VarChar(20)
-  issue_date     DateTime?       @db.Date
-  source_text    String?         @db.Text
-  contributor    String?         @db.VarChar(255)
-  info__predicts info__predict[]
+  id                          BigInt                        @id @default(autoincrement()) @db.UnsignedBigInt
+  title                       String                        @db.VarChar(255)
+  summary                     String                        @db.Text
+  source_url                  String                        @unique(map: "uk_source_url") @db.VarChar(512)
+  tags                        String?                       @db.VarChar(255)
+  create_time                 DateTime                      @default(now()) @db.DateTime(0)
+  update_time                 DateTime                      @default(now()) @updatedAt @db.DateTime(0)
+  publication                 String?                       @db.VarChar(20)
+  issue_date                  DateTime?                     @db.Date
+  source_text                 String?                       @db.Text
+  contributor                 String?                       @db.VarChar(255)
+  info__predicts              info__predict[]
+  relation__industry_articles relation__industry_article[]
 
   @@index([tags], map: "idx_tags")
   @@index([title], map: "idx_title")
+}
+
+/// 行业表
+model info__industry {
+  id                          Int                           @id @default(autoincrement()) @db.UnsignedInt
+  name                        String                        @unique(map: "uk_industry_name") @db.VarChar(100)
+  description                 String?                       @db.Text
+  create_time                 DateTime                      @default(now()) @db.DateTime(0)
+  update_time                 DateTime                      @default(now()) @updatedAt @db.DateTime(0)
+  relation__industry_articles relation__industry_article[]
+}
+
+/// 行业-文章关联表
+model relation__industry_article {
+  id               Int              @id @default(autoincrement()) @db.UnsignedInt
+  industry_id      Int              @db.UnsignedInt
+  article_id       BigInt           @db.UnsignedBigInt
+  create_time      DateTime         @default(now()) @db.DateTime(0)
+  update_time      DateTime         @default(now()) @updatedAt @db.DateTime(0)
+  info__industry   info__industry   @relation(fields: [industry_id], references: [id], onDelete: Cascade, map: "fk_industry_article_industry_id")
+  summary__article summary__article @relation(fields: [article_id], references: [id], onDelete: Cascade, map: "fk_industry_article_article_id")
+
+  @@unique([industry_id, article_id], map: "uk_industry_article")
+  @@index([industry_id], map: "idx_industry_id")
+  @@index([article_id], map: "idx_article_id")
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments

@@ -8,7 +8,9 @@ export async function GET(request: NextRequest) {
     const title = searchParams.get('title')
     const tags = searchParams.get('tags')
     const publication = searchParams.get('publication')
+    const contributor = searchParams.get('contributor')
     const issue_date = searchParams.get('issue_date')
+    const year = searchParams.get('year')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '50')
 
@@ -24,6 +26,20 @@ export async function GET(request: NextRequest) {
 
     if (publication) {
       where.publication = publication
+    }
+    if (contributor) {
+      where.contributor = { contains: contributor }
+    }
+    if (year) {
+      const y = parseInt(year)
+      if (!isNaN(y)) {
+        const startOfYear = new Date(`${y}-01-01T00:00:00.000Z`)
+        const startOfNextYear = new Date(`${y + 1}-01-01T00:00:00.000Z`)
+        where.issue_date = {
+          gte: startOfYear,
+          lt: startOfNextYear,
+        }
+      }
     }
     if (issue_date) {
       // 仅匹配日期部分

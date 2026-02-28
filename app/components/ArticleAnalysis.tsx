@@ -5,6 +5,9 @@ import type { summary__article } from '@/types'
 import * as tools from '@/app/tools'
 import * as ctools from '@/app/tools/ctools'
 import Button from '@/app/widget/Button'
+import ModalForm from '@/app/widget/ModalForm'
+import { FormItem, FormLabel } from '@/app/widget/Form'
+import { TextInput } from '@/app/widget/Input'
 function appendPredictsSaved(articleId: string) {
   const predicts_saved = localStorage.getItem('PREDICTS_SAVED')?.split(',') || []
   predicts_saved.push(articleId)
@@ -38,6 +41,15 @@ export default function ArticleAnalysis() {
   })
   const [hoveredArticle, setHoveredArticle] = useState<summary__article | null>(null)
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
+  const [showAddArticle, setShowAddArticle] = useState(false)
+  const [addArticleForm, setAddArticleForm] = useState({
+    title: '',
+    source_url: '',
+    publication: '',
+    issue_date: '',
+    source_text: '',
+    contributor: '',
+  })
 
   useEffect(() => {
     fetchArticles()
@@ -177,6 +189,41 @@ export default function ArticleAnalysis() {
     }
   }
 
+  const handleAddArticle = async (_e: React.FormEvent, values: typeof addArticleForm) => {
+    if (!values.title.trim() || !values.source_url.trim() || !values.source_text.trim()) {
+      alert('请填写标题、来源链接和原文内容')
+      return
+    }
+
+    const articleData = {
+      title: values.title.trim(),
+      source_url: values.source_url.trim(),
+      source_text: values.source_text.trim(),
+      publication: values.publication.trim() || null,
+      contributor: values.contributor.trim() || null,
+      issue_date: values.issue_date || null,
+    }
+
+    const response = await fetch('/api/process-articles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ articles: [articleData] }),
+    })
+
+    const data = await response.json()
+
+    if (data.successful > 0) {
+      alert('文章新增成功，已生成摘要和标签')
+      setShowAddArticle(false)
+      setAddArticleForm({ title: '', source_url: '', publication: '', issue_date: '', source_text: '', contributor: '' })
+      await fetchArticles()
+    } else if (data.skipped > 0) {
+      alert('该文章已存在（来源链接重复）')
+    } else {
+      alert('文章处理失败，请稍后重试')
+    }
+  }
+
   const handleReanalyze = async (article: summary__article) => {
     if (!article.source_text) {
       alert('该文章没有原文内容，无法重新分析')
@@ -301,6 +348,12 @@ export default function ArticleAnalysis() {
             className="px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg font-medium"
           >
             搜索
+          </button>
+          <button
+            onClick={() => setShowAddArticle(true)}
+            className="px-8 py-3 bg-gradient-to-r from-green-500 to-teal-600 text-white rounded-lg hover:from-green-600 hover:to-teal-700 transition-all shadow-md hover:shadow-lg font-medium whitespace-nowrap"
+          >
+            ＋ 新增文章
           </button>
 
         </div>
@@ -627,6 +680,57 @@ export default function ArticleAnalysis() {
           </div>
         </div>
       )}
+
+      {/* 新增文章弹窗 */}
+      <ModalForm
+        open={showAddArticle}
+        onClose={() => setShowAddArticle(false)}
+        title="✍️ 新增文章"
+        values={addArticleForm}
+        onValuesChange={setAddArticleForm}
+        onSubmit={handleAddArticle}
+        submitText="提交并生成摘要"
+        maxWidth="xl"
+      >
+        <FormLabel label="标题" required>
+          <FormItem field="title">
+            <TextInput placeholder="输入文章标题" />
+          </FormItem>
+        </FormLabel>
+        <FormLabel label="来源链接" required>
+          <FormItem field="source_url">
+            <TextInput placeholder="输入文章来源 URL" />
+          </FormItem>
+        </FormLabel>
+        <div className="grid grid-cols-2 gap-4">
+          <FormLabel label="刊物">
+            <FormItem field="publication">
+              <TextInput placeholder="如：求是、WSJ、The Economist" />
+            </FormItem>
+          </FormLabel>
+          <FormLabel label="发布日期">
+            <FormItem field="issue_date">
+              <TextInput placeholder="YYYY-MM-DD" />
+            </FormItem>
+          </FormLabel>
+        </div>
+        <FormLabel label="撰稿人/贡献者">
+          <FormItem field="contributor">
+            <TextInput placeholder="输入撰稿人或贡献者" />
+          </FormItem>
+        </FormLabel>
+        <FormLabel label="原文内容" required>
+          <div>
+            <textarea
+              value={addArticleForm.source_text}
+              onChange={(e) => setAddArticleForm({ ...addArticleForm, source_text: e.target.value })}
+              placeholder="粘贴文章原文内容..."
+              rows={10}
+              className="w-full px-4 py-2 border rounded-lg border-slate-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-slate-900 transition-all duration-200 resize-y"
+            />
+          </div>
+        </FormLabel>
+      </ModalForm>
     </div>
   )
 }

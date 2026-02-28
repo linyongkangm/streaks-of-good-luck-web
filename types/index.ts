@@ -3,10 +3,12 @@ import {
   info__tweet,
   info__stock_board,
   info__industry_analysis,
+  info__industry,
   info__predict,
   indicator__predict_observation,
   relation__stock_board_company,
   relation__board_industry_analysis,
+  relation__industry_article,
   summary__tweet,
   summary__article,
   indicator__predict_financial_report,
@@ -24,9 +26,11 @@ export {
   type info__tweet,
   type info__stock_board,
   type info__industry_analysis,
+  type info__industry,
   type info__predict,
   type indicator__predict_observation,
   type relation__board_industry_analysis,
+  type relation__industry_article,
   type summary__tweet,
   type summary__article,
   type indicator__predict_financial_report,
@@ -121,6 +125,19 @@ export type TweetSummaryListResponse = ApiResponse<summary__tweet[]>
 
 // 文章摘要相关类型
 export type ArticleSummaryListResponse = ApiResponse<summary__article[]>
+
+// 行业相关类型
+export type IndustryListResponse = ApiResponse<info__industry[]>
+
+export interface IndustryWithArticles extends info__industry {
+  relation__industry_articles: (relation__industry_article & {
+    summary__article: summary__article
+  })[]
+}
+
+export interface IndustryWithCount extends info__industry {
+  _count: { relation__industry_articles: number }
+}
 
 export type PredictDetail = info__predict & {
   summary__article?: summary__article | null
