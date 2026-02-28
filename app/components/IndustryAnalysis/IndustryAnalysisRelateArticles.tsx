@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import type { summary__article, IndustryWithArticles } from '@/types'
 import * as tools from '@/app/tools'
 import Button from '@/app/widget/Button'
+import Panel from '@/app/widget/Panel'
 
 interface Props {
   industryDetail: IndustryWithArticles;
@@ -79,22 +80,21 @@ export default function IndustryAnalysisRelateArticles({
     const yearLabel = year === 0 ? '未知年份' : `${year} 年`
 
     return (
-      <div key={year} className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <button
-          onClick={() => toggleYear(year)}
-          className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <span className={`text-lg transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>
-              ▶
-            </span>
-            <h3 className="text-xl font-bold text-slate-900">{yearLabel}</h3>
-            <span className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm font-medium">
-              {yearArticles.length} 篇
-            </span>
-          </div>
-        </button>
-
+      <Panel
+        key={year}
+        title={(
+          <button onClick={() => toggleYear(year)}>
+            <div className="flex items-center gap-3">
+              <span className={`text-lg transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>
+                ▶
+              </span>
+              <h3 className="text-xl font-bold text-slate-900">{yearLabel}</h3>
+              <span className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm font-medium">
+                {yearArticles.length} 篇
+              </span>
+            </div>
+          </button>)}
+      >
         {isExpanded && (
           <div className="border-t border-slate-100">
             <div className="divide-y divide-slate-100">
@@ -165,7 +165,7 @@ export default function IndustryAnalysisRelateArticles({
             </div>
           </div>
         )}
-      </div>
+      </Panel>
     )
   })
 }
