@@ -6,6 +6,7 @@ import { DateTime } from 'luxon'
 import type { info__stock_company, view_financial_statements } from '@/types'
 import Panel from '@/app/widget/Panel'
 import Select from '@/app/widget/Select'
+import Radio from '@/app/widget/Radio'
 import { FormLabel } from '@/app/widget/Form'
 import Loading from '@/app/widget/Loading'
 import { formatNumber } from '@/app/tools'
@@ -57,6 +58,15 @@ const fieldOrder: FinancialViewField[] = [
   'netcash_finance_ttm',
   'rate_change_effect_ttm',
 ]
+
+const quickSelectFields: FinancialViewField[] = [
+  'cashflow_ratio_ttm',
+  'gross_profit_margin_ttm',
+  'net_profit_margin_ttm',
+  'free_cash_flow_ttm',
+]
+
+const otherFields: FinancialViewField[] = fieldOrder.filter((field) => !quickSelectFields.includes(field))
 
 export default function StockAnalysisFinancialViewChart({ selectedCompany }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
@@ -237,16 +247,28 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
 
   return (
     <Panel>
-      <FormLabel>
-        <Select
-          options={fieldOrder.map((value) => ({
-            value,
-            label: fieldLabels[value],
-          }))}
-          value={field}
-          onChange={setField}
-        />
-      </FormLabel>
+      <div className="flex gap-4 items-end flex-wrap">
+        <FormLabel label="常用指标">
+          <Radio
+            options={quickSelectFields.map((value) => ({
+              value,
+              label: fieldLabels[value],
+            }))}
+            value={field}
+            onChange={setField}
+          />
+        </FormLabel>
+        <FormLabel label="其他指标">
+          <Select
+            options={otherFields.map((value) => ({
+              value,
+              label: fieldLabels[value],
+            }))}
+            value={field}
+            onChange={setField}
+          />
+        </FormLabel>
+      </div>
 
       {loading ? (
         <Loading />
