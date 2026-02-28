@@ -6,12 +6,11 @@ import type {
 } from '@/types'
 import StockAnalysisStockList from './StockAnalysisStockList'
 import StockAnalysisLoading from './StockAnalysisLoading'
+import StockAnalysisCompanyInfo from './StockAnalysisCompanyInfo'
 import Loading from '@/app/widget/Loading'
 import StockAnalysisVisual from './StockAnalysisVisual'
 import StockAnalysisPredictions from './StockAnalysisPredictions'
 import StockAnalysisFinancialViewChart from './StockAnalysisFinancialViewChart'
-import Button from '@/app/widget/Button'
-import Panel from '@/app/widget/Panel'
 
 export default function StockAnalysis() {
   const [companies, setCompanies] = useState<info__stock_company[]>([])
@@ -81,27 +80,21 @@ export default function StockAnalysis() {
       </div>
 
       {/* 右侧：详细信息 */}
-      <div className="col-span-10">
+      <div className="col-span-10 space-y-6">
         <StockAnalysisLoading selectedCompany={selectedCompany}>
-          {
-            selectedCompany && <div className="space-y-6">
-              <Panel
-                title={`${selectedCompany.company_name} - ${selectedCompany.company_code}`}
-                headerAction={
-                  <Button
-                    look={sinkCompanyIds.includes(selectedCompany.id) ? 'cancel' : 'danger'}
-                    size="small"
-                    onClick={() => toggleSinkCompany(selectedCompany.id)}
-                  >
-                    {sinkCompanyIds.includes(selectedCompany.id) ? 'UnSink' : 'Sink'}
-                  </Button>
-                }>
-              </Panel>
+          {selectedCompany && (
+            <>
+              <StockAnalysisCompanyInfo
+                selectedCompany={selectedCompany}
+                sinkCompanyIds={sinkCompanyIds}
+                onToggleSink={toggleSinkCompany}
+              />
               <StockAnalysisVisual selectedCompany={selectedCompany}></StockAnalysisVisual>
               <StockAnalysisPredictions selectedCompany={selectedCompany}></StockAnalysisPredictions>
               <StockAnalysisFinancialViewChart selectedCompany={selectedCompany}></StockAnalysisFinancialViewChart>
-            </div>
-          }
+            </>
+          )}
+
         </StockAnalysisLoading>
       </div>
     </div>
