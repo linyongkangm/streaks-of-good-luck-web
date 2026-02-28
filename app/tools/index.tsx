@@ -83,7 +83,10 @@ export function test() {
 }
 
 
-export function toLuxon(date: Date | string): luxon.DateTime {
+export function toLuxon(date: Date | string | luxon.DateTime): luxon.DateTime {
+  if (date instanceof luxon.DateTime) {
+    return date.toUTC();
+  }
   return luxon.DateTime.fromJSDate(new Date(date)).toUTC();
 }
 
@@ -177,6 +180,18 @@ export function formatPercent(current: any, last: any) {
       {isPositive ? '+' : ''}{change.toFixed(2)}%
     </span>
   )
+}
+
+export function formatDate(date: string | Date | luxon.DateTime): string {
+  const dt = toLuxon(date)
+  if (!dt.isValid) return '-'
+  return dt.toFormat("yyyy-MM-dd")
+}
+
+export function formatBeijingDate(date: string | Date | luxon.DateTime): string {
+  const dt = toBeijing(date)
+  if (!dt.isValid) return '-'
+  return dt.toFormat(DATE_FORMAT)
 }
 
 /**

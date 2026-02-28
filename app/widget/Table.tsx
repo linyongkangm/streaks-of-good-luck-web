@@ -1,5 +1,11 @@
 'use client'
+import { formatBeijingDate, formatDate, formatNumber, formatPercent } from '@/app/tools'
 
+export enum ColumnFormatType {
+  NUMBER = 'number',
+  DATE = 'date',
+  BEIJING_DATE = 'beijing_date',
+}
 export interface Column<T> {
   title: string
   dataIndex: keyof T | string
@@ -8,7 +14,9 @@ export interface Column<T> {
   width?: string
   sticky?: boolean
   render?: (value: any, record: T, index: number) => React.ReactNode
-  className?: string
+  format?: ((value: any) => any) | ColumnFormatType
+  className?: string;
+
 }
 
 interface TableProps<T> {
@@ -23,13 +31,13 @@ interface TableProps<T> {
   }
 }
 
-export default function Table<T>({ 
-  columns, 
-  dataSource, 
-  loading = false, 
+export default function Table<T>({
+  columns,
+  dataSource,
+  loading = false,
   emptyText = '暂无数据',
   rowClassName,
-  onRow 
+  onRow
 }: TableProps<T>) {
   if (loading) {
     return (
@@ -53,9 +61,8 @@ export default function Table<T>({
             {columns.map((column) => (
               <th
                 key={String(column.dataIndex) || column.key}
-                className={`px-4 py-3 text-${column.align || 'center'} text-sm font-semibold text-slate-700 ${
-                  column.sticky ? 'sticky left-0 bg-slate-50 z-10' : ''
-                } ${column.className || ''}`}
+                className={`px-4 py-3 text-${column.align || 'center'} text-sm font-semibold text-slate-700 ${column.sticky ? 'sticky left-0 bg-slate-50 z-10' : ''
+                  } ${column.className || ''}`}
                 style={{ width: column.width }}
                 data-column-key={String(column.dataIndex) || column.key}
               >
@@ -68,7 +75,7 @@ export default function Table<T>({
           {dataSource.map((record, index) => {
             const rowProps = onRow?.(record, index) || {}
             const rowClass = rowClassName?.(record, index) || ''
-            
+
             return (
               <tr
                 key={index}
@@ -78,15 +85,26 @@ export default function Table<T>({
               >
                 {columns.map((column) => {
                   const value = record[column.dataIndex as keyof T];
+                  let formattedValue = value as React.ReactNode;
+                  if (column.format) {
+                    if (column.format === ColumnFormatType.NUMBER) {
+                      formattedValue = formatNumber(value as any);
+                    } else if (column.format === ColumnFormatType.DATE) {
+                      formattedValue = formatDate(value as any);
+                    } else if (column.format === ColumnFormatType.BEIJING_DATE) {
+                      formattedValue = formatBeijingDate(value as any);
+                    } else {
+                      formattedValue = column.format(value);
+                    }
+                  }
                   return (
                     <td
                       key={String(column.dataIndex) || column.key}
                       data-column-key={String(column.dataIndex) || column.key}
-                      className={`px-4 py-3 text-sm text-slate-900 text-${column.align || 'center'} ${
-                        column.sticky ? 'sticky left-0 bg-white hover:bg-slate-50' : ''
-                      } ${column.className || ''}`}
+                      className={`px-4 py-3 text-sm text-slate-900 text-${column.align || 'center'} ${column.sticky ? 'sticky left-0 bg-white hover:bg-slate-50' : ''
+                        } ${column.className || ''}`}
                     >
-                      {column.render ? column.render(value, record, index) : String(value ?? '')}
+                      {column.render ? column.render(formattedValue, record, index) : String(formattedValue ?? '')}
                     </td>
                   )
                 })}
