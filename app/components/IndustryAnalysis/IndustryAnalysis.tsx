@@ -8,6 +8,9 @@ import ModalForm from '@/app/widget/ModalForm'
 import { FormItem, FormLabel } from '@/app/widget/Form'
 import { TextInput } from '@/app/widget/Input'
 import Modal from '@/app/widget/Modal'
+import IndustryAnalysisIndustryList from './IndustryAnalysisIndustryList'
+import IndustryAnalysisIndustryInfo from './IndustryAnalysisIndustryInfo'
+import IndustryAnalysisLoading from './IndustryAnalysisLoading'
 
 export default function IndustryAnalysis() {
   // 行业列表
@@ -220,107 +223,33 @@ export default function IndustryAnalysis() {
     <div className="p-6 max-w-[1600px] mx-auto">
       <div className="flex gap-6" style={{ minHeight: 'calc(100vh - 120px)' }}>
         {/* 左侧 - 行业列表 */}
-        <div className="w-80 flex-shrink-0 flex flex-col gap-4">
-          <div className="bg-white rounded-xl shadow-lg p-5">
-            <h2 className="text-xl font-bold mb-4 bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
-              🏭 行业列表
-            </h2>
-
-            {/* 搜索 + 新建 */}
-            <div className="flex gap-2 mb-4">
-              <input
-                type="text"
-                placeholder="搜索行业..."
-                value={searchName}
-                onChange={(e) => setSearchName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && fetchIndustries()}
-                className="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-200 outline-none text-slate-900"
-              />
-              <Button size="small" look="success" onClick={openCreateForm}>＋</Button>
-            </div>
-
-            {/* 行业列表 */}
-            {loadingIndustries ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-3 border-teal-500 border-t-transparent"></div>
-              </div>
-            ) : industries.length === 0 ? (
-              <div className="text-center py-8 text-slate-400 text-sm">暂无行业</div>
-            ) : (
-              <div className="space-y-1 max-h-[calc(100vh-320px)] overflow-y-auto">
-                {industries.map((industry) => (
-                  <div
-                    key={industry.id}
-                    onClick={() => setSelectedIndustryId(industry.id)}
-                    className={`group flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-all ${
-                      selectedIndustryId === industry.id
-                        ? 'bg-teal-50 border border-teal-200 text-teal-800'
-                        : 'hover:bg-slate-50 border border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-sm font-medium truncate">{industry.name}</span>
-                      <span className="text-xs text-slate-400 flex-shrink-0">
-                        {industry._count.relation__industry_articles}篇
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); openEditForm(industry) }}
-                        className="p-1 text-slate-400 hover:text-blue-600 transition-colors"
-                        title="编辑"
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDeleteIndustry(industry) }}
-                        className="p-1 text-slate-400 hover:text-red-600 transition-colors"
-                        title="删除"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        <IndustryAnalysisIndustryList
+          industries={industries}
+          loading={loadingIndustries}
+          searchName={searchName}
+          onSearchNameChange={setSearchName}
+          onSearch={fetchIndustries}
+          selectedIndustryId={selectedIndustryId}
+          onSelectIndustry={setSelectedIndustryId}
+          onCreateIndustry={openCreateForm}
+          onEditIndustry={openEditForm}
+          onDeleteIndustry={handleDeleteIndustry}
+        />
 
         {/* 右侧 - 行业资讯 */}
         <div className="flex-1 min-w-0">
-          {!selectedIndustryId ? (
-            <div className="bg-white rounded-xl shadow-lg flex flex-col items-center justify-center py-32">
-              <div className="text-6xl mb-4">👈</div>
-              <p className="text-slate-400 text-lg">请从左侧选择一个行业</p>
-            </div>
-          ) : loadingDetail ? (
-            <div className="bg-white rounded-xl shadow-lg flex items-center justify-center py-32">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-teal-500 border-t-transparent"></div>
-            </div>
-          ) : industryDetail ? (
+          <IndustryAnalysisLoading selectedIndustryId={selectedIndustryId} loadingDetail={loadingDetail}>
+          {industryDetail ? (
             <div className="space-y-4">
               {/* 行业信息头 */}
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <h2 className="text-2xl font-bold text-slate-900">
-                    {industryDetail.name}
-                  </h2>
-                  <Button size="small" onClick={() => {
-                    setArticleSearchTitle('')
-                    setArticleSearchResults([])
-                    setShowLinkArticle(true)
-                  }}>
-                    ＋ 关联文章
-                  </Button>
-                </div>
-                {industryDetail.description && (
-                  <p className="text-slate-500 text-sm">{industryDetail.description}</p>
-                )}
-                <p className="text-slate-400 text-xs mt-2">
-                  共 {industryDetail.relation__industry_articles.length} 篇关联文章
-                </p>
-              </div>
+              <IndustryAnalysisIndustryInfo
+                industryDetail={industryDetail}
+                onOpenLinkArticle={() => {
+                  setArticleSearchTitle('')
+                  setArticleSearchResults([])
+                  setShowLinkArticle(true)
+                }}
+              />
 
               {/* 文章按年份分组 */}
               {articlesByYear.length === 0 ? (
@@ -433,6 +362,7 @@ export default function IndustryAnalysis() {
               )}
             </div>
           ) : null}
+          </IndustryAnalysisLoading>
         </div>
       </div>
 
