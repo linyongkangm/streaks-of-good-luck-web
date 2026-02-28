@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { info__stock_company } from '@/types'
-import Table from '@/app/widget/Table'
+import Table, { Column, ColumnFormatType } from '@/app/widget/Table'
 import Panel from '@/app/widget/Panel'
 import { formatNumber } from '@/app/tools'
 
@@ -37,56 +37,42 @@ export default function SecuritiesMetadataCashFlowSheet({ selectedCompany }: Pro
     }
   }
 
-  const columns = [
+  const columns: Column<any>[] = [
     {
       title: '报告期',
       dataIndex: 'report_date',
-      key: 'report_date',
-      render: (value: any) => (
-        <span className="font-medium">{new Date(value).toLocaleDateString('zh-CN')}</span>
-      )
+      format: ColumnFormatType.DATE,
     },
     {
       title: '经营活动现金流净额',
       dataIndex: 'netcash_operate',
-      key: 'netcash_operate',
-      align: 'right' as const,
-      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
+      format: ColumnFormatType.NUMBER,
     },
     {
       title: '投资活动现金流净额',
       dataIndex: 'netcash_invest',
-      key: 'netcash_invest',
-      align: 'right' as const,
-      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
+      format: ColumnFormatType.NUMBER,
     },
     {
       title: '筹资活动现金流净额',
       dataIndex: 'netcash_finance',
-      key: 'netcash_finance',
-      align: 'right' as const,
-      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
+      format: ColumnFormatType.NUMBER,
     },
     {
       title: '汇率变动对现金的影响',
       dataIndex: 'rate_change_effect',
-      key: 'rate_change_effect',
-      align: 'right' as const,
-      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
+      format: ColumnFormatType.NUMBER,
     }
   ]
 
   return (
-    <Panel>
-    <div className="w-full">
-      <h3 className="text-xl font-semibold mb-4 text-slate-800">现金流量表（按单季度）</h3>
-      <Table 
-        columns={columns} 
-        dataSource={data} 
+    <Panel title={`📊 现金流量表（按单季度） - ${selectedCompany.company_name}`} >
+      <Table
+        columns={columns}
+        dataSource={data}
         loading={loading}
         emptyText="暂无现金流量表数据"
       />
-    </div>
     </Panel>
   )
 }

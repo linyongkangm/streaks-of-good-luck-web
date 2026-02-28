@@ -108,7 +108,7 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
     }
   ]
   return (
-    <Panel title="📊 财务报表综合视图（滚动四季度）">
+    <Panel title={`📊 财务报表综合视图（滚动四季度） - ${selectedCompany.company_name}`} >
       <Table
         columns={columns}
         dataSource={data}
