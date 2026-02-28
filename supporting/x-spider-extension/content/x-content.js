@@ -12,7 +12,7 @@ async function scrape({ existingFlags = [] } = {}) {
     if (records.length - cacheRecords.length >= 20) {
       isScraping = false;
     }
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 500)); // 等待500毫秒再继续抓取，避免过快滚动导致页面崩溃
   } while (isScraping);
   const records = Array.from(tweetRecords.values());
   const cacheRecords = records.filter(item => !existingFlags.includes(item.tweetID));
