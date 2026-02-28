@@ -1,25 +1,67 @@
 'use client'
 
-import type { summary__article } from '@/types'
+import { useState, useMemo } from 'react'
+import type { summary__article, IndustryWithArticles } from '@/types'
 import * as tools from '@/app/tools'
 import Button from '@/app/widget/Button'
 
 interface Props {
-  articlesByYear: [number, summary__article[]][];
-  expandedYears: Set<number>;
-  onToggleYear: (year: number) => void;
-  onUnlinkArticle: (articleId: bigint) => void;
+  industryDetail: IndustryWithArticles;
   onOpenLinkArticle: () => void;
+  onAfterUnlink: () => void;
 }
 
 /* 文章按年份分组展示 */
 export default function IndustryAnalysisRelateArticles({
-  articlesByYear,
-  expandedYears,
-  onToggleYear,
-  onUnlinkArticle,
+  industryDetail,
   onOpenLinkArticle,
+  onAfterUnlink,
 }: Props) {
+  // 年份折叠
+  const [expandedYears, setExpandedYears] = useState<Set<number>>(new Set([new Date().getFullYear()]))
+
+  const toggleYear = (year: number) => {
+    setExpandedYears(prev => {
+      const next = new Set(prev)
+      if (next.has(year)) next.delete(year)
+      else next.add(year)
+      return next
+    })
+  }
+
+  // 关联文章按年份分组
+  const articlesByYear = useMemo(() => {
+    const articles = industryDetail.relation__industry_articles.map(r => r.summary__article)
+    const map = new Map<number, summary__article[]>()
+    for (const article of articles) {
+      const year = article.issue_date
+        ? new Date(article.issue_date).getFullYear()
+        : 0
+      if (!map.has(year)) map.set(year, [])
+      map.get(year)!.push(article)
+    }
+    return Array.from(map.entries()).sort((a, b) => {
+      if (a[0] === 0) return 1
+      if (b[0] === 0) return -1
+      return b[0] - a[0]
+    })
+  }, [industryDetail])
+
+  // 移除文章关联
+  const handleUnlinkArticle = async (articleId: bigint) => {
+    if (!confirm('确定要移除此文章的关联吗？')) return
+    const response = await fetch(`/api/industries/${industryDetail.id}/articles`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ article_id: articleId.toString() }),
+    })
+    const data = await response.json()
+    if (data.error) {
+      alert(data.error)
+      return
+    }
+    onAfterUnlink()
+  }
   if (articlesByYear.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-lg flex flex-col items-center justify-center py-20">
@@ -39,7 +81,7 @@ export default function IndustryAnalysisRelateArticles({
     return (
       <div key={year} className="bg-white rounded-xl shadow-lg overflow-hidden">
         <button
-          onClick={() => onToggleYear(year)}
+          onClick={() => toggleYear(year)}
           className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors"
         >
           <div className="flex items-center gap-3">
@@ -75,7 +117,7 @@ export default function IndustryAnalysisRelateArticles({
                           </a>
                         </h4>
                         <button
-                          onClick={() => onUnlinkArticle(article.id)}
+                          onClick={() => handleUnlinkArticle(article.id)}
                           className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-red-400 hover:text-red-600 flex-shrink-0"
                           title="移除关联"
                         >

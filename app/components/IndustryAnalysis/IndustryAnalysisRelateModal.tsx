@@ -10,7 +10,7 @@ interface Props {
   open: boolean
   onClose: () => void
   industryDetail: IndustryWithArticles | null
-  onLinkArticle: (articleId: bigint) => Promise<void>
+  onAfterLink: () => void
 }
 
 /* 关联文章弹窗 */
@@ -18,7 +18,7 @@ export default function IndustryAnalysisRelateModal({
   open,
   onClose,
   industryDetail,
-  onLinkArticle,
+  onAfterLink,
 }: Props) {
   const [articleSearchTitle, setArticleSearchTitle] = useState('')
   const [articleSearchResults, setArticleSearchResults] = useState<summary__article[]>([])
@@ -37,6 +37,22 @@ export default function IndustryAnalysisRelateModal({
     } finally {
       setSearchingArticles(false)
     }
+  }
+
+  // 关联文章到行业
+  const handleLinkArticle = async (articleId: bigint) => {
+    if (!industryDetail) return
+    const response = await fetch(`/api/industries/${industryDetail.id}/articles`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ article_id: articleId.toString() }),
+    })
+    const data = await response.json()
+    if (data.error) {
+      alert(data.error)
+      return
+    }
+    onAfterLink()
   }
 
   const handleClose = () => {
@@ -97,7 +113,7 @@ export default function IndustryAnalysisRelateModal({
                   <Button
                     size="tiny"
                     look="success"
-                    onClick={() => onLinkArticle(article.id)}
+                    onClick={() => handleLinkArticle(article.id)}
                   >
                     关联
                   </Button>
