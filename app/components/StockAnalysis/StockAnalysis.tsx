@@ -5,7 +5,7 @@ import type {
   info__stock_company,
 } from '@/types'
 import StockAnalysisStockList from './StockAnalysisStockList'
-import StockAnalysisLoading from './StockAnalysisLoading'
+import Placeholder from '@/app/widget/Placeholder'
 import StockAnalysisCompanyInfo from './StockAnalysisCompanyInfo'
 import Loading from '@/app/widget/Loading'
 import StockAnalysisVisual from './StockAnalysisVisual'
@@ -81,7 +81,7 @@ export default function StockAnalysis() {
 
       {/* 右侧：详细信息 */}
       <div className="col-span-10 space-y-6">
-        <StockAnalysisLoading selectedCompany={selectedCompany}>
+        <Placeholder selected={!!selectedCompany} icon="📋" message="请从左侧选择一只股票">
           {selectedCompany && (
             <>
               <StockAnalysisCompanyInfo
@@ -95,7 +95,7 @@ export default function StockAnalysis() {
             </>
           )}
 
-        </StockAnalysisLoading>
+        </Placeholder>
       </div>
     </div>
   )

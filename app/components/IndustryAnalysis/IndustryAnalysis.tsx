@@ -8,9 +8,9 @@ import ModalForm from '@/app/widget/ModalForm'
 import { FormItem, FormLabel } from '@/app/widget/Form'
 import { TextInput } from '@/app/widget/Input'
 import Modal from '@/app/widget/Modal'
+import Placeholder from '@/app/widget/Placeholder'
 import IndustryAnalysisIndustryList from './IndustryAnalysisIndustryList'
 import IndustryAnalysisIndustryInfo from './IndustryAnalysisIndustryInfo'
-import IndustryAnalysisLoading from './IndustryAnalysisLoading'
 
 export default function IndustryAnalysis() {
   // 行业列表
@@ -238,7 +238,7 @@ export default function IndustryAnalysis() {
 
         {/* 右侧 - 行业资讯 */}
         <div className="flex-1 min-w-0">
-          <IndustryAnalysisLoading selectedIndustryId={selectedIndustryId} loadingDetail={loadingDetail}>
+          <Placeholder selected={!!selectedIndustryId} loading={loadingDetail} icon="👈" message="请从左侧选择一个行业">
           {industryDetail ? (
             <div className="space-y-4">
               {/* 行业信息头 */}
@@ -362,7 +362,7 @@ export default function IndustryAnalysis() {
               )}
             </div>
           ) : null}
-          </IndustryAnalysisLoading>
+          </Placeholder>
         </div>
       </div>
 
