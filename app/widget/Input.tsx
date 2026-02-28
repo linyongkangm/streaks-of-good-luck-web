@@ -59,12 +59,12 @@ const getInputClassName = (error?: string, disabled?: boolean, className?: strin
     w-full px-4 py-2 border rounded-lg 
     focus:outline-none focus:ring-2 
     transition-all duration-200
-    ${error 
-      ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+    ${error
+      ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
       : 'border-slate-300 focus:ring-purple-500 focus:border-purple-500'
     }
-    ${disabled 
-      ? 'bg-slate-100 text-slate-500 cursor-not-allowed' 
+    ${disabled
+      ? 'bg-slate-100 text-slate-500 cursor-not-allowed'
       : 'bg-white text-slate-900'
     }
     ${className || ''}
@@ -127,13 +127,13 @@ export function NumberInput({
   // 将实际值转换为显示值
   const convertToDisplayValue = (actualValue: number | undefined): string => {
     if (actualValue === undefined || actualValue === null) return ''
-    
+
     const numValue = typeof actualValue === 'string' ? parseFloat(actualValue) : actualValue
     if (isNaN(numValue)) return ''
-    
+
     const multiplier = unitMultipliers[unit]
     const displayNum = numValue / multiplier
-    
+
     if (decimalPlaces !== undefined) {
       return displayNum.toFixed(decimalPlaces)
     }
@@ -144,18 +144,18 @@ export function NumberInput({
   // 将显示值转换为实际值
   const convertToActualValue = (displayVal: string): number => {
     if (!displayVal || displayVal === '') return 0
-    
+
     const numValue = parseFloat(displayVal)
     if (isNaN(numValue)) return 0
-    
+
     const multiplier = unitMultipliers[unit]
     const actualNum = numValue * multiplier
-    
+
     // 应用最小值和最大值限制
     let finalValue = actualNum
     if (min !== undefined && actualNum < min) finalValue = min
     if (max !== undefined && actualNum > max) finalValue = max
-    
+
     return finalValue
   }
 
@@ -168,7 +168,7 @@ export function NumberInput({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDisplayValue = e.target.value
     setDisplayValue(newDisplayValue)
-    
+
     // 只有在输入的是有效数字时才触发onChange
     if (newDisplayValue === '' || newDisplayValue === '-' || !isNaN(parseFloat(newDisplayValue))) {
       const actualValue = convertToActualValue(newDisplayValue)
@@ -216,16 +216,20 @@ export function NumberInput({
       )}
       {!error && (min !== undefined || max !== undefined) && (
         <p className="mt-1 text-xs text-slate-500">
-          {min !== undefined && max !== undefined 
+          {min !== undefined && max !== undefined
             ? `范围: ${min} - ${max}`
-            : min !== undefined 
-            ? `最小值: ${min}`
-            : `最大值: ${max}`
+            : min !== undefined
+              ? `最小值: ${min}`
+              : `最大值: ${max}`
           }
         </p>
       )}
     </div>
   )
+}
+
+export function TextArea({ value, onChange, ...props }: { value?: string; onChange?: (value: string) => void } & Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'value' | 'onChange'>) {
+  return <textarea value={value} onChange={(e) => onChange?.(e.target.value)} {...props} />
 }
 
 // 默认导出 TextInput 以保持向后兼容

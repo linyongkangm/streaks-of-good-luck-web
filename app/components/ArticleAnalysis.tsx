@@ -7,12 +7,13 @@ import * as ctools from '@/app/tools/ctools'
 import Button from '@/app/widget/Button'
 import ModalForm from '@/app/widget/ModalForm'
 import { FormItem, FormLabel } from '@/app/widget/Form'
-import { TextInput } from '@/app/widget/Input'
+import { TextInput, TextArea } from '@/app/widget/Input'
 import Loading from '@/app/widget/Loading'
 import Pagination from '@/app/widget/Pagination'
 import Select from '@/app/widget/Select'
 import DatePicker from '@/app/widget/DatePicker'
 import { DateTime } from 'luxon'
+
 function appendPredictsSaved(articleId: string) {
   const predicts_saved = localStorage.getItem('PREDICTS_SAVED')?.split(',') || []
   predicts_saved.push(articleId)
@@ -47,14 +48,6 @@ export default function ArticleAnalysis() {
   const [hoveredArticle, setHoveredArticle] = useState<summary__article | null>(null)
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
   const [showAddArticle, setShowAddArticle] = useState(false)
-  const [addArticleForm, setAddArticleForm] = useState({
-    title: '',
-    source_url: '',
-    publication: '',
-    issue_date: '',
-    source_text: '',
-    contributor: '',
-  })
 
   useEffect(() => {
     fetchArticles()
@@ -190,7 +183,7 @@ export default function ArticleAnalysis() {
 
 
 
-  const handleAddArticle = async (_e: React.FormEvent, values: typeof addArticleForm) => {
+  const handleAddArticle = async (_e: React.FormEvent, values: Record<string, string>) => {
     if (!values.title.trim() || !values.source_url.trim() || !values.source_text.trim()) {
       alert('请填写标题、来源链接和原文内容')
       return
@@ -216,7 +209,6 @@ export default function ArticleAnalysis() {
     if (data.successful > 0) {
       alert('文章新增成功，已生成摘要和标签')
       setShowAddArticle(false)
-      setAddArticleForm({ title: '', source_url: '', publication: '', issue_date: '', source_text: '', contributor: '' })
       await fetchArticles()
     } else if (data.skipped > 0) {
       alert('该文章已存在（来源链接重复）')
@@ -570,8 +562,7 @@ export default function ArticleAnalysis() {
         open={showAddArticle}
         onClose={() => setShowAddArticle(false)}
         title="✍️ 新增文章"
-        values={addArticleForm}
-        onValuesChange={setAddArticleForm}
+        initialValues={{ title: '', source_url: '', publication: '', issue_date: '', source_text: '', contributor: '' }}
         onSubmit={handleAddArticle}
         submitText="提交并生成摘要"
         maxWidth="xl"
@@ -594,7 +585,7 @@ export default function ArticleAnalysis() {
           </FormLabel>
           <FormLabel label="发布日期">
             <FormItem field="issue_date">
-              <TextInput placeholder="YYYY-MM-DD" />
+              <DatePicker mode="date" placeholder="选择发布日期" />
             </FormItem>
           </FormLabel>
         </div>
@@ -604,15 +595,13 @@ export default function ArticleAnalysis() {
           </FormItem>
         </FormLabel>
         <FormLabel label="原文内容" required>
-          <div>
-            <textarea
-              value={addArticleForm.source_text}
-              onChange={(e) => setAddArticleForm({ ...addArticleForm, source_text: e.target.value })}
+          <FormItem field="source_text">
+            <TextArea
               placeholder="粘贴文章原文内容..."
               rows={10}
               className="w-full px-4 py-2 border rounded-lg border-slate-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-slate-900 transition-all duration-200 resize-y"
             />
-          </div>
+          </FormItem>
         </FormLabel>
       </ModalForm>
     </div>
