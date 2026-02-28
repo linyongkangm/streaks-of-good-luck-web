@@ -256,6 +256,7 @@ model quote__cash_flow_sheet {
   netcash_invest      Decimal             @db.Decimal(20, 2)
   netcash_finance     Decimal             @db.Decimal(20, 2)
   rate_change_effect  Decimal             @db.Decimal(20, 2)
+  capex               Decimal            @db.Decimal(20, 2)
   create_time         DateTime            @default(now()) @db.DateTime(0)
   update_time         DateTime            @default(now()) @updatedAt @db.DateTime(0)
   info__stock_company info__stock_company @relation(fields: [company_id], references: [id], map: "fk_cash_flow_sheet_company_id")
@@ -308,6 +309,8 @@ view view_financial_statements {
   netcash_finance_last_year      Decimal?  @db.Decimal(42, 2)
   rate_change_effect_ttm         Decimal?  @db.Decimal(42, 2)
   rate_change_effect_last_year   Decimal?  @db.Decimal(42, 2)
+  free_cash_flow_ttm             Decimal?  @db.Decimal(42, 2)
+  free_cash_flow_last_year       Decimal?  @db.Decimal(42, 2)
 }
 
 enum VerifyStatus {

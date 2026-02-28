@@ -132,6 +132,7 @@ export async function POST(req: NextRequest) {
             netcash_invest: item.NETCASH_INVEST || 0,
             netcash_finance: item.NETCASH_FINANCE || 0,
             rate_change_effect: item.RATE_CHANGE_EFFECT || 0,
+            capex: item.CONSTRUCT_LONG_ASSET || 0,
           },
           create: {
             company_id: company.id,
@@ -140,6 +141,7 @@ export async function POST(req: NextRequest) {
             netcash_invest: item.NETCASH_INVEST || 0,
             netcash_finance: item.NETCASH_FINANCE || 0,
             rate_change_effect: item.RATE_CHANGE_EFFECT || 0,
+            capex: item.CONSTRUCT_LONG_ASSET || 0,
           }
         })
         cashFlowSheetCount++

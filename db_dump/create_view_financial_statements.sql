@@ -106,7 +106,13 @@ cashflow_rolling AS (
         cf.netcash_invest,
         cf.netcash_finance,
         cf.rate_change_effect,
+        cf.capex,
         -- 最近四个季度汇总
+        SUM(cf.netcash_operate - cf.capex) OVER (
+            PARTITION BY cf.company_id 
+            ORDER BY cf.report_date 
+            ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
+        ) AS free_cash_flow_ttm,
         SUM(cf.netcash_operate) OVER (
             PARTITION BY cf.company_id 
             ORDER BY cf.report_date 
@@ -151,7 +157,13 @@ cashflow_rolling AS (
             FROM quote__cash_flow_sheet cf2
             WHERE cf2.company_id = cf.company_id
             AND YEAR(cf2.report_date) = YEAR(cf.report_date) - 1
-        ) AS rate_change_effect_last_year
+        ) AS rate_change_effect_last_year,
+        (
+            SELECT SUM(cf2.netcash_operate - cf2.capex)
+            FROM quote__cash_flow_sheet cf2
+            WHERE cf2.company_id = cf.company_id
+            AND YEAR(cf2.report_date) = YEAR(cf.report_date) - 1
+        ) AS free_cash_flow_last_year
     FROM quote__cash_flow_sheet cf
 )
 -- 主查询：整合所有数据
@@ -179,7 +191,9 @@ SELECT
     cf.netcash_finance_ttm,
     cf.netcash_finance_last_year,
     cf.rate_change_effect_ttm,
-    cf.rate_change_effect_last_year
+    cf.rate_change_effect_last_year,
+    cf.free_cash_flow_ttm,
+    cf.free_cash_flow_last_year
 FROM profit_rolling pr
 LEFT JOIN quote__balance_sheet bs 
     ON pr.company_id = bs.company_id 

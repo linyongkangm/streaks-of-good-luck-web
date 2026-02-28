@@ -15,7 +15,7 @@ interface Props {
 }
 
 type FinancialViewField =
-  Exclude<keyof view_financial_statements, 'total_shares' | 'company_id' | 'report_date' | 'total_operate_income_last_year' | 'operate_income_last_year' | 'total_operate_cost_last_year' | 'operate_cost_last_year' | 'netprofit_last_year' | 'parent_netprofit_last_year' | 'netcash_operate_last_year' | 'netcash_invest_last_year' | 'netcash_finance_last_year' | 'rate_change_effect_last_year'>
+  Exclude<keyof view_financial_statements, 'total_shares' | 'company_id' | 'report_date' | 'total_operate_income_last_year' | 'operate_income_last_year' | 'total_operate_cost_last_year' | 'operate_cost_last_year' | 'netprofit_last_year' | 'parent_netprofit_last_year' | 'netcash_operate_last_year' | 'netcash_invest_last_year' | 'netcash_finance_last_year' | 'rate_change_effect_last_year' | 'free_cash_flow_last_year'>
   | 'cashflow_ratio_ttm' | 'gross_profit_margin_ttm' | 'net_profit_margin_ttm'
 
 const fieldLabels: Record<FinancialViewField, string> = {
@@ -37,12 +37,14 @@ const fieldLabels: Record<FinancialViewField, string> = {
   netcash_invest_ttm: '投资现金流(TTM)',
   netcash_finance_ttm: '筹资现金流(TTM)',
   rate_change_effect_ttm: '汇率变动影响(TTM)',
+  free_cash_flow_ttm: '自由现金流(TTM)',
 }
 
 const fieldOrder: FinancialViewField[] = [
   'cashflow_ratio_ttm',
   'gross_profit_margin_ttm',
   'net_profit_margin_ttm',
+  'free_cash_flow_ttm',
   'total_parent_equity',
   'total_operate_income_ttm',
   'operate_income_ttm',

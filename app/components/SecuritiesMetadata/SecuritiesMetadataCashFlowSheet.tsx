@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import type { info__stock_company } from '@/types'
+import type { info__stock_company, quote__cash_flow_sheet } from '@/types'
 import Table, { Column, ColumnFormatType } from '@/app/widget/Table'
 import Panel from '@/app/widget/Panel'
 import { formatNumber } from '@/app/tools'
@@ -11,7 +11,7 @@ interface Props {
 }
 
 export default function SecuritiesMetadataCashFlowSheet({ selectedCompany }: Props) {
-  const [data, setData] = useState<any[]>([])
+  const [data, setData] = useState<quote__cash_flow_sheet[]>([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export default function SecuritiesMetadataCashFlowSheet({ selectedCompany }: Pro
     }
   }
 
-  const columns: Column<any>[] = [
+  const columns: Column<quote__cash_flow_sheet>[] = [
     {
       title: '报告期',
       dataIndex: 'report_date',
@@ -62,7 +62,12 @@ export default function SecuritiesMetadataCashFlowSheet({ selectedCompany }: Pro
       title: '汇率变动对现金的影响',
       dataIndex: 'rate_change_effect',
       format: ColumnFormatType.NUMBER,
-    }
+    },
+    {
+      title: '购建固定资产、无形资产和其他长期资产支付的现金',
+      dataIndex: 'capex',
+      format: ColumnFormatType.NUMBER,
+    },
   ]
 
   return (

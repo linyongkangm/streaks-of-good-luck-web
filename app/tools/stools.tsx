@@ -96,7 +96,7 @@ return=[{'REPORT_DATE': '2000-06-30 00:00:00','TOTAL_OPERATE_INCOME': 1006680000
 -- 现金流量表
 -- 现金流量表-按单季度
 method=stock_cash_flow_sheet_by_quarterly_em params={"symbol":"sh600519"}
-REPORT_DATE: 报告期,NETCASH_OPERATE: 经营活动产生的现金流量净额,NETCASH_INVEST: 投资活动产生的现金流量净额,NETCASH_FINANCE:筹资活动产生的现金流量净额,RATE_CHANGE_EFFECT: 汇率变动对现金的影响
+REPORT_DATE: 报告期,NETCASH_OPERATE: 经营活动产生的现金流量净额,NETCASH_INVEST: 投资活动产生的现金流量净额,NETCASH_FINANCE:筹资活动产生的现金流量净额,RATE_CHANGE_EFFECT: 汇率变动对现金的影响,CONSTRUCT_LONG_ASSET: 购建固定资产、无形资产和其他长期资产支付的现金
 return=[{'REPORT_DATE': '2000-06-30 00:00:00', 'NETCASH_OPERATE': 123456789.0, 'NETCASH_INVEST': 12345678.0, 'NETCASH_FINANCE': 12345678.0, 'RATE_CHANGE_EFFECT': 1234567.0}, {...}, ...]
  */
 export async function fetchWebIntellCallAKShare(method: string, params: Record<string, any>) {

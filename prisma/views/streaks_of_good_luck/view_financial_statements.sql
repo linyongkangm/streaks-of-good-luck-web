@@ -138,7 +138,13 @@ WITH `profit_rolling` AS (
     `cf`.`netcash_invest` AS `netcash_invest`,
     `cf`.`netcash_finance` AS `netcash_finance`,
     `cf`.`rate_change_effect` AS `rate_change_effect`,
-    sum(`cf`.`netcash_operate`) OVER (
+    `cf`.`capex` AS `capex`,
+    sum(`cf`.`netcash_operate` - `cf`.`capex`) OVER (
+      PARTITION BY `cf`.`company_id`
+      ORDER BY
+        `cf`.`report_date` ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
+    ) AS `free_cash_flow_ttm`,
+(
       PARTITION BY `cf`.`company_id`
       ORDER BY
         `cf`.`report_date` ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
@@ -209,7 +215,20 @@ WITH `profit_rolling` AS (
             year(`cf2`.`report_date`) = (year(`cf`.`report_date`) - 1)
           )
         )
-    ) AS `rate_change_effect_last_year`
+    ) AS `rate_change_effect_last_year`,
+(
+      SELECT
+        sum(`cf2`.`netcash_operate` - `cf2`.`capex`)
+      FROM
+        `streaks_of_good_luck`.`quote__cash_flow_sheet` `cf2`
+      WHERE
+        (
+          (`cf2`.`company_id` = `cf`.`company_id`)
+          AND (
+            year(`cf2`.`report_date`) = (year(`cf`.`report_date`) - 1)
+          )
+        )
+    ) AS `free_cash_flow_last_year`
   FROM
     `streaks_of_good_luck`.`quote__cash_flow_sheet` `cf`
 )
@@ -237,7 +256,9 @@ SELECT
   `cf`.`netcash_finance_ttm` AS `netcash_finance_ttm`,
   `cf`.`netcash_finance_last_year` AS `netcash_finance_last_year`,
   `cf`.`rate_change_effect_ttm` AS `rate_change_effect_ttm`,
-  `cf`.`rate_change_effect_last_year` AS `rate_change_effect_last_year`
+  `cf`.`rate_change_effect_last_year` AS `rate_change_effect_last_year`,
+  `cf`.`free_cash_flow_ttm` AS `free_cash_flow_ttm`,
+  `cf`.`free_cash_flow_last_year` AS `free_cash_flow_last_year`
 FROM
   (
     (
