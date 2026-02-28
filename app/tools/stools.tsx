@@ -88,7 +88,7 @@ method=stock_balance_sheet_by_report_em params={"symbol":"sh600519"}
 return=[{'REPORT_DATE': '2000-06-30 00:00:00', 'TOTAL_PARENT_EQUITY': 1234567890.0, '流动资产': 123456789.0, ...}, {...}, ...]
 
 -- 利润表
-REPORT_DATE: 报告期,BASIC_EPS: 基本每股收益,BASIC_EPS: 稀释每股收益,OPERATE_INCOME: 营业总收入,PARENT_NETPROFIT: 归属母公司净利润,
+REPORT_DATE: 报告期,OPERATE_INCOME: 营业总收入,PARENT_NETPROFIT: 归属母公司净利润,
 -- 利润表-按单季度
 method=stock_profit_sheet_by_quarterly_em params={"symbol":"sh600519"}
 return=[{'REPORT_DATE': '2000-06-30 00:00:00', 'BASIC_EPS': 1.18, 'DILUTED_EPS': 1.18, 'OPERATE_INCOME': 100668000000, 'PARENT_NETPROFIT': 38339000000...}, {...}, ...]

@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
     const symbol = company.company_akshare_code
 
-    // 1. 获取资产负债表数据
+    
     const [
       balanceSheetRes,
       profitSheetRes,
@@ -31,6 +31,8 @@ export async function POST(req: NextRequest) {
       fetchWebIntellCallAKShare('stock_profit_sheet_by_quarterly_em', { symbol }),
       fetchWebIntellCallAKShare('stock_cash_flow_sheet_by_quarterly_em', { symbol })
     ])
+    
+    // 1. 获取资产负债表数据
     if (!balanceSheetRes.ok) {
       throw new Error('获取资产负债表数据失败')
     }
