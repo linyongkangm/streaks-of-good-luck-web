@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react'
 import type { info__stock_company, quote__stock_constituent_daily } from '@/types'
 import { DateTime } from 'luxon'
 import { formatNumber } from '@/app/tools'
-import Table from '@/app/widget/Table'
+import Table, { ColumnFormatType } from '@/app/widget/Table'
 import Button from '@/app/widget/Button'
 import Select from '@/app/widget/Select'
 import DatePicker from '@/app/widget/DatePicker'
 import Panel from '@/app/widget/Panel'
+import { format } from 'path'
 
 interface Props {
   selectedCompany: info__stock_company
@@ -78,72 +79,54 @@ export default function SecuritiesMetadataQuotes({ selectedCompany }: Props) {
     {
       title: '交易日期',
       dataIndex: 'trade_date',
-
-      render: (value: any) => new Date(value).toLocaleDateString('zh-CN'),
+      format: ColumnFormatType.DATE,
     },
     {
       title: '开盘',
-      dataIndex: 'open',
-      render: (_: any, record: any) => {
-        const data = getDisplayData(record)
-        return formatNumber(data.open)
-      },
+      dataIndex: `${adjustType}_open_price`,
     },
     {
       title: '收盘',
-      dataIndex: 'close',
-      render: (_: any, record: any) => {
-        const data = getDisplayData(record)
+      dataIndex: `${adjustType}_close_price`,
+      render: (data: any, record: any) => {
         const isPositive = Number(record.change_percent) > 0
         const isNegative = Number(record.change_percent) < 0
         const colorClass = isPositive ? 'text-red-600' : isNegative ? 'text-green-600' : 'text-slate-900'
-        return <span className={colorClass}>{formatNumber(data.close)}</span>
+        return <span className={colorClass}>{formatNumber(data)}</span>
       },
     },
     {
       title: '最高',
-      dataIndex: 'high',
-      render: (_: any, record: any) => {
-        const data = getDisplayData(record)
-        return formatNumber(data.high)
-      },
+      dataIndex: `${adjustType}_high_price`,
     },
     {
       title: '最低',
-      dataIndex: 'low',
-      render: (_: any, record: any) => {
-        const data = getDisplayData(record)
-        return formatNumber(data.low)
-      },
+      dataIndex: `${adjustType}_low_price`,
     },
     {
       title: '成交量',
       dataIndex: 'volume',
-      render: (value: any) => formatNumber(value),
+      format: ColumnFormatType.NUMBER,
     },
     {
       title: '成交额',
-      dataIndex: 'turnover',
-      render: (_: any, record: any) => {
-        const data = getDisplayData(record)
-        return formatNumber(data.turnover)
-      },
+      dataIndex: `${adjustType}_turnover`,
+      format: ColumnFormatType.NUMBER,
     },
     {
       title: '涨跌额',
-      dataIndex: 'change_amt',
-      render: (_: any, record: any) => {
-        const data = getDisplayData(record)
+      dataIndex: `${adjustType}_change_amt`,
+      render: (data: any, record: any) => {
         const isPositive = Number(record.change_percent) > 0
         const isNegative = Number(record.change_percent) < 0
         const colorClass = isPositive ? 'text-red-600' : isNegative ? 'text-green-600' : 'text-slate-900'
-        return <span className={colorClass}>{formatNumber(data.change_amt)}</span>
+        return <span className={colorClass}>{formatNumber(data)}</span>
       },
     },
     {
       title: '涨跌幅',
       dataIndex: 'change_percent',
-      render: (value: any, record: any) => {
+      render: (value: any) => {
         const isPositive = Number(value) > 0
         const isNegative = Number(value) < 0
         const colorClass = isPositive ? 'text-red-600' : isNegative ? 'text-green-600' : 'text-slate-900'
@@ -153,7 +136,7 @@ export default function SecuritiesMetadataQuotes({ selectedCompany }: Props) {
     {
       title: '振幅',
       dataIndex: 'price_range',
-      render: (value: any) => `${formatNumber(value)}%`,
+      render: (value: any) => `${value}%`,
     },
     {
       title: '换手率',
@@ -163,7 +146,7 @@ export default function SecuritiesMetadataQuotes({ selectedCompany }: Props) {
   ]
 
   return (
-    <Panel title="📈 历史行情数据">
+    <Panel title={`📈 历史行情数据 - ${selectedCompany.company_name}`}>
       <div className="w-full">
         {/* 筛选栏 */}
         <div className="flex gap-4 mb-6 items-end">
@@ -213,31 +196,27 @@ export default function SecuritiesMetadataQuotes({ selectedCompany }: Props) {
           loading={loading}
           emptyText="暂无行情数据"
         />
-
-        {/* 分页 */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-6">
-            <Button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              look="cancel"
-              size="small"
-            >
-              ← 上一页
-            </Button>
-            <span className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg font-medium shadow-md">
-              {page} / {totalPages}
-            </span>
-            <Button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              look="cancel"
-              size="small"
-            >
-              下一页 →
-            </Button>
-          </div>
-        )}
+        <div className="flex items-center justify-center gap-2 mt-6">
+          <Button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            look="cancel"
+            size="small"
+          >
+            ← 上一页
+          </Button>
+          <span className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg font-medium shadow-md">
+            {page} / {totalPages}
+          </span>
+          <Button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            look="cancel"
+            size="small"
+          >
+            下一页 →
+          </Button>
+        </div>
       </div>
     </Panel>
   )
