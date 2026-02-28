@@ -11,6 +11,8 @@ import { TextInput } from '@/app/widget/Input'
 import Loading from '@/app/widget/Loading'
 import Pagination from '@/app/widget/Pagination'
 import Select from '@/app/widget/Select'
+import DatePicker from '@/app/widget/DatePicker'
+import { DateTime } from 'luxon'
 function appendPredictsSaved(articleId: string) {
   const predicts_saved = localStorage.getItem('PREDICTS_SAVED')?.split(',') || []
   predicts_saved.push(articleId)
@@ -292,7 +294,12 @@ export default function ArticleAnalysis() {
             <TextInput placeholder="👤 搜索作者/贡献者..." value={searchContributor} onChange={setSearchContributor} />
           </div>
           <div className="flex-1 min-w-[180px]">
-            <TextInput placeholder="📅 发布日期 (YYYY-MM-DD)" value={searchIssueDate} onChange={setSearchIssueDate} />
+            <DatePicker
+              mode="date"
+              placeholder="📅 发布日期"
+              value={searchIssueDate ? DateTime.fromISO(searchIssueDate) : undefined}
+              onChange={(dt) => setSearchIssueDate(dt.toFormat('yyyy-MM-dd'))}
+            />
           </div>
           <div className="flex-1">
             <TextInput placeholder="🏷️ 搜索标签..." value={searchTags} onChange={setSearchTags} />
