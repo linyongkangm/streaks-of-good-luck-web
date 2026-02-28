@@ -13,6 +13,7 @@ import {
   quote__profit_sheet,
   quote__balance_sheet,
   quote__cash_flow_sheet,
+  view_financial_statements
 } from '@prisma/client'
 
 // 导出 Prisma 生成的所有类型
@@ -32,6 +33,7 @@ export {
   type quote__profit_sheet,
   type quote__balance_sheet,
   type quote__cash_flow_sheet,
+  type view_financial_statements,
 } from '@prisma/client'
 
 // API 响应类型

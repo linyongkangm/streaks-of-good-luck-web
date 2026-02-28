@@ -1,18 +1,44 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import type { info__stock_company } from '@/types'
-import Table from '@/app/widget/Table'
+import type { info__stock_company, view_financial_statements } from '@/types'
+import Table, { Column } from '@/app/widget/Table'
 import Button from '@/app/widget/Button'
 import Panel from '@/app/widget/Panel'
-import { formatNumber } from '@/app/tools'
+import { formatNumber, formatPercent } from '@/app/tools'
 
 interface Props {
   selectedCompany: info__stock_company
 }
 
+
+function getTTMvsLYColumn(dataIndex: string, title: string): Column<view_financial_statements> {
+  return {
+    title: `${title}(TTM/LY/VS)`,
+    dataIndex: dataIndex,
+    render: (_, record) => {
+      const ttm = record[dataIndex + '_ttm' as keyof typeof record] as number
+      const lastYear = record[dataIndex + '_last_year' as keyof typeof record] as number
+      return (
+        <div className="flex flex-col items-center">
+          <span>
+            {formatNumber(ttm)}
+          </span>
+          <span>
+            {formatNumber(lastYear)}
+          </span>
+          <span>
+            {formatPercent(ttm, lastYear)}
+          </span>
+        </div>
+
+      )
+    },
+  }
+}
+
 export default function SecuritiesMetadataFinancialView({ selectedCompany }: Props) {
-  const [data, setData] = useState<any[]>([])
+  const [data, setData] = useState<view_financial_statements[]>([])
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -48,23 +74,12 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
     }
   }
 
-  const formatPercent = (current: any, last: any) => {
-    if (!current || !last || last === 0) return '-'
-    const change = ((Number(current) - Number(last)) / Number(last)) * 100
-    const isPositive = change > 0
-    return (
-      <span className={isPositive ? 'text-red-600' : change < 0 ? 'text-green-600' : 'text-slate-900'}>
-        {isPositive ? '+' : ''}{change.toFixed(2)}%
-      </span>
-    )
-  }
 
-  const columns = [
+
+  const columns: Column<view_financial_statements>[] = [
     {
       title: '报告期',
       dataIndex: 'report_date',
-      sticky: true,
-      className: 'text-xs',
       render: (value: any) => (
         <span className="font-medium">{new Date(value).toLocaleDateString('zh-CN')}</span>
       )
@@ -72,138 +87,55 @@ export default function SecuritiesMetadataFinancialView({ selectedCompany }: Pro
     {
       title: '归母权益',
       dataIndex: 'total_parent_equity',
-      align: 'right' as const,
-      className: 'text-xs',
       render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
     },
-    {
-      title: '归母净利(TTM)',
-      dataIndex: 'parent_netprofit_ttm',
-      align: 'right' as const,
-      className: 'text-xs',
-      render: (value: any) => <span className="font-mono font-semibold">{formatNumber(value)}</span>
-    },
-    {
-      title: '归母净利(去年)',
-      dataIndex: 'parent_netprofit_last_year',
-      align: 'right' as const,
-      className: 'text-xs text-slate-600',
-      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
-    },
-    {
-      title: '同比',
-      dataIndex: 'parent_netprofit_yoy',
-      align: 'center' as const,
-      className: 'text-xs',
-      render: (_: any, record: any) => (
-        <span className="font-mono font-semibold">
-          {formatPercent(record.parent_netprofit_ttm, record.parent_netprofit_last_year)}
-        </span>
-      )
-    },
-    {
-      title: '营收(TTM)',
-      dataIndex: 'operate_income_ttm',
-      align: 'right' as const,
-      className: 'text-xs',
-      render: (value: any) => <span className="font-mono font-semibold">{formatNumber(value)}</span>
-    },
-    {
-      title: '营收(去年)',
-      dataIndex: 'operate_income_last_year',
-      align: 'right' as const,
-      className: 'text-xs text-slate-600',
-      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
-    },
-    {
-      title: '同比',
-      dataIndex: 'operate_income_yoy',
-      align: 'center' as const,
-      className: 'text-xs',
-      render: (_: any, record: any) => (
-        <span className="font-mono font-semibold">
-          {formatPercent(record.operate_income_ttm, record.operate_income_last_year)}
-        </span>
-      )
-    },
-    {
-      title: '经营现金流(TTM)',
-      dataIndex: 'netcash_operate_ttm',
-      align: 'right' as const,
-      className: 'text-xs',
-      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
-    },
-    {
-      title: '经营现金流(去年)',
-      dataIndex: 'netcash_operate_last_year',
-      align: 'right' as const,
-      className: 'text-xs text-slate-600',
-      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
-    },
-    {
-      title: '同比',
-      dataIndex: 'netcash_operate_yoy',
-      align: 'center' as const,
-      className: 'text-xs',
-      render: (_: any, record: any) => (
-        <span className="font-mono font-semibold">
-          {formatPercent(record.netcash_operate_ttm, record.netcash_operate_last_year)}
-        </span>
-      )
-    },
+    getTTMvsLYColumn('total_operate_income', '营业总收入'),
+    getTTMvsLYColumn('operate_income', '营业收入'),
+    getTTMvsLYColumn('total_operate_cost', '营业总成本'),
+    getTTMvsLYColumn('operate_cost', '营业成本'),
+    getTTMvsLYColumn('netprofit', '净利润'),
+    getTTMvsLYColumn('parent_netprofit', '归母净利润'),
+    getTTMvsLYColumn('netcash_operate', '经营现金流'),
     {
       title: '投资现金流(TTM)',
       dataIndex: 'netcash_invest_ttm',
-      align: 'right' as const,
-      className: 'text-xs',
       render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
     },
     {
       title: '筹资现金流(TTM)',
       dataIndex: 'netcash_finance_ttm',
-      align: 'right' as const,
-      className: 'text-xs',
       render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
     }
   ]
-
   return (
-    <Panel>
-    <div className="w-full">
-      <h3 className="text-xl font-semibold mb-4 text-slate-800">📊 财务报表综合视图（滚动四季度）</h3>
-
+    <Panel title="📊 财务报表综合视图（滚动四季度）">
       <Table
         columns={columns}
         dataSource={data}
         loading={loading}
         emptyText="暂无综合财务数据"
       />
-
-      {/* 分页 */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-6">
-          <Button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            look="cancel"
-            size="small"
-          >
-            ← 上一页
-          </Button>
-          <span className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg font-medium shadow-md">
-            {page} / {totalPages}
-          </span>
-          <Button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-            look="cancel"
-            size="small"
-          >
-            下一页 →
-          </Button>
-        </div>
-      )}
-    </div>
+      <div className="flex items-center justify-center gap-2 mt-6">
+        <Button
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page === 1}
+          look="cancel"
+          size="small"
+        >
+          ← 上一页
+        </Button>
+        <span className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg font-medium shadow-md">
+          {page} / {totalPages}
+        </span>
+        <Button
+          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          disabled={page === totalPages}
+          look="cancel"
+          size="small"
+        >
+          下一页 →
+        </Button>
+      </div>
     </Panel>
   )
 }

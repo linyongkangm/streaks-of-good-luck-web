@@ -5,18 +5,42 @@ WITH `profit_rolling` AS (
     `c`.`company_code` AS `company_code`,
     `c`.`total_shares` AS `total_shares`,
     year(`p`.`report_date`) AS `current_year`,
-    `p`.`parent_netprofit` AS `parent_netprofit`,
+    `p`.`total_operate_income` AS `total_operate_income`,
     `p`.`operate_income` AS `operate_income`,
-    sum(`p`.`parent_netprofit`) OVER (
+    `p`.`total_operate_cost` AS `total_operate_cost`,
+    `p`.`operate_cost` AS `operate_cost`,
+    `p`.`netprofit` AS `netprofit`,
+    `p`.`parent_netprofit` AS `parent_netprofit`,
+    sum(`p`.`total_operate_income`) OVER (
       PARTITION BY `p`.`company_id`
       ORDER BY
         `p`.`report_date` ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
-    ) AS `parent_netprofit_ttm`,
+    ) AS `total_operate_income_ttm`,
     sum(`p`.`operate_income`) OVER (
       PARTITION BY `p`.`company_id`
       ORDER BY
         `p`.`report_date` ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
     ) AS `operate_income_ttm`,
+    sum(`p`.`total_operate_cost`) OVER (
+      PARTITION BY `p`.`company_id`
+      ORDER BY
+        `p`.`report_date` ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
+    ) AS `total_operate_cost_ttm`,
+    sum(`p`.`operate_cost`) OVER (
+      PARTITION BY `p`.`company_id`
+      ORDER BY
+        `p`.`report_date` ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
+    ) AS `operate_cost_ttm`,
+    sum(`p`.`netprofit`) OVER (
+      PARTITION BY `p`.`company_id`
+      ORDER BY
+        `p`.`report_date` ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
+    ) AS `netprofit_ttm`,
+    sum(`p`.`parent_netprofit`) OVER (
+      PARTITION BY `p`.`company_id`
+      ORDER BY
+        `p`.`report_date` ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
+    ) AS `parent_netprofit_ttm`,
 (
       SELECT
         sum(`p2`.`parent_netprofit`)
@@ -43,6 +67,58 @@ WITH `profit_rolling` AS (
           )
         )
     ) AS `operate_income_last_year`,
+(
+      SELECT
+        sum(`p2`.`total_operate_income`)
+      FROM
+        `streaks_of_good_luck`.`quote__profit_sheet` `p2`
+      WHERE
+        (
+          (`p2`.`company_id` = `p`.`company_id`)
+          AND (
+            year(`p2`.`report_date`) = (year(`p`.`report_date`) - 1)
+          )
+        )
+    ) AS `total_operate_income_last_year`,
+(
+      SELECT
+        sum(`p2`.`total_operate_cost`)
+      FROM
+        `streaks_of_good_luck`.`quote__profit_sheet` `p2`
+      WHERE
+        (
+          (`p2`.`company_id` = `p`.`company_id`)
+          AND (
+            year(`p2`.`report_date`) = (year(`p`.`report_date`) - 1)
+          )
+        )
+    ) AS `total_operate_cost_last_year`,
+(
+      SELECT
+        sum(`p2`.`operate_cost`)
+      FROM
+        `streaks_of_good_luck`.`quote__profit_sheet` `p2`
+      WHERE
+        (
+          (`p2`.`company_id` = `p`.`company_id`)
+          AND (
+            year(`p2`.`report_date`) = (year(`p`.`report_date`) - 1)
+          )
+        )
+    ) AS `operate_cost_last_year`,
+(
+      SELECT
+        sum(`p2`.`netprofit`)
+      FROM
+        `streaks_of_good_luck`.`quote__profit_sheet` `p2`
+      WHERE
+        (
+          (`p2`.`company_id` = `p`.`company_id`)
+          AND (
+            year(`p2`.`report_date`) = (year(`p`.`report_date`) - 1)
+          )
+        )
+    ) AS `netprofit_last_year`,
     row_number() OVER (
       PARTITION BY `p`.`company_id`
       ORDER BY
@@ -142,10 +218,18 @@ SELECT
   `pr`.`report_date` AS `report_date`,
   `pr`.`total_shares` AS `total_shares`,
   `bs`.`total_parent_equity` AS `total_parent_equity`,
-  `pr`.`parent_netprofit_ttm` AS `parent_netprofit_ttm`,
-  `pr`.`parent_netprofit_last_year` AS `parent_netprofit_last_year`,
+  `pr`.`total_operate_income_ttm` AS `total_operate_income_ttm`,
+  `pr`.`total_operate_income_last_year` AS `total_operate_income_last_year`,
   `pr`.`operate_income_ttm` AS `operate_income_ttm`,
   `pr`.`operate_income_last_year` AS `operate_income_last_year`,
+  `pr`.`total_operate_cost_ttm` AS `total_operate_cost_ttm`,
+  `pr`.`total_operate_cost_last_year` AS `total_operate_cost_last_year`,
+  `pr`.`operate_cost_ttm` AS `operate_cost_ttm`,
+  `pr`.`operate_cost_last_year` AS `operate_cost_last_year`,
+  `pr`.`netprofit_ttm` AS `netprofit_ttm`,
+  `pr`.`netprofit_last_year` AS `netprofit_last_year`,
+  `pr`.`parent_netprofit_ttm` AS `parent_netprofit_ttm`,
+  `pr`.`parent_netprofit_last_year` AS `parent_netprofit_last_year`,
   `cf`.`netcash_operate_ttm` AS `netcash_operate_ttm`,
   `cf`.`netcash_operate_last_year` AS `netcash_operate_last_year`,
   `cf`.`netcash_invest_ttm` AS `netcash_invest_ttm`,

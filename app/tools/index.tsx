@@ -1,3 +1,4 @@
+import { Decimal } from '@prisma/client/runtime/client';
 import * as luxon from 'luxon';
 
 export const DATE_TIME_FORMAT = 'yyyy-MM-dd HH:mm z';
@@ -151,7 +152,7 @@ export function fromISOUseBeijing(dateTime: string): luxon.DateTime {
  * @param {number} decimals 小数位数，默认2位
  * @returns {string} 格式化后的字符串
  */
-export function formatNumber(value: string | number | undefined | null, decimals: number = 2): string {
+export function formatNumber(value: string | number | undefined | null | Decimal, decimals: number = 2): string {
   if (value === null || value === undefined) return '-'
   const num = Number(value)
   const abs = Math.abs(num)
@@ -160,6 +161,22 @@ export function formatNumber(value: string | number | undefined | null, decimals
   if (abs >= 100000000) return `${sign}${(abs / 100000000).toFixed(decimals)}亿`
   if (abs >= 10000) return `${sign}${(abs / 10000).toFixed(decimals)}万`
   return num.toFixed(decimals)
+}
+
+/** 格式化百分比
+ * @param {any} current 当前值
+ * @param {any} last 上一个值
+ * @returns {string} 格式化后的百分比字符串，带颜色表示增长（红色）或下降（绿色）
+ */
+export function formatPercent(current: any, last: any) {
+  if (!current || !last || last === 0) return '-'
+  const change = ((Number(current) - Number(last)) / Number(last)) * 100
+  const isPositive = change > 0
+  return (
+    <span className={isPositive ? 'text-red-600' : change < 0 ? 'text-green-600' : 'text-slate-900'}>
+      {isPositive ? '+' : ''}{change.toFixed(2)}%
+    </span>
+  )
 }
 
 /**

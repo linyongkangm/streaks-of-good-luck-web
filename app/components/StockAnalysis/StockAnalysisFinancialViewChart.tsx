@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Chart } from '@antv/g2'
 import { DateTime } from 'luxon'
-import type { info__stock_company } from '@/types'
+import type { info__stock_company, view_financial_statements } from '@/types'
 import Panel from '@/app/widget/Panel'
 import Select from '@/app/widget/Select'
 import { FormLabel } from '@/app/widget/Form'
@@ -14,44 +14,28 @@ interface Props {
   selectedCompany: info__stock_company
 }
 
-type FinancialViewField =
-  | 'total_parent_equity'
-  | 'cashflow_ratio_ttm'
-  | 'parent_netprofit_ttm'
-  | 'parent_netprofit_last_year'
-  | 'operate_income_ttm'
-  | 'operate_income_last_year'
-  | 'netcash_operate_ttm'
-  | 'netcash_operate_last_year'
-  | 'netcash_invest_ttm'
-  | 'netcash_invest_last_year'
-  | 'netcash_finance_ttm'
-  | 'netcash_finance_last_year'
-  | 'rate_change_effect_ttm'
-  | 'rate_change_effect_last_year'
+type FinancialViewField = Exclude<keyof view_financial_statements, 'total_shares' | 'company_id' | 'report_date' | 'total_operate_income_last_year' | 'operate_income_last_year' | 'total_operate_cost_last_year' | 'operate_cost_last_year' | 'netprofit_last_year' | 'parent_netprofit_last_year' | 'netcash_operate_last_year' | 'netcash_invest_last_year' | 'netcash_finance_last_year' | 'rate_change_effect_last_year'> | 'cashflow_ratio_ttm'
 
 const fieldLabels: Record<FinancialViewField, string> = {
   total_parent_equity: '归母权益',
   cashflow_ratio_ttm: '现金流量比率',
+  total_operate_income_ttm: '营业总收入(TTM)',
+  operate_income_ttm: '营业收入(TTM)',
+  total_operate_cost_ttm: '营业总成本(TTM)',
+  operate_cost_ttm: '营业成本(TTM)',
+  netprofit_ttm: '净利润(TTM)',
   parent_netprofit_ttm: '归母净利(TTM)',
-  parent_netprofit_last_year: '归母净利(去年)',
-  operate_income_ttm: '营收(TTM)',
-  operate_income_last_year: '营收(去年)',
   netcash_operate_ttm: '经营现金流(TTM)',
-  netcash_operate_last_year: '经营现金流(去年)',
   netcash_invest_ttm: '投资现金流(TTM)',
-  netcash_invest_last_year: '投资现金流(去年)',
   netcash_finance_ttm: '筹资现金流(TTM)',
-  netcash_finance_last_year: '筹资现金流(去年)',
   rate_change_effect_ttm: '汇率变动影响(TTM)',
-  rate_change_effect_last_year: '汇率变动影响(去年)',
 }
 
 export default function StockAnalysisFinancialViewChart({ selectedCompany }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
   const chartInstance = useRef<Chart | null>(null)
   const [loading, setLoading] = useState(false)
-  const [records, setRecords] = useState<any[]>([])
+  const [records, setRecords] = useState<view_financial_statements[]>([])
   const [field, setField] = useState<FinancialViewField>('parent_netprofit_ttm')
 
   useEffect(() => {
@@ -63,7 +47,7 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
         const limit = 200
         let page = 1
         let totalPages = 1
-        const allRows: any[] = []
+        const allRows: view_financial_statements[] = []
 
         while (page <= totalPages) {
           const res = await fetch(
@@ -102,19 +86,19 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
         const metricValue =
           field === 'cashflow_ratio_ttm'
             ? (() => {
-                const netcashOperateTtm = Number(item.netcash_operate_ttm)
-                const parentNetprofitTtm = Number(item.parent_netprofit_ttm)
-                if (!Number.isFinite(netcashOperateTtm) || !Number.isFinite(parentNetprofitTtm) || parentNetprofitTtm === 0) {
-                  return Number.NaN
-                }
-                return netcashOperateTtm / parentNetprofitTtm
-              })()
+              const netcashOperateTtm = Number(item.netcash_operate_ttm)
+              const parentNetprofitTtm = Number(item.parent_netprofit_ttm)
+              if (!Number.isFinite(netcashOperateTtm) || !Number.isFinite(parentNetprofitTtm) || parentNetprofitTtm === 0) {
+                return Number.NaN
+              }
+              return netcashOperateTtm / parentNetprofitTtm
+            })()
             : Number(item[field])
 
         if (!Number.isFinite(metricValue)) return null
 
         return {
-          report_date: new Date(item.report_date),
+          report_date: new Date(item.report_date as any),
           value: metricValue,
         }
       })

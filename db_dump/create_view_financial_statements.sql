@@ -15,19 +15,43 @@ profit_rolling AS (
         c.company_code,
         c.total_shares,
         YEAR(p.report_date) as current_year,
-        p.parent_netprofit,
+        p.total_operate_income,
         p.operate_income,
+        p.total_operate_cost,
+        p.operate_cost,
+        p.netprofit,
+        p.parent_netprofit,
         -- 最近四个季度汇总（包含当前季度）
-        SUM(p.parent_netprofit) OVER (
+        SUM(p.total_operate_income) OVER (
             PARTITION BY p.company_id 
             ORDER BY p.report_date 
             ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
-        ) AS parent_netprofit_ttm,
+        ) AS total_operate_income_ttm,
         SUM(p.operate_income) OVER (
             PARTITION BY p.company_id 
             ORDER BY p.report_date 
             ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
         ) AS operate_income_ttm,
+        SUM(p.total_operate_cost) OVER (
+            PARTITION BY p.company_id 
+            ORDER BY p.report_date 
+            ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
+        ) AS total_operate_cost_ttm,
+        SUM(p.operate_cost) OVER (
+            PARTITION BY p.company_id 
+            ORDER BY p.report_date 
+            ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
+        ) AS operate_cost_ttm,
+        SUM(p.netprofit) OVER (
+            PARTITION BY p.company_id 
+            ORDER BY p.report_date 
+            ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
+        ) AS netprofit_ttm,
+        SUM(p.parent_netprofit) OVER (
+            PARTITION BY p.company_id 
+            ORDER BY p.report_date 
+            ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
+        ) AS parent_netprofit_ttm,
         -- 上年度四个季度汇总（基于年份匹配，而非行偏移）
         (
             SELECT SUM(p2.parent_netprofit)
@@ -41,6 +65,30 @@ profit_rolling AS (
             WHERE p2.company_id = p.company_id
             AND YEAR(p2.report_date) = YEAR(p.report_date) - 1
         ) AS operate_income_last_year,
+        (
+            SELECT SUM(p2.total_operate_income)
+            FROM quote__profit_sheet p2
+            WHERE p2.company_id = p.company_id
+            AND YEAR(p2.report_date) = YEAR(p.report_date) - 1
+        ) AS total_operate_income_last_year,
+        (
+            SELECT SUM(p2.total_operate_cost)
+            FROM quote__profit_sheet p2
+            WHERE p2.company_id = p.company_id
+            AND YEAR(p2.report_date) = YEAR(p.report_date) - 1
+        ) AS total_operate_cost_last_year,
+        (
+            SELECT SUM(p2.operate_cost)
+            FROM quote__profit_sheet p2
+            WHERE p2.company_id = p.company_id
+            AND YEAR(p2.report_date) = YEAR(p.report_date) - 1
+        ) AS operate_cost_last_year,
+        (
+            SELECT SUM(p2.netprofit)
+            FROM quote__profit_sheet p2
+            WHERE p2.company_id = p.company_id
+            AND YEAR(p2.report_date) = YEAR(p.report_date) - 1
+        ) AS netprofit_last_year,
         -- 计算行号，用于判断是否有足够的历史数据
         ROW_NUMBER() OVER (
             PARTITION BY p.company_id 
@@ -112,10 +160,18 @@ SELECT
     pr.report_date,
     pr.total_shares,
     bs.total_parent_equity,
-    pr.parent_netprofit_ttm,
-    pr.parent_netprofit_last_year,
+    pr.total_operate_income_ttm,
+    pr.total_operate_income_last_year,
     pr.operate_income_ttm,
     pr.operate_income_last_year,
+    pr.total_operate_cost_ttm,
+    pr.total_operate_cost_last_year,
+    pr.operate_cost_ttm,
+    pr.operate_cost_last_year,
+    pr.netprofit_ttm,
+    pr.netprofit_last_year,
+    pr.parent_netprofit_ttm,
+    pr.parent_netprofit_last_year,
     cf.netcash_operate_ttm,
     cf.netcash_operate_last_year,
     cf.netcash_invest_ttm,
