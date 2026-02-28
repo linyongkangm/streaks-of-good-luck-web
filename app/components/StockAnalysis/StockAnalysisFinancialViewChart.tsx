@@ -14,22 +14,47 @@ interface Props {
   selectedCompany: info__stock_company
 }
 
-type FinancialViewField = Exclude<keyof view_financial_statements, 'total_shares' | 'company_id' | 'report_date' | 'total_operate_income_last_year' | 'operate_income_last_year' | 'total_operate_cost_last_year' | 'operate_cost_last_year' | 'netprofit_last_year' | 'parent_netprofit_last_year' | 'netcash_operate_last_year' | 'netcash_invest_last_year' | 'netcash_finance_last_year' | 'rate_change_effect_last_year'> | 'cashflow_ratio_ttm'
+type FinancialViewField =
+  Exclude<keyof view_financial_statements, 'total_shares' | 'company_id' | 'report_date' | 'total_operate_income_last_year' | 'operate_income_last_year' | 'total_operate_cost_last_year' | 'operate_cost_last_year' | 'netprofit_last_year' | 'parent_netprofit_last_year' | 'netcash_operate_last_year' | 'netcash_invest_last_year' | 'netcash_finance_last_year' | 'rate_change_effect_last_year'>
+  | 'cashflow_ratio_ttm' | 'gross_profit_margin_ttm' | 'net_profit_margin_ttm'
 
 const fieldLabels: Record<FinancialViewField, string> = {
-  total_parent_equity: '归母权益',
+  // 现金流量比率 = 经营现金流(TTM) / 归母净利润(TTM)
   cashflow_ratio_ttm: '现金流量比率',
+  // 毛利率 = (营业收入(TTM) - 营业成本(TTM)) / 营业收入(TTM)
+  gross_profit_margin_ttm: '毛利率(TTM)',
+  // 净利率 = 净利润(TTM) / 营业收入(TTM)
+  net_profit_margin_ttm: '净利率(TTM)',
+
+  total_parent_equity: '归母权益',
   total_operate_income_ttm: '营业总收入(TTM)',
   operate_income_ttm: '营业收入(TTM)',
   total_operate_cost_ttm: '营业总成本(TTM)',
   operate_cost_ttm: '营业成本(TTM)',
   netprofit_ttm: '净利润(TTM)',
-  parent_netprofit_ttm: '归母净利(TTM)',
+  parent_netprofit_ttm: '归母净利润(TTM)',
   netcash_operate_ttm: '经营现金流(TTM)',
   netcash_invest_ttm: '投资现金流(TTM)',
   netcash_finance_ttm: '筹资现金流(TTM)',
   rate_change_effect_ttm: '汇率变动影响(TTM)',
 }
+
+const fieldOrder: FinancialViewField[] = [
+  'cashflow_ratio_ttm',
+  'gross_profit_margin_ttm',
+  'net_profit_margin_ttm',
+  'total_parent_equity',
+  'total_operate_income_ttm',
+  'operate_income_ttm',
+  'total_operate_cost_ttm',
+  'operate_cost_ttm',
+  'netprofit_ttm',
+  'parent_netprofit_ttm',
+  'netcash_operate_ttm',
+  'netcash_invest_ttm',
+  'netcash_finance_ttm',
+  'rate_change_effect_ttm',
+]
 
 export default function StockAnalysisFinancialViewChart({ selectedCompany }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
@@ -37,6 +62,7 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
   const [loading, setLoading] = useState(false)
   const [records, setRecords] = useState<view_financial_statements[]>([])
   const [field, setField] = useState<FinancialViewField>('parent_netprofit_ttm')
+  const isPercentField = field === 'gross_profit_margin_ttm' || field === 'net_profit_margin_ttm'
 
   useEffect(() => {
     const fetchData = async () => {
@@ -83,17 +109,36 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
     const chartData = [...records]
       .reverse()
       .map((item) => {
-        const metricValue =
-          field === 'cashflow_ratio_ttm'
-            ? (() => {
-              const netcashOperateTtm = Number(item.netcash_operate_ttm)
-              const parentNetprofitTtm = Number(item.parent_netprofit_ttm)
-              if (!Number.isFinite(netcashOperateTtm) || !Number.isFinite(parentNetprofitTtm) || parentNetprofitTtm === 0) {
-                return Number.NaN
-              }
-              return netcashOperateTtm / parentNetprofitTtm
-            })()
-            : Number(item[field])
+        const metricValue = (() => {
+          if (field === 'cashflow_ratio_ttm') {
+            const netcashOperateTtm = Number(item.netcash_operate_ttm)
+            const parentNetprofitTtm = Number(item.parent_netprofit_ttm)
+            if (!Number.isFinite(netcashOperateTtm) || !Number.isFinite(parentNetprofitTtm) || parentNetprofitTtm === 0) {
+              return Number.NaN
+            }
+            return netcashOperateTtm / parentNetprofitTtm
+          }
+
+          if (field === 'gross_profit_margin_ttm') {
+            const operateIncomeTtm = Number(item.operate_income_ttm)
+            const operateCostTtm = Number(item.operate_cost_ttm)
+            if (!Number.isFinite(operateIncomeTtm) || !Number.isFinite(operateCostTtm) || operateIncomeTtm === 0) {
+              return Number.NaN
+            }
+            return (operateIncomeTtm - operateCostTtm) / operateIncomeTtm
+          }
+
+          if (field === 'net_profit_margin_ttm') {
+            const operateIncomeTtm = Number(item.operate_income_ttm)
+            const netprofitTtm = Number(item.netprofit_ttm)
+            if (!Number.isFinite(operateIncomeTtm) || !Number.isFinite(netprofitTtm) || operateIncomeTtm === 0) {
+              return Number.NaN
+            }
+            return netprofitTtm / operateIncomeTtm
+          }
+
+          return Number(item[field])
+        })()
 
         if (!Number.isFinite(metricValue)) return null
 
@@ -125,6 +170,9 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
         y: {
           title: fieldLabels[field],
           labelFormatter: (value: number) => {
+            if (isPercentField) {
+              return `${(Number(value) * 100).toFixed(2)}%`
+            }
             if (field === 'cashflow_ratio_ttm') {
               return Number(value).toFixed(2)
             }
@@ -156,7 +204,9 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
               name: fieldLabels[field],
               channel: 'y',
               valueFormatter: (value) =>
-                field === 'cashflow_ratio_ttm'
+                isPercentField
+                  ? `${(Number(value) * 100).toFixed(2)}%`
+                  : field === 'cashflow_ratio_ttm'
                   ? Number(value).toFixed(2)
                   : formatNumber(Number(value)),
             },
@@ -187,9 +237,9 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
     <Panel>
       <FormLabel>
         <Select
-          options={Object.entries(fieldLabels).map(([value, label]) => ({
-            value: value as FinancialViewField,
-            label,
+          options={fieldOrder.map((value) => ({
+            value,
+            label: fieldLabels[value],
           }))}
           value={field}
           onChange={setField}
