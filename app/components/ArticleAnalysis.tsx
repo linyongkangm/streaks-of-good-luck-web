@@ -8,6 +8,9 @@ import Button from '@/app/widget/Button'
 import ModalForm from '@/app/widget/ModalForm'
 import { FormItem, FormLabel } from '@/app/widget/Form'
 import { TextInput } from '@/app/widget/Input'
+import Loading from '@/app/widget/Loading'
+import Pagination from '@/app/widget/Pagination'
+import Select from '@/app/widget/Select'
 function appendPredictsSaved(articleId: string) {
   const predicts_saved = localStorage.getItem('PREDICTS_SAVED')?.split(',') || []
   predicts_saved.push(articleId)
@@ -183,11 +186,7 @@ export default function ArticleAnalysis() {
     })
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch()
-    }
-  }
+
 
   const handleAddArticle = async (_e: React.FormEvent, values: typeof addArticleForm) => {
     if (!values.title.trim() || !values.source_url.trim() || !values.source_text.trim()) {
@@ -267,11 +266,7 @@ export default function ArticleAnalysis() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-      </div>
-    )
+    return <Loading />
   }
 
   return (
@@ -282,80 +277,28 @@ export default function ArticleAnalysis() {
         </h2>
 
         {/* 搜索栏 */}
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              placeholder="搜索标题..."
-              value={searchTitle}
-              onChange={(e) => setSearchTitle(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="text-slate-900 w-full px-4 py-3 pl-10 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
-            />
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+        <div className="flex gap-4" onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}>
+          <div className="flex-1">
+            <TextInput placeholder="🔍 搜索标题..." value={searchTitle} onChange={setSearchTitle} />
           </div>
-          <div className="flex-1 min-w-[180px] relative">
-            <select
+          <div className="flex-1 min-w-[180px]">
+            <Select
+              options={[{ label: '全部刊物', value: '' }, ...publications.map(pub => ({ label: pub, value: pub }))]}
               value={searchPublication}
-              onChange={(e) => setSearchPublication(e.target.value)}
-              className="text-slate-900 w-full px-4 py-3 pl-10 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all appearance-none bg-white cursor-pointer"
-            >
-              <option value="">全部刊物</option>
-              {publications.map((pub) => (
-                <option key={pub} value={pub}>
-                  {pub}
-                </option>
-              ))}
-            </select>
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">📰</span>
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">▼</span>
-          </div>
-          <div className="flex-1 min-w-[180px] relative">
-            <input
-              type="text"
-              placeholder="搜索作者/贡献者..."
-              value={searchContributor}
-              onChange={(e) => setSearchContributor(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="text-slate-900 w-full px-4 py-3 pl-10 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+              onChange={setSearchPublication}
             />
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">👤</span>
           </div>
-          <div className="flex-1 min-w-[180px] relative">
-            <input
-              type="date"
-              placeholder="发布日期..."
-              value={searchIssueDate}
-              onChange={(e) => setSearchIssueDate(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="text-slate-900 w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
-            />
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">📅</span>
+          <div className="flex-1 min-w-[180px]">
+            <TextInput placeholder="👤 搜索作者/贡献者..." value={searchContributor} onChange={setSearchContributor} />
           </div>
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              placeholder="搜索标签..."
-              value={searchTags}
-              onChange={(e) => setSearchTags(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="text-slate-900 w-full px-4 py-3 pl-10 border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
-            />
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🏷️</span>
+          <div className="flex-1 min-w-[180px]">
+            <TextInput placeholder="📅 发布日期 (YYYY-MM-DD)" value={searchIssueDate} onChange={setSearchIssueDate} />
           </div>
-          <button
-            onClick={handleSearch}
-            className="px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg font-medium"
-          >
-            搜索
-          </button>
-          <button
-            onClick={() => setShowAddArticle(true)}
-            className="px-8 py-3 bg-gradient-to-r from-green-500 to-teal-600 text-white rounded-lg hover:from-green-600 hover:to-teal-700 transition-all shadow-md hover:shadow-lg font-medium whitespace-nowrap"
-          >
-            ＋ 新增文章
-          </button>
-
+          <div className="flex-1">
+            <TextInput placeholder="🏷️ 搜索标签..." value={searchTags} onChange={setSearchTags} />
+          </div>
+          <Button onClick={handleSearch}>搜索</Button>
+          <Button onClick={() => setShowAddArticle(true)} look="success">＋ 新增文章</Button>
         </div>
         <div className="flex gap-4 mt-4">
           <Button onClick={async () => {
@@ -415,42 +358,15 @@ export default function ArticleAnalysis() {
                   </div>
                   <div className="flex items-center gap-3">
                     {
-                      !predictsSaved.includes(article.id.toString()) ? (<button
-                        onClick={() => handleExtractPredicts(article.id)}
-                        disabled={extractingPredicts === article.id.toString()}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg hover:from-purple-600 hover:to-pink-700 transition-all shadow-md hover:shadow-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {extractingPredicts === article.id.toString() ? (
-                          <>
-                            <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                            提取中...
-                          </>
-                        ) : (
-                          <>
-                            <span>🔮</span>
-                            获取预测
-                          </>
-                        )}
-                      </button>) : null
+                      !predictsSaved.includes(article.id.toString()) ? (
+                        <Button onClick={async () => { await handleExtractPredicts(article.id) }} size="small">
+                          🔮 获取预测
+                        </Button>
+                      ) : null
                     }
-                    <button
-                      onClick={() => handleReanalyze(article)}
-                      disabled={reanalyzing === article.id.toString()}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg hover:from-orange-600 hover:to-red-700 transition-all shadow-md hover:shadow-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {reanalyzing === article.id.toString() ? (
-                        <>
-                          <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                          分析中...
-                        </>
-                      ) : (
-                        <>
-                          <span>🔄</span>
-                          重新分析
-                        </>
-                      )}
-                    </button>
-
+                    <Button onClick={async () => { await handleReanalyze(article) }} look="danger" size="small">
+                      🔄 重新分析
+                    </Button>
                   </div>
                 </div>
 
@@ -497,30 +413,7 @@ export default function ArticleAnalysis() {
       </div>
 
       {/* 分页 */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-8">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="px-5 py-2.5 rounded-lg text-slate-900 border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 hover:border-slate-300 transition-all font-medium"
-          >
-            ← 上一页
-          </button>
-          <div className="flex items-center gap-2">
-            <span className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg font-medium shadow-md">
-              {page}
-            </span>
-            <span className="text-slate-500">/ {totalPages}</span>
-          </div>
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-            className="px-5 py-2.5 rounded-lg text-slate-900 border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 hover:border-slate-300 transition-all font-medium"
-          >
-            下一页 →
-          </button>
-        </div>
-      )}
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} className="mt-8" />
 
       {/* 预测预览弹窗 */}
       {predictPreview && (
@@ -614,13 +507,9 @@ export default function ArticleAnalysis() {
                               <span className="font-mono bg-white px-2 py-0.5 rounded">
                                 {predict.interval_end}
                               </span>
-                              <button
-                                onClick={() => handleRemovePredict(idx)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-xs font-medium ml-10"
-                              >
-                                <span>✕</span>
-                                移除此预测
-                              </button>
+                              <Button onClick={() => handleRemovePredict(idx)} look="danger" size="tiny" className="ml-10">
+                                ✕ 移除此预测
+                              </Button>
                             </div>
                             <div className="text-slate-900 leading-relaxed">{predict.content}</div>
                           </div>
@@ -635,26 +524,14 @@ export default function ArticleAnalysis() {
 
             {/* 弹窗底部 */}
             <div className="border-t border-slate-200 p-4 bg-slate-50 flex justify-end gap-3">
-              <button
-                onClick={() => setPredictPreview(null)}
-                className="px-6 py-2.5 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-medium"
-              >
-                关闭
-              </button>
-              <button
+              <Button look="cancel" size="small" onClick={() => setPredictPreview(null)}>关闭</Button>
+              <Button
+                size="small"
                 onClick={handleSavePredicts}
-                disabled={savingPredicts || predictPreview.predicts.length === 0}
-                className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-md hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={predictPreview.predicts.length === 0}
               >
-                {savingPredicts ? (
-                  <>
-                    <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                    保存中...
-                  </>
-                ) : (
-                  '保存预测'
-                )}
-              </button>
+                保存预测
+              </Button>
             </div>
           </div>
         </div>
