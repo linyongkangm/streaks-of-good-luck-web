@@ -18,11 +18,12 @@ interface StockValuationSummary {
 interface Props {
   companies: info__stock_company[];
   selectedCompany: info__stock_company | null;
+  sinkCompanyIds: number[];
   onSelectCompany: (company: info__stock_company) => void;
 }
 
 /* 个股列表 */
-export default function StockAnalysisStockList({ companies, selectedCompany, onSelectCompany }: Props) {
+export default function StockAnalysisStockList({ companies, selectedCompany, sinkCompanyIds, onSelectCompany }: Props) {
   const [valuationMap, setValuationMap] = useState<Record<number, StockValuationSummary>>({})
 
   useEffect(() => {
@@ -95,6 +96,13 @@ export default function StockAnalysisStockList({ companies, selectedCompany, onS
 
   const sortedCompanies = useMemo(() => {
     return [...companies].sort((a, b) => {
+      const aSink = sinkCompanyIds.includes(a.id)
+      const bSink = sinkCompanyIds.includes(b.id)
+
+      if (aSink !== bSink) {
+        return aSink ? 1 : -1
+      }
+
       const aValue = valuationMap[a.id]?.pe_percentile_3y
       const bValue = valuationMap[b.id]?.pe_percentile_3y
       const aInvalid = aValue === null || aValue === undefined || Number.isNaN(aValue)
@@ -106,7 +114,7 @@ export default function StockAnalysisStockList({ companies, selectedCompany, onS
 
       return aValue - bValue
     })
-  }, [companies, valuationMap])
+  }, [companies, sinkCompanyIds, valuationMap])
 
   return <div className="bg-white rounded-xl shadow-lg p-4 sticky">
     <div className="flex items-center justify-between mb-3">
@@ -118,6 +126,7 @@ export default function StockAnalysisStockList({ companies, selectedCompany, onS
       {sortedCompanies.map((company) => {
         const summary = valuationMap[company.id]
         const isSelected = selectedCompany?.id === company.id
+        const isSink = sinkCompanyIds.includes(company.id)
 
         return (
           <div key={company.id} className="relative group">
@@ -130,9 +139,17 @@ export default function StockAnalysisStockList({ companies, selectedCompany, onS
             >
               <div className='flex'>
                 <div className='flex-1'>
-                  <div className="font-medium text-sm leading-5 line-clamp-1">{company.company_name}</div>
+                  <div className="flex items-center gap-1">
+                    <div className="font-medium text-sm leading-5 line-clamp-1 flex-1">{company.company_name}</div>
+
+                  </div>
                   <div className={`text-[11px] leading-4 ${isSelected ? 'text-blue-100' : 'text-slate-500'}`}>
                     {company.company_code}
+                    {isSink && (
+                      <span className={`text-[10px] leading-4 px-1.5 py-0.5 rounded ml-2 ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'}`}>
+                        Sink
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div>
