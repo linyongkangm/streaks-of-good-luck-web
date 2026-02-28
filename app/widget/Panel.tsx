@@ -5,11 +5,12 @@ interface PanelProps {
   headerAction?: React.ReactNode
   children?: React.ReactNode
   className?: string
+  style?: React.CSSProperties
 }
 
-export default function Panel({ title, headerAction, children, className = '' }: PanelProps) {
+export default function Panel({ title, headerAction, children, className = '', style }: PanelProps) {
   return (
-    <div className={`bg-white rounded-xl shadow-lg p-6 ${className}`}>
+    <div className={`bg-white rounded-xl shadow-lg p-6 ${className}`} style={style}>
       {
         (title || headerAction) && <div className={`flex justify-between items-center ${children ? 'mb-4' : ''}`}>
           {title && (
