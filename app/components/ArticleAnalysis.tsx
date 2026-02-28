@@ -183,7 +183,7 @@ export default function ArticleAnalysis() {
 
 
 
-  const handleAddArticle = async (_e: React.FormEvent, values: Record<string, string>) => {
+  const handleAddArticle = async (_e: React.FormEvent, values: { title: string, source_url: string, publication?: string, issue_date: DateTime, source_text: string, contributor?: string }) => {
     if (!values.title.trim() || !values.source_url.trim() || !values.source_text.trim()) {
       alert('请填写标题、来源链接和原文内容')
       return
@@ -193,9 +193,9 @@ export default function ArticleAnalysis() {
       title: values.title.trim(),
       source_url: values.source_url.trim(),
       source_text: values.source_text.trim(),
-      publication: values.publication.trim() || null,
-      contributor: values.contributor.trim() || null,
-      issue_date: values.issue_date || null,
+      publication: values.publication?.trim() || null,
+      contributor: values.contributor?.trim() || null,
+      issue_date: values.issue_date?.toFormat('yyyy-MM-dd') || null,
     }
 
     const response = await fetch('/api/process-articles', {
@@ -562,7 +562,7 @@ export default function ArticleAnalysis() {
         open={showAddArticle}
         onClose={() => setShowAddArticle(false)}
         title="✍️ 新增文章"
-        initialValues={{ title: '', source_url: '', publication: '', issue_date: '', source_text: '', contributor: '' }}
+        initialValues={{ title: '', source_url: '', publication: '', issue_date: DateTime.now(), source_text: '', contributor: '' }}
         onSubmit={handleAddArticle}
         submitText="提交并生成摘要"
         maxWidth="xl"
