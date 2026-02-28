@@ -233,7 +233,11 @@ model quote__profit_sheet {
   id                  BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
   company_id          Int                 @db.UnsignedInt
   report_date         DateTime            @db.Date
+  total_operate_income Decimal            @db.Decimal(20, 2)
   operate_income      Decimal             @db.Decimal(20, 2)
+  total_operate_cost  Decimal             @db.Decimal(20, 2)
+  operate_cost        Decimal             @db.Decimal(20, 2)
+  netprofit           Decimal             @db.Decimal(20, 2)
   parent_netprofit    Decimal             @db.Decimal(20, 2)
   create_time         DateTime            @default(now()) @db.DateTime(0)
   update_time         DateTime            @default(now()) @updatedAt @db.DateTime(0)

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import type { info__stock_company } from '@/types'
-import Table from '@/app/widget/Table'
+import type { info__stock_company, quote__profit_sheet } from '@/types'
+import Table, { Column } from '@/app/widget/Table'
 import Panel from '@/app/widget/Panel'
 import { formatNumber } from '@/app/tools'
 
@@ -11,7 +11,7 @@ interface Props {
 }
 
 export default function SecuritiesMetadataProfitSheet({ selectedCompany }: Props) {
-  const [data, setData] = useState<any[]>([])
+  const [data, setData] = useState<quote__profit_sheet[]>([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -37,42 +37,54 @@ export default function SecuritiesMetadataProfitSheet({ selectedCompany }: Props
     }
   }
 
-  const columns = [
+  const columns: Column<quote__profit_sheet>[] = [
     {
       title: '报告期',
       dataIndex: 'report_date',
-      key: 'report_date',
       render: (value: any) => (
         <span className="font-medium">{new Date(value).toLocaleDateString('zh-CN')}</span>
       )
     },
     {
       title: '营业总收入',
+      dataIndex: 'total_operate_income',
+      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
+    },
+    {
+      title: '营业收入',
       dataIndex: 'operate_income',
-      key: 'operate_income',
-      align: 'right' as const,
+      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
+    },
+    {
+      title: '营业总成本',
+      dataIndex: 'total_operate_cost',
+      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
+    },
+    {
+      title: '营业成本',
+      dataIndex: 'operate_cost',
+      render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
+    },
+    {
+      title: '净利润',
+      dataIndex: 'netprofit',
       render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
     },
     {
       title: '归属母公司净利润',
       dataIndex: 'parent_netprofit',
-      key: 'parent_netprofit',
-      align: 'right' as const,
       render: (value: any) => <span className="font-mono">{formatNumber(value)}</span>
     }
   ]
 
   return (
-    <Panel>
-    <div className="w-full">
-      <h3 className="text-xl font-semibold mb-4 text-slate-800">利润表（按单季度）</h3>
-      <Table 
-        columns={columns} 
-        dataSource={data} 
+    <Panel title="利润表（按单季度）">
+      <Table
+        columns={columns}
+        dataSource={data}
         loading={loading}
         emptyText="暂无利润表数据"
       />
-    </div>
     </Panel>
   )
 }

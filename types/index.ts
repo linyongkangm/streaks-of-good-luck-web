@@ -10,6 +10,9 @@ import {
   summary__tweet,
   summary__article,
   indicator__predict_financial_report,
+  quote__profit_sheet,
+  quote__balance_sheet,
+  quote__cash_flow_sheet,
 } from '@prisma/client'
 
 // 导出 Prisma 生成的所有类型
@@ -26,6 +29,9 @@ export {
   type summary__tweet,
   type summary__article,
   type indicator__predict_financial_report,
+  type quote__profit_sheet,
+  type quote__balance_sheet,
+  type quote__cash_flow_sheet,
 } from '@prisma/client'
 
 // API 响应类型

@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
     const symbol = company.company_akshare_code
 
-    
+
     const [
       balanceSheetRes,
       profitSheetRes,
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       fetchWebIntellCallAKShare('stock_profit_sheet_by_quarterly_em', { symbol }),
       fetchWebIntellCallAKShare('stock_cash_flow_sheet_by_quarterly_em', { symbol })
     ])
-    
+
     // 1. 获取资产负债表数据
     if (!balanceSheetRes.ok) {
       throw new Error('获取资产负债表数据失败')
@@ -88,6 +88,16 @@ export async function POST(req: NextRequest) {
     let profitSheetCount = 0
     if (Array.isArray(profitSheetData) && profitSheetData.length > 0) {
       for (const item of profitSheetData) {
+        const operate_income = item.OPERATE_INCOME || 0
+        const operate_cost = item.OPERATE_COST || item.OPERATE_EXPENSE || 0
+        const data = {
+          operate_income: operate_income,
+          total_operate_income: item.TOTAL_OPERATE_INCOME || operate_income,
+          operate_cost: operate_cost,
+          total_operate_cost: item.TOTAL_OPERATE_COST || operate_cost,  
+          netprofit: item.NETPROFIT || 0,
+          parent_netprofit: item.PARENT_NETPROFIT || 0,
+        }
         await prisma.quote__profit_sheet.upsert({
           where: {
             company_id_report_date: {
@@ -95,15 +105,11 @@ export async function POST(req: NextRequest) {
               report_date: new Date(item.REPORT_DATE)
             }
           },
-          update: {
-            operate_income: item.OPERATE_INCOME || 0,
-            parent_netprofit: item.PARENT_NETPROFIT || 0,
-          },
+          update: data,
           create: {
             company_id: company.id,
             report_date: new Date(item.REPORT_DATE),
-            operate_income: item.OPERATE_INCOME || 0,
-            parent_netprofit: item.PARENT_NETPROFIT || 0,
+            ...data,
           }
         })
         profitSheetCount++
