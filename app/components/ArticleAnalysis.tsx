@@ -13,6 +13,7 @@ import Pagination from '@/app/widget/Pagination'
 import Select from '@/app/widget/Select'
 import DatePicker from '@/app/widget/DatePicker'
 import { DateTime } from 'luxon'
+import Panel from '../widget/Panel'
 
 function appendPredictsSaved(articleId: string) {
   const predicts_saved = localStorage.getItem('PREDICTS_SAVED')?.split(',') || []
@@ -32,21 +33,16 @@ export default function ArticleAnalysis() {
   const [searchContributor, setSearchContributor] = useState('')
   const [searchIssueDate, setSearchIssueDate] = useState('')
   const [publications, setPublications] = useState<string[]>([])
-  const [reanalyzing, setReanalyzing] = useState<string | null>(null)
-  const [extractingPredicts, setExtractingPredicts] = useState<string | null>(null)
   const [predictPreview, setPredictPreview] = useState<{
     article: summary__article;
     predicts: Array<{ interval_start: string; interval_end: string; content: string }>;
   } | null>(null)
-  const [savingPredicts, setSavingPredicts] = useState(false)
   const [predictsSaved, setPredictsSaved] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('PREDICTS_SAVED')?.split(',') || []
     }
     return []
   })
-  const [hoveredArticle, setHoveredArticle] = useState<summary__article | null>(null)
-  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
   const [showAddArticle, setShowAddArticle] = useState(false)
 
   useEffect(() => {
@@ -102,7 +98,6 @@ export default function ArticleAnalysis() {
 
   const handleExtractPredicts = async (articleId: bigint) => {
     try {
-      setExtractingPredicts(articleId.toString())
       const response = await fetch('/api/extract-predicts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -125,8 +120,6 @@ export default function ArticleAnalysis() {
     } catch (error) {
       console.error('Failed to extract predictions:', error)
       alert('提取预测失败，请稍后重试')
-    } finally {
-      setExtractingPredicts(null)
     }
   }
 
@@ -134,7 +127,6 @@ export default function ArticleAnalysis() {
     if (!predictPreview) return
 
     try {
-      setSavingPredicts(true)
 
       // 组合数据：将每个预测与文章信息结合
       const predictsToSave = predictPreview.predicts.map(predict => ({
@@ -167,8 +159,6 @@ export default function ArticleAnalysis() {
     } catch (error) {
       console.error('Failed to save predictions:', error)
       alert('保存预测失败，请稍后重试')
-    } finally {
-      setSavingPredicts(false)
     }
   }
 
@@ -227,7 +217,6 @@ export default function ArticleAnalysis() {
     if (!confirmResult) return
 
     try {
-      setReanalyzing(article.id.toString())
       const response = await fetch('/api/update-articles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -254,8 +243,6 @@ export default function ArticleAnalysis() {
     } catch (error) {
       console.error('Failed to reanalyze article:', error)
       alert('重新分析失败，请稍后重试')
-    } finally {
-      setReanalyzing(null)
     }
   }
 
@@ -265,11 +252,7 @@ export default function ArticleAnalysis() {
 
   return (
     <div className="p-6 max-w-[1600px] mx-auto">
-      <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-        <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-          📄 文章分析
-        </h2>
-
+      <Panel title="文章分析" className="mb-6">
         {/* 搜索栏 */}
         <div className="flex gap-4" onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}>
           <div className="flex-1">
@@ -310,26 +293,34 @@ export default function ArticleAnalysis() {
             await ctools.collectLatestEconomistArticles()
           }}>获取Economist Weekly Edition</Button>
         </div>
-      </div>
+      </Panel>
 
       {/* 文章列表 */}
       <div className="space-y-4">
         {articles.map((article) => (
-          <div
+          <Panel
             key={article.id}
-            className="bg-white border-2 border-slate-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-xl transition-all duration-200"
+            className="hover:shadow-lg transition-shadow cursor-pointer"
+            title={
+              <a href={article.source_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                {article.title}
+              </a>}
+            headerAction={
+              <div className="flex items-center gap-3">
+                {
+                  !predictsSaved.includes(article.id.toString()) ? (
+                    <Button onClick={async () => { await handleExtractPredicts(article.id) }} size="small">
+                      🔮 获取预测
+                    </Button>
+                  ) : null
+                }
+                <Button onClick={async () => { await handleReanalyze(article) }} look="danger" size="small">
+                  🔄 重新分析
+                </Button>
+              </div>}
           >
             <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white text-xl">
-                📄
-              </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-bold text-slate-900 mb-3 hover:text-blue-600 transition-colors">
-                  <a href={article.source_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                    {article.title}
-                  </a>
-                </h3>
-
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex flex-wrap gap-3">
                     {
@@ -355,20 +346,7 @@ export default function ArticleAnalysis() {
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-3">
-                    {
-                      !predictsSaved.includes(article.id.toString()) ? (
-                        <Button onClick={async () => { await handleExtractPredicts(article.id) }} size="small">
-                          🔮 获取预测
-                        </Button>
-                      ) : null
-                    }
-                    <Button onClick={async () => { await handleReanalyze(article) }} look="danger" size="small">
-                      🔄 重新分析
-                    </Button>
-                  </div>
                 </div>
-
                 {article.tags && (
                   <div className="flex gap-2 mb-4 flex-wrap">
                     {article.tags.split(',').map((tag, idx) => (
@@ -384,23 +362,12 @@ export default function ArticleAnalysis() {
 
                 <p
                   className="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap mb-4"
-                // onMouseEnter={(e) => {
-                //   if (article.source_text) {
-                //     setHoveredArticle(article)
-                //     const rect = e.currentTarget.getBoundingClientRect()
-                //     setTooltipPosition({
-                //       x: rect.left,
-                //       y: rect.bottom + 10
-                //     })
-                //   }
-                // }}
-                // onMouseLeave={() => setHoveredArticle(null)}
                 >
                   {article.summary}
                 </p>
               </div>
             </div>
-          </div>
+          </Panel>
         ))}
 
         {articles.length === 0 && (
@@ -535,28 +502,6 @@ export default function ArticleAnalysis() {
           </div>
         </div>
       )}
-
-      {/* 原文悬浮提示 */}
-      {hoveredArticle && hoveredArticle.source_text && (
-        <div
-          className="fixed z-[60] bg-white rounded-lg shadow-2xl border-2 border-slate-300 max-w-3xl max-h-[600px] overflow-y-auto"
-          style={{
-            left: `${tooltipPosition.x}px`,
-            top: `${tooltipPosition.y}px`,
-            transform: tooltipPosition.y > window.innerHeight / 2 ? 'translateY(calc(-100% - 20px))' : 'none'
-          }}
-        >
-          <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-t-lg">
-            <h4 className="font-bold text-lg">📄 文章原文</h4>
-          </div>
-          <div className="p-6">
-            <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">
-              {hoveredArticle.source_text}
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* 新增文章弹窗 */}
       <ModalForm
         open={showAddArticle}
