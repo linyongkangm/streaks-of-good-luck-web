@@ -1,33 +1,108 @@
 'use client'
 
+import { useState, useEffect, useCallback } from 'react'
 import type { IndustryWithCount } from '@/types'
 import Button from '@/app/widget/Button'
+import ModalForm from '@/app/widget/ModalForm'
+import { FormItem, FormLabel } from '@/app/widget/Form'
+import { TextInput } from '@/app/widget/Input'
 
 interface IndustryAnalysisIndustryListProps {
-  industries: IndustryWithCount[]
-  loading: boolean
-  searchName: string
-  onSearchNameChange: (name: string) => void
-  onSearch: () => void
+  refreshKey: number
   selectedIndustryId: number | null
-  onSelectIndustry: (id: number) => void
-  onCreateIndustry: () => void
-  onEditIndustry: (industry: IndustryWithCount) => void
-  onDeleteIndustry: (industry: IndustryWithCount) => void
+  onSelectIndustry: (id: number | null) => void
 }
 
 export default function IndustryAnalysisIndustryList({
-  industries,
-  loading,
-  searchName,
-  onSearchNameChange,
-  onSearch,
+  refreshKey,
   selectedIndustryId,
   onSelectIndustry,
-  onCreateIndustry,
-  onEditIndustry,
-  onDeleteIndustry,
 }: IndustryAnalysisIndustryListProps) {
+  const [industries, setIndustries] = useState<IndustryWithCount[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchName, setSearchName] = useState('')
+
+  // 新建/编辑行业弹窗
+  const [showIndustryForm, setShowIndustryForm] = useState(false)
+  const [editingIndustry, setEditingIndustry] = useState<IndustryWithCount | null>(null)
+  const [industryForm, setIndustryForm] = useState({ name: '', description: '' })
+
+  const fetchIndustries = useCallback(async () => {
+    try {
+      const params = new URLSearchParams()
+      if (searchName) params.append('name', searchName)
+      const response = await fetch(`/api/industries?${params}`)
+      const data = await response.json()
+      setIndustries(data.data || [])
+    } catch (error) {
+      console.error('Failed to fetch industries:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [searchName])
+
+  useEffect(() => {
+    fetchIndustries()
+  }, [fetchIndustries, refreshKey])
+
+  // 新建/编辑行业提交
+  const handleSubmitIndustry = async (_e: React.FormEvent, values: typeof industryForm) => {
+    if (!values.name.trim()) {
+      alert('请填写行业名称')
+      return
+    }
+
+    const url = editingIndustry
+      ? `/api/industries/${editingIndustry.id}`
+      : '/api/industries'
+    const method = editingIndustry ? 'PUT' : 'POST'
+
+    const response = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: values.name.trim(), description: values.description.trim() || null }),
+    })
+
+    const data = await response.json()
+    if (data.error) {
+      alert(data.error)
+      return
+    }
+
+    setShowIndustryForm(false)
+    setEditingIndustry(null)
+    setIndustryForm({ name: '', description: '' })
+    fetchIndustries()
+  }
+
+  // 删除行业
+  const handleDeleteIndustry = async (industry: IndustryWithCount) => {
+    if (!confirm(`确定要删除行业「${industry.name}」吗？关联的文章不会被删除。`)) return
+
+    const response = await fetch(`/api/industries/${industry.id}`, { method: 'DELETE' })
+    const data = await response.json()
+    if (data.error) {
+      alert(data.error)
+      return
+    }
+
+    if (selectedIndustryId === industry.id) {
+      onSelectIndustry(null)
+    }
+    fetchIndustries()
+  }
+
+  const openEditForm = (industry: IndustryWithCount) => {
+    setEditingIndustry(industry)
+    setIndustryForm({ name: industry.name, description: industry.description || '' })
+    setShowIndustryForm(true)
+  }
+
+  const openCreateForm = () => {
+    setEditingIndustry(null)
+    setIndustryForm({ name: '', description: '' })
+    setShowIndustryForm(true)
+  }
   return (
     <div className="w-80 flex-shrink-0 flex flex-col gap-4">
       <div className="bg-white rounded-xl shadow-lg p-5">
@@ -41,11 +116,11 @@ export default function IndustryAnalysisIndustryList({
             type="text"
             placeholder="搜索行业..."
             value={searchName}
-            onChange={(e) => onSearchNameChange(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && onSearch()}
+            onChange={(e) => setSearchName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && fetchIndustries()}
             className="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-200 outline-none text-slate-900"
           />
-          <Button size="small" look="success" onClick={onCreateIndustry}>＋</Button>
+          <Button size="small" look="success" onClick={openCreateForm}>＋</Button>
         </div>
 
         {/* 行业列表 */}
@@ -75,14 +150,14 @@ export default function IndustryAnalysisIndustryList({
                 </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                   <button
-                    onClick={(e) => { e.stopPropagation(); onEditIndustry(industry) }}
+                    onClick={(e) => { e.stopPropagation(); openEditForm(industry) }}
                     className="p-1 text-slate-400 hover:text-blue-600 transition-colors"
                     title="编辑"
                   >
                     ✏️
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); onDeleteIndustry(industry) }}
+                    onClick={(e) => { e.stopPropagation(); handleDeleteIndustry(industry) }}
                     className="p-1 text-slate-400 hover:text-red-600 transition-colors"
                     title="删除"
                   >
@@ -94,6 +169,29 @@ export default function IndustryAnalysisIndustryList({
           </div>
         )}
       </div>
+
+      {/* 新建/编辑行业弹窗 */}
+      <ModalForm
+        open={showIndustryForm}
+        onClose={() => { setShowIndustryForm(false); setEditingIndustry(null) }}
+        title={editingIndustry ? '✏️ 编辑行业' : '🏭 新建行业'}
+        values={industryForm}
+        onValuesChange={setIndustryForm}
+        onSubmit={handleSubmitIndustry}
+        submitText={editingIndustry ? '保存' : '新建'}
+        maxWidth="md"
+      >
+        <FormLabel label="行业名称" required>
+          <FormItem field="name">
+            <TextInput placeholder="输入行业名称" />
+          </FormItem>
+        </FormLabel>
+        <FormLabel label="描述">
+          <FormItem field="description">
+            <TextInput placeholder="输入行业描述（可选）" />
+          </FormItem>
+        </FormLabel>
+      </ModalForm>
     </div>
   )
 }
