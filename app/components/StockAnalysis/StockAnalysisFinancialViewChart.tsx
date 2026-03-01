@@ -70,25 +70,6 @@ const quickSelectFields: FinancialViewField[] = [
 
 const otherFields: FinancialViewField[] = fieldOrder.filter((field) => !quickSelectFields.includes(field))
 
-// 字段映射：TTM -> 年度数据
-const fieldMapping: Record<FinancialViewField, FinancialViewField | null> = {
-  'cashflow_ratio_ttm': 'cashflow_ratio_ttm', // 比率字段无年度对应
-  'gross_profit_margin_ttm': 'gross_profit_margin_ttm', // 比率字段无年度对应
-  'net_profit_margin_ttm': 'net_profit_margin_ttm', // 比率字段无年度对应
-  'free_cash_flow_ttm': 'free_cash_flow_last_year' as any,
-  'total_parent_equity': 'total_parent_equity', // 资产表字段无年度对应
-  'total_operate_income_ttm': 'total_operate_income_last_year' as any,
-  'operate_income_ttm': 'operate_income_last_year' as any,
-  'total_operate_cost_ttm': 'total_operate_cost_last_year' as any,
-  'operate_cost_ttm': 'operate_cost_last_year' as any,
-  'netprofit_ttm': 'netprofit_last_year' as any,
-  'parent_netprofit_ttm': 'parent_netprofit_last_year' as any,
-  'netcash_operate_ttm': 'netcash_operate_last_year' as any,
-  'netcash_invest_ttm': 'netcash_invest_last_year' as any,
-  'netcash_finance_ttm': 'netcash_finance_last_year' as any,
-  'rate_change_effect_ttm': 'rate_change_effect_last_year' as any,
-}
-
 export default function StockAnalysisFinancialViewChart({ selectedCompany }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
   const chartInstance = useRef<Chart | null>(null)
@@ -101,10 +82,8 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
   // 根据数据类型获取实际字段名
   const getFieldForDataType = (baseField: FinancialViewField, type: DataType): string => {
     if (type === 'ttm') return baseField
-    if (type === 'annual') {
-      const mapped = fieldMapping[baseField]
-      if (mapped && mapped !== baseField) return mapped
-    }
+    // 年度数据使用每年第四季度的 TTM 字段
+    if (type === 'annual') return baseField
     return baseField
   }
 
@@ -150,8 +129,39 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
 
     if (!chartRef.current || records.length === 0) return
 
-    const sortedRecords = [...records].reverse()
-    const chartData = sortedRecords
+    const sortedRecords = [...records].sort((a, b) => {
+      const aTime = new Date(a.report_date as any).getTime()
+      const bTime = new Date(b.report_date as any).getTime()
+      return aTime - bTime
+    })
+
+    const recordsForChart = (() => {
+      if (dataType !== 'annual') return sortedRecords
+
+      const recordsByYear = new Map<number, view_financial_statements[]>()
+
+      for (const item of sortedRecords) {
+        const date = new Date(item.report_date as any)
+        const year = date.getFullYear()
+        const yearRecords = recordsByYear.get(year) || []
+        yearRecords.push(item)
+        recordsByYear.set(year, yearRecords)
+      }
+
+      return Array.from(recordsByYear.entries())
+        .sort((a, b) => a[0] - b[0])
+        .map(([, yearRecords]) => {
+          const q4Record = [...yearRecords]
+            .sort((a, b) => new Date(a.report_date as any).getTime() - new Date(b.report_date as any).getTime())
+            .findLast((record) => new Date(record.report_date as any).getMonth() + 1 === 12)
+
+          if (q4Record) return q4Record
+
+          return [...yearRecords].sort((a, b) => new Date(a.report_date as any).getTime() - new Date(b.report_date as any).getTime())[yearRecords.length - 1]
+        })
+    })()
+
+    const chartData = recordsForChart
       .map((item, index) => {
         const metricField = getFieldForDataType(field, dataType)
 
@@ -191,7 +201,7 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
         // 计算环比
         let sequentialRatio = Number.NaN
         if (index > 0) {
-          const prevData = sortedRecords[index - 1]
+          const prevData = recordsForChart[index - 1]
 
           const prevValue = (() => {
             if (field === 'cashflow_ratio_ttm') {
@@ -244,15 +254,6 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
       autoFit: true,
       height: 380,
     })
-
-    // 获取环比的最大最小值用于坐标轴刻度
-    const validSequentialValues = chartData
-      .map(d => d.sequential_ratio)
-      .filter(v => Number.isFinite(v))
-    const sequentialMax = validSequentialValues.length > 0 ? Math.max(...validSequentialValues) : 0.1
-    const sequentialMin = validSequentialValues.length > 0 ? Math.min(...validSequentialValues) : -0.1
-
-    const dataTypeLabel = dataType === 'ttm' ? '(TTM)' : '(年度)'
 
     chart.options({
       type: 'view',
