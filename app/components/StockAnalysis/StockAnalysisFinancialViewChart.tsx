@@ -22,8 +22,8 @@ type FinancialViewField =
   | 'cashflow_ratio_ttm' | 'gross_profit_margin_ttm' | 'net_profit_margin_ttm'
 
 const fieldLabels: Record<FinancialViewField, string> = {
-  // 现金流量比率 = 经营现金流(TTM) / 归母净利润(TTM)
-  cashflow_ratio_ttm: '现金流量比率',
+  // 净利润现金含量 = 经营现金流(TTM) / 归母净利润(TTM)
+  cashflow_ratio_ttm: '净利润现金含量',
   // 毛利率 = (营业收入(TTM) - 营业成本(TTM)) / 营业收入(TTM)
   gross_profit_margin_ttm: '毛利率',
   // 净利率 = 净利润(TTM) / 营业收入(TTM)
