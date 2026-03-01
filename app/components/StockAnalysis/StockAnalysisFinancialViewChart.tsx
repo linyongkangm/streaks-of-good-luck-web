@@ -25,22 +25,22 @@ const fieldLabels: Record<FinancialViewField, string> = {
   // 现金流量比率 = 经营现金流(TTM) / 归母净利润(TTM)
   cashflow_ratio_ttm: '现金流量比率',
   // 毛利率 = (营业收入(TTM) - 营业成本(TTM)) / 营业收入(TTM)
-  gross_profit_margin_ttm: '毛利率(TTM)',
+  gross_profit_margin_ttm: '毛利率',
   // 净利率 = 净利润(TTM) / 营业收入(TTM)
-  net_profit_margin_ttm: '净利率(TTM)',
+  net_profit_margin_ttm: '净利率',
 
   total_parent_equity: '归母权益',
-  total_operate_income_ttm: '营业总收入(TTM)',
-  operate_income_ttm: '营业收入(TTM)',
-  total_operate_cost_ttm: '营业总成本(TTM)',
-  operate_cost_ttm: '营业成本(TTM)',
-  netprofit_ttm: '净利润(TTM)',
-  parent_netprofit_ttm: '归母净利润(TTM)',
-  netcash_operate_ttm: '经营现金流(TTM)',
-  netcash_invest_ttm: '投资现金流(TTM)',
-  netcash_finance_ttm: '筹资现金流(TTM)',
-  rate_change_effect_ttm: '汇率变动影响(TTM)',
-  free_cash_flow_ttm: '自由现金流(TTM)',
+  total_operate_income_ttm: '营业总收入',
+  operate_income_ttm: '营业收入',
+  total_operate_cost_ttm: '营业总成本',
+  operate_cost_ttm: '营业成本',
+  netprofit_ttm: '净利润',
+  parent_netprofit_ttm: '归母净利润',
+  netcash_operate_ttm: '经营现金流',
+  netcash_invest_ttm: '投资现金流',
+  netcash_finance_ttm: '筹资现金流',
+  rate_change_effect_ttm: '汇率变动影响',
+  free_cash_flow_ttm: '自由现金流',
 }
 
 const fieldOrder: FinancialViewField[] = [
@@ -157,12 +157,14 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
 
         const metricValue = (() => {
           if (field === 'cashflow_ratio_ttm') {
-            const netcashOperateTtm = Number((item as any)[metricField] || 0)
-            const parentNetprofitTtm = Number((item as any)[getFieldForDataType('parent_netprofit_ttm', dataType)] || 0)
-            if (!Number.isFinite(netcashOperateTtm) || !Number.isFinite(parentNetprofitTtm) || parentNetprofitTtm === 0) {
+            const netcashOperateField = getFieldForDataType('netcash_operate_ttm', dataType)
+            const parentNetprofitField = getFieldForDataType('parent_netprofit_ttm', dataType)
+            const netcashOperate = Number((item as any)[netcashOperateField] || 0)
+            const parentNetprofit = Number((item as any)[parentNetprofitField] || 0)
+            if (!Number.isFinite(netcashOperate) || !Number.isFinite(parentNetprofit) || parentNetprofit === 0) {
               return Number.NaN
             }
-            return netcashOperateTtm / parentNetprofitTtm
+            return netcashOperate / parentNetprofit
           }
 
           if (field === 'gross_profit_margin_ttm') {
@@ -190,14 +192,17 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
         let sequentialRatio = Number.NaN
         if (index > 0) {
           const prevData = sortedRecords[index - 1]
-          const prevMetricField = getFieldForDataType(field, dataType)
 
           const prevValue = (() => {
             if (field === 'cashflow_ratio_ttm') {
-              const prevNetcash = Number((prevData as any)[prevMetricField] || 0)
-              const prevNetprofit = Number((prevData as any)[getFieldForDataType('parent_netprofit_ttm', dataType)] || 0)
-              if (prevNetprofit === 0) return Number.NaN
-              return prevNetcash / prevNetprofit
+              const netcashOperateField = getFieldForDataType('netcash_operate_ttm', dataType)
+              const parentNetprofitField = getFieldForDataType('parent_netprofit_ttm', dataType)
+              const prevNetcashOperate = Number((prevData as any)[netcashOperateField] || 0)
+              const prevParentNetprofit = Number((prevData as any)[parentNetprofitField] || 0)
+              if (!Number.isFinite(prevNetcashOperate) || !Number.isFinite(prevParentNetprofit) || prevParentNetprofit === 0) {
+                return Number.NaN
+              }
+              return prevNetcashOperate / prevParentNetprofit
             }
 
             if (field === 'gross_profit_margin_ttm') {
@@ -214,7 +219,7 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
               return prevNetprofit / prevOpIncome
             }
 
-            return Number((prevData as any)[prevMetricField])
+            return Number((prevData as any)[metricField])
           })()
 
           if (Number.isFinite(metricValue) && Number.isFinite(prevValue) && prevValue !== 0) {
