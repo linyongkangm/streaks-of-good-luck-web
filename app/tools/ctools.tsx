@@ -87,6 +87,9 @@ export async function collectLatestWSJArticles() {
     "https://www.wsj.com/economy/central-banking?page=1",
     "https://www.wsj.com/economy/trade?page=1",
     "https://www.wsj.com/economy/global?page=1",
+    "https://www.wsj.com/world/china?page=1",
+    "https://www.wsj.com/world?page=1",
+    "https://www.wsj.com/politics?page=1"
     
   ]);
   const response = await fetch('/api/article-summaries/existing?publication=wsj')
