@@ -373,7 +373,7 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
           <Radio
             options={[
               { value: 'ttm', label: 'TTM' },
-              { value: 'annual', label: '年度' },
+              { value: 'annual', label: '年度末TTM' },
             ] as const}
             value={dataType}
             onChange={(v) => setDataType(v as DataType)}
