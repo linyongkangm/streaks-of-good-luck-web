@@ -264,7 +264,7 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
       legend: false,
       axis: {
         x: {
-          title: `${selectedCompany.company_name} - 报告期`,
+          title: `${selectedCompany.company_name} - ${dataType === 'ttm' ? 'TTM' : '年度'}报告期`,
         },
       },
       children: [
