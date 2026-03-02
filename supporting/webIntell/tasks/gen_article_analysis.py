@@ -10,7 +10,7 @@ ARTICLE_SUMMARY_PROMPT_TEMPLATE = """
 
 请严格按照以下格式用中文进行回应:
 
-Tags:文章标签，多个标签用逗号分隔
+Tags:文章标签，多个标签用","分隔
 Summary:文章总结
 
 
