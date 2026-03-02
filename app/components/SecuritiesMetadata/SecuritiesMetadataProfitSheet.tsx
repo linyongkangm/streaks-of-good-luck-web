@@ -10,8 +10,57 @@ interface Props {
   selectedCompany: info__stock_company
 }
 
+interface ProfitSheetWithYoY extends quote__profit_sheet {
+  operate_income_yoy?: number | null // 同比增长率（百分比）
+  total_operate_income_yoy?: number | null
+  netprofit_yoy?: number | null
+  parent_netprofit_yoy?: number | null
+}
+
+// 计算同比增长率
+function calculateYoYGrowth(currentValue: any, priorYearValue: any): number | null {
+  const curr = Number(currentValue)
+  const prior = Number(priorYearValue)
+  
+  if (!prior || prior === 0) return null
+  return ((curr - prior) / Math.abs(prior)) * 100
+}
+
+// 获取报告期的年份和季度
+function getYearAndQuarter(date: Date | string): { year: number; quarter: number } {
+  const d = new Date(date instanceof Date ? date : new Date(date))
+  const month = d.getMonth() + 1
+  const quarter = Math.ceil(month / 3)
+  return { year: d.getFullYear(), quarter }
+}
+
+// 为数据添加同比数据
+function enrichDataWithYoY(data: quote__profit_sheet[]): ProfitSheetWithYoY[] {
+  // 创建年份和季度的索引
+  const dataByYearQuarter: Map<string, quote__profit_sheet> = new Map()
+  
+  data.forEach(item => {
+    const { year, quarter } = getYearAndQuarter(item.report_date)
+    dataByYearQuarter.set(`${year}Q${quarter}`, item)
+  })
+  
+  return data.map(item => {
+    const { year, quarter } = getYearAndQuarter(item.report_date)
+    const priorYearKey = `${year - 1}Q${quarter}`
+    const priorYearData = dataByYearQuarter.get(priorYearKey)
+    
+    return {
+      ...item,
+      operate_income_yoy: priorYearData ? calculateYoYGrowth(item.operate_income, priorYearData.operate_income) : null,
+      total_operate_income_yoy: priorYearData ? calculateYoYGrowth(item.total_operate_income, priorYearData.total_operate_income) : null,
+      netprofit_yoy: priorYearData ? calculateYoYGrowth(item.netprofit, priorYearData.netprofit) : null,
+      parent_netprofit_yoy: priorYearData ? calculateYoYGrowth(item.parent_netprofit, priorYearData.parent_netprofit) : null,
+    }
+  })
+}
+
 export default function SecuritiesMetadataProfitSheet({ selectedCompany }: Props) {
-  const [data, setData] = useState<quote__profit_sheet[]>([])
+  const [data, setData] = useState<ProfitSheetWithYoY[]>([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -28,7 +77,8 @@ export default function SecuritiesMetadataProfitSheet({ selectedCompany }: Props
       )
       if (res.ok) {
         const result = await res.json()
-        setData(result.data)
+        const enrichedData = enrichDataWithYoY(result.data || [])
+        setData(enrichedData)
       }
     } catch (error) {
       console.error('获取利润表数据失败:', error)
@@ -37,7 +87,7 @@ export default function SecuritiesMetadataProfitSheet({ selectedCompany }: Props
     }
   }
 
-  const columns: Column<quote__profit_sheet>[] = [
+  const columns: Column<ProfitSheetWithYoY>[] = [
     {
       title: '报告期',
       dataIndex: 'report_date',
@@ -49,9 +99,27 @@ export default function SecuritiesMetadataProfitSheet({ selectedCompany }: Props
       format: ColumnFormatType.NUMBER,
     },
     {
+      title: '营业总收入同比',
+      dataIndex: 'total_operate_income_yoy',
+      render: (value) => {
+        if (value === null || value === undefined) return '-'
+        const color = value >= 0 ? 'text-red-600' : 'text-green-600'
+        return <span className={color}>{value.toFixed(2)}%</span>
+      }
+    },
+    {
       title: '营业收入',
       dataIndex: 'operate_income',
       format: ColumnFormatType.NUMBER,
+    },
+    {
+      title: '营业收入同比',
+      dataIndex: 'operate_income_yoy',
+      render: (value) => {
+        if (value === null || value === undefined) return '-'
+        const color = value >= 0 ? 'text-red-600' : 'text-green-600'
+        return <span className={color}>{value.toFixed(2)}%</span>
+      }
     },
     {
       title: '营业总成本',
@@ -69,9 +137,27 @@ export default function SecuritiesMetadataProfitSheet({ selectedCompany }: Props
       format: ColumnFormatType.NUMBER,
     },
     {
+      title: '净利润同比',
+      dataIndex: 'netprofit_yoy',
+      render: (value) => {
+        if (value === null || value === undefined) return '-'
+        const color = value >= 0 ? 'text-red-600' : 'text-green-600'
+        return <span className={color}>{value.toFixed(2)}%</span>
+      }
+    },
+    {
       title: '归属母公司净利润',
       dataIndex: 'parent_netprofit',
       format: ColumnFormatType.NUMBER,
+    },
+    {
+      title: '归属母公司净利润同比',
+      dataIndex: 'parent_netprofit_yoy',
+      render: (value) => {
+        if (value === null || value === undefined) return '-'
+        const color = value >= 0 ? 'text-red-600' : 'text-green-600'
+        return <span className={color}>{value.toFixed(2)}%</span>
+      }
     }
   ]
 
