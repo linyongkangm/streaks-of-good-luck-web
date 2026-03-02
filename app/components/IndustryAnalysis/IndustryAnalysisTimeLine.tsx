@@ -124,7 +124,7 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
 
   // 删除 milestone
   const handleDelete = async (id: number) => {
-    if (!confirm('确定要删除这个里程碑吗？')) return
+    if (!confirm('确定要删除这个行业事件吗？')) return
 
     try {
       const response = await fetch(`/api/milestones/${id}`, {
@@ -172,10 +172,10 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
 
   return (
     <Panel
-      title="行业里程碑"
+      title="行业事件"
       headerAction={
         <Button size="small" onClick={handleOpenCreate}>
-          新增里程碑
+          新增事件
         </Button>
       }>
 
@@ -183,7 +183,7 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
       {loading ? (
         <div className="text-center py-8 text-gray-500">加载中...</div>
       ) : milestones.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">暂无里程碑数据</div>
+        <div className="text-center py-8 text-gray-500">暂无行业事件数据</div>
       ) : (
         <div className="space-y-8">
           {Object.keys(milestonesByYear)
@@ -242,11 +242,11 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
         </div>
       )}
 
-      {/* 创建/编辑里程碑弹窗 */}
+      {/* 创建/编辑行业事件弹窗 */}
       <ModalForm
         open={showModal}
         onClose={handleCloseModal}
-        title={editingMilestone ? '编辑里程碑' : '新增里程碑'}
+        title={editingMilestone ? '编辑行业事件' : '新增行业事件'}
         onSubmit={handleSubmit}
         submitText={editingMilestone ? '保存' : '创建'}
         initialValues={{
@@ -260,7 +260,7 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
       >
         <FormLabel label="标题" required>
           <FormItem field="title">
-            <Input placeholder="请输入里程碑标题" />
+            <Input placeholder="请输入行业事件标题" />
           </FormItem>
         </FormLabel>
         <FormLabel label="日期" required>
