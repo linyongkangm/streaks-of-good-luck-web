@@ -16,7 +16,7 @@ interface Props {
 }
 
 /* 关联文章弹窗 */
-export default function IndustryAnalysisRelateModal({
+export default function IndustryAnalysisArticleModal({
   open,
   onClose,
   industryDetail,

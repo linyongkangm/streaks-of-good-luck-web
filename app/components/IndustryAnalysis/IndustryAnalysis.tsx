@@ -6,7 +6,7 @@ import Placeholder from '@/app/widget/Placeholder'
 import IndustryAnalysisIndustryList from './IndustryAnalysisIndustryList'
 import IndustryAnalysisIndustryInfo from './IndustryAnalysisIndustryInfo'
 import IndustryAnalysisRelateArticles from './IndustryAnalysisRelateArticles'
-import IndustryAnalysisRelateModal from './IndustryAnalysisRelateModal'
+import IndustryAnalysisArticleModal from './IndustryAnalysisArticleModal'
 import IndustryAnalysisTimeLine from './IndustryAnalysisTimeLine'
 export default function IndustryAnalysis() {
   const [selectedIndustryId, setSelectedIndustryId] = useState<number | null>(null)
@@ -88,7 +88,7 @@ export default function IndustryAnalysis() {
       </div>
 
       {/* 关联文章弹窗 */}
-      <IndustryAnalysisRelateModal
+      <IndustryAnalysisArticleModal
         open={showLinkArticle}
         onClose={() => setShowLinkArticle(false)}
         industryDetail={industryDetail}
