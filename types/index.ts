@@ -15,7 +15,9 @@ import {
   quote__profit_sheet,
   quote__balance_sheet,
   quote__cash_flow_sheet,
-  view_financial_statements
+  view_financial_statements,
+  info__milestone,
+  relation__industry_or_company_milestone
 } from '@prisma/client'
 
 // 导出 Prisma 生成的所有类型
@@ -38,6 +40,8 @@ export {
   type quote__balance_sheet,
   type quote__cash_flow_sheet,
   type view_financial_statements,
+  type info__milestone,
+  type relation__industry_or_company_milestone,
 } from '@prisma/client'
 
 // API 响应类型
@@ -149,3 +153,34 @@ export interface CreateObservationRequest {
   observation_date: string | Date
   content: string
 }
+
+// 里程碑相关类型
+export type MilestoneListResponse = ApiResponse<MilestoneWithRelations[]>
+
+export interface MilestoneWithRelations extends info__milestone {
+  relation__industry_or_company_milestone: (relation__industry_or_company_milestone & {
+    info__industry: info__industry | null
+    info__stock_company: info__stock_company | null
+  })[]
+}
+
+export type MilestoneDetailResponse = ApiResponse<MilestoneWithRelations>
+
+export interface CreateMilestoneRequest {
+  title: string
+  description?: string
+  milestone_date: string | Date
+  status?: string
+  industry_ids?: number[]
+  company_ids?: number[]
+}
+
+export interface UpdateMilestoneRequest {
+  title?: string
+  description?: string
+  milestone_date?: string | Date
+  status?: string
+  industry_ids?: number[]
+  company_ids?: number[]
+}
+

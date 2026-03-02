@@ -63,7 +63,7 @@ export default function IndustryAnalysis() {
         {/* 右侧 - 行业资讯 */}
         <div className="flex-1 min-w-0">
           <Placeholder selected={!!selectedIndustryId} loading={loadingDetail} icon="👈" message="请从左侧选择一个行业">
-            {industryDetail && (
+            {industryDetail && selectedIndustryId && (
               <div className="space-y-4">
 
                 {/* 行业信息头 */}
@@ -71,7 +71,10 @@ export default function IndustryAnalysis() {
                   industryDetail={industryDetail}
                   onOpenLinkArticle={() => setShowLinkArticle(true)}
                 />
-                <IndustryAnalysisTimeLine />
+                
+                {/* 行业里程碑时间轴 */}
+                <IndustryAnalysisTimeLine industryId={selectedIndustryId} />
+                
                 {/* 文章按年份分组 */}
                 <IndustryAnalysisRelateArticles
                   industryDetail={industryDetail}

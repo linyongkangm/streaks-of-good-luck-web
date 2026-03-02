@@ -37,21 +37,22 @@ model info__stock_board {
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model info__stock_company {
-  id                             Int                              @id @default(autoincrement()) @db.UnsignedInt
-  company_name                   String                           @unique(map: "idx_company_name") @db.VarChar(50)
-  company_code                   String                           @unique(map: "idx_company_code") @db.VarChar(20)
-  company_akshare_code           String                           @unique(map: "idx_company_akshare_code") @db.VarChar(20)
-  create_time                    DateTime                         @default(now()) @db.DateTime(0)
-  update_time                    DateTime                         @default(now()) @updatedAt @db.DateTime(0)
-  industry                       String?                          @db.VarChar(20)
-  ipo_date                       DateTime?                        @db.Date
-  circulating_shares             Decimal?                         @db.Decimal(20, 2)
-  total_shares                   Decimal?                         @db.Decimal(20, 2)
-  quote__balance_sheet           quote__balance_sheet[]
-  quote__cash_flow_sheet         quote__cash_flow_sheet[]
-  quote__profit_sheet            quote__profit_sheet[]
-  quote__stock_constituent_daily quote__stock_constituent_daily[]
-  relation__stock_board_company  relation__stock_board_company[]
+  id                                      Int                                           @id @default(autoincrement()) @db.UnsignedInt
+  company_name                            String                                        @unique(map: "idx_company_name") @db.VarChar(50)
+  company_code                            String                                        @unique(map: "idx_company_code") @db.VarChar(20)
+  company_akshare_code                    String                                        @unique(map: "idx_company_akshare_code") @db.VarChar(20)
+  create_time                             DateTime                                      @default(now()) @db.DateTime(0)
+  update_time                             DateTime                                      @default(now()) @updatedAt @db.DateTime(0)
+  industry                                String?                                       @db.VarChar(20)
+  ipo_date                                DateTime?                                     @db.Date
+  circulating_shares                      Decimal?                                      @db.Decimal(20, 2)
+  total_shares                            Decimal?                                      @db.Decimal(20, 2)
+  quote__balance_sheet                    quote__balance_sheet[]
+  quote__cash_flow_sheet                  quote__cash_flow_sheet[]
+  quote__profit_sheet                     quote__profit_sheet[]
+  quote__stock_constituent_daily          quote__stock_constituent_daily[]
+  relation__stock_board_company           relation__stock_board_company[]
+  relation__industry_or_company_milestone relation__industry_or_company_milestone[]
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -152,7 +153,7 @@ model summary__article {
   update_time                 DateTime                      @default(now()) @updatedAt @db.DateTime(0)
   publication                 String?                       @db.VarChar(20)
   issue_date                  DateTime?                     @db.Date
-  source_text                 String?                       @db.Text
+  source_text                 String?                       @db.LongText
   contributor                 String?                       @db.VarChar(255)
   info__predicts              info__predict[]
   relation__industry_articles relation__industry_article[]
@@ -163,12 +164,13 @@ model summary__article {
 
 /// 行业表
 model info__industry {
-  id                          Int                           @id @default(autoincrement()) @db.UnsignedInt
-  name                        String                        @unique(map: "uk_industry_name") @db.VarChar(100)
-  description                 String?                       @db.Text
-  create_time                 DateTime                      @default(now()) @db.DateTime(0)
-  update_time                 DateTime                      @default(now()) @updatedAt @db.DateTime(0)
-  relation__industry_articles relation__industry_article[]
+  id                                      Int                                           @id @default(autoincrement()) @db.UnsignedInt
+  name                                    String                                        @unique(map: "uk_industry_name") @db.VarChar(100)
+  description                             String?                                       @db.Text
+  create_time                             DateTime                                      @default(now()) @db.DateTime(0)
+  update_time                             DateTime                                      @default(now()) @updatedAt @db.DateTime(0)
+  relation__industry_articles             relation__industry_article[]
+  relation__industry_or_company_milestone relation__industry_or_company_milestone[]
 }
 
 /// 行业-文章关联表
@@ -350,4 +352,35 @@ enum VerifyStatus {
 enum AssocType {
   article
   link
+}
+
+/// 里程碑表
+model info__milestone {
+  id                                          Int                                           @id @default(autoincrement()) @db.UnsignedInt
+  title                                       String                                        @db.VarChar(200)
+  description                                 String?                                       @db.Text
+  milestone_date                              DateTime                                      @db.Date
+  status                                      String                                        @default("planned") @db.VarChar(20)
+  create_time                                 DateTime                                      @default(now()) @db.DateTime(0)
+  update_time                                 DateTime                                      @default(now()) @updatedAt @db.DateTime(0)
+  relation__industry_or_company_milestone     relation__industry_or_company_milestone[]
+
+  @@index([milestone_date], map: "idx_milestone_date")
+}
+
+/// 行业或公司-里程碑关联表
+model relation__industry_or_company_milestone {
+  id                Int              @id @default(autoincrement()) @db.UnsignedInt
+  milestone_id      Int              @db.UnsignedInt
+  industry_id       Int?             @db.UnsignedInt
+  company_id        Int?             @db.UnsignedInt
+  create_time       DateTime         @default(now()) @db.DateTime(0)
+  update_time       DateTime         @default(now()) @updatedAt @db.DateTime(0)
+  info__milestone   info__milestone  @relation(fields: [milestone_id], references: [id], onDelete: Cascade, map: "fk_milestone_relation_milestone_id")
+  info__industry    info__industry?  @relation(fields: [industry_id], references: [id], onDelete: Cascade, map: "fk_milestone_relation_industry_id")
+  info__stock_company info__stock_company? @relation(fields: [company_id], references: [id], onDelete: Cascade, map: "fk_milestone_relation_company_id")
+
+  @@index([milestone_id], map: "idx_milestone_id")
+  @@index([industry_id], map: "idx_industry_id")
+  @@index([company_id], map: "idx_company_id")
 }
