@@ -19,7 +19,6 @@ interface MilestoneFormData {
   title: string
   description: string
   milestone_date: DateTime | string
-  status: string
   keyword: string
 }
 
@@ -235,18 +234,22 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
     return yearGroups
   }, [dateRange])
 
-  const statusOptions = [
-    { label: '计划中', value: 'planned' },
-    { label: '进行中', value: 'ongoing' },
-    { label: '已完成', value: 'completed' },
-    { label: '已取消', value: 'cancelled' },
-  ]
-
-  const statusColors: Record<string, string> = {
-    planned: 'bg-blue-100 text-blue-800',
-    ongoing: 'bg-yellow-100 text-yellow-800',
-    completed: 'bg-green-100 text-green-800',
-    cancelled: 'bg-gray-100 text-gray-800',
+  // 根据 impact 获取日历格子背景颜色
+  const getImpactColor = (impact?: string | null): string => {
+    switch (impact) {
+      case '超正面':
+        return 'bg-red-700' // 深红色
+      case '正面':
+        return 'bg-red-500' // 红色
+      case '中性':
+        return 'bg-blue-400' // 蓝色
+      case '负面':
+        return 'bg-green-500' // 绿色
+      case '超负面':
+        return 'bg-green-700' // 深绿色
+      default:
+        return 'bg-blue-400' // 默认蓝色
+    }
   }
 
   const renderMilestoneHoverPopover = (
@@ -434,10 +437,11 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
                                     onMouseLeave={() => setHoverDate(null)}
                                   >
                                     <div
-                                      className={`rounded cursor-pointer transition-all flex items-center justify-center text-[10px] font-medium ${hasMilestone
-                                          ? 'bg-blue-400 hover:bg-blue-500 px-1.5 py-0.5 whitespace-nowrap text-white'
+                                      className={`rounded cursor-pointer transition-all flex items-center justify-center text-[10px] font-medium ${
+                                        hasMilestone
+                                          ? `${getImpactColor(dayMilestones[0]?.relation__industry_or_company_milestone?.[0]?.impact)} hover:opacity-80 px-1.5 py-0.5 whitespace-nowrap text-white`
                                           : 'w-5 h-5 bg-gray-200 hover:bg-gray-300'
-                                        }`}
+                                      }`}
                                     >
                                       {hasMilestone && dayMilestones.map((m, idx) => (
                                         <span key={m.id}>
@@ -484,7 +488,6 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
           milestone_date: editingMilestone
             ? DateTime.fromISO(new Date(editingMilestone.milestone_date).toISOString().split('T')[0])
             : DateTime.now(),
-          status: editingMilestone?.status || 'planned',
           keyword: editingMilestone?.keyword || '',
         }}
       >

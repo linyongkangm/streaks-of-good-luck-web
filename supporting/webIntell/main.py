@@ -53,6 +53,14 @@ class MilestoneKeywordRequest(BaseModel):
     description: str | None = None
 
 
+class MilestoneImpactRequest(BaseModel):
+    """里程碑影响判断请求模型"""
+
+    title: str
+    description: str | None = None
+    context: str | None = None
+
+
 # ==================== 数据库操作 ====================
 
 # 数据库操作由 Next.js 负责，Python API 不进行数据库操作
@@ -121,6 +129,34 @@ async def api_extract_milestone_keyword(request: MilestoneKeywordRequest):
         import traceback
 
         logger.error(f"✗ 里程碑关键词提取失败: {e}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# /extract-milestone-impact 路由
+@app.post("/extract-milestone-impact")
+async def api_extract_milestone_impact(request: MilestoneImpactRequest):
+    """API 接口：判断里程碑对行业/公司的影响（超正面、正面、中性、负面、超负面）"""
+    logger = utils.locator.get_project_logger()
+
+    try:
+        if not request.title:
+            return {"success": False, "message": "title is required"}
+
+        impact = await tasks.gen_milestone_impact(
+            request.title,
+            request.description or "",
+            request.context or "",
+        )
+
+        return {
+            "success": True,
+            "impact": impact,
+        }
+    except Exception as e:
+        import traceback
+
+        logger.error(f"✗ 里程碑影响判断失败: {e}")
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 

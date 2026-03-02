@@ -5,6 +5,7 @@ from .gen_tweet_analysis import gen_tweet_analysis as gen_tweet_analysis
 from .gen_article_analysis import gen_article_analysis as gen_article_analysis
 from .gen_predicts import gen_predicts as gen_predicts
 from .gen_milestone_keyword import gen_milestone_keyword as gen_milestone_keyword
+from .gen_milestone_impact import gen_milestone_impact as gen_milestone_impact
 from .call_akshare import call_akshare as call_akshare
 
 async def test():

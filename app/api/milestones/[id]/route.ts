@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { extractMilestoneKeyword } from '@/app/tools/extractMilestoneKeyword'
+import { extractMilestoneImpact } from '@/app/tools/extractMilestoneImpact'
 
 // GET /api/milestones/:id - 获取单个里程碑详情
 export async function GET(
@@ -47,7 +48,7 @@ export async function PUT(
   try {
     const id = parseInt((await params).id)
     const body = await request.json()
-    const { title, description, milestone_date, status, industry_ids = [], company_ids = [], keyword: clientKeyword } = body
+    const { title, description, milestone_date, industry_ids = [], company_ids = [], keyword: clientKeyword } = body
 
     if (!title || !milestone_date) {
       return NextResponse.json(
@@ -59,26 +60,71 @@ export async function PUT(
     // 如果客户端提供了 keyword，就用客户端的；否则调用 LLM 生成
     const keyword = clientKeyword ? clientKeyword : await extractMilestoneKeyword(title, description)
 
-    // 先删除旧的关联，再创建新的
+    // 先删除旧的关联
     await prisma.relation__industry_or_company_milestone.deleteMany({
       where: { milestone_id: id },
     })
 
+    // 更新 milestone
     const milestone = await prisma.info__milestone.update({
       where: { id },
       data: {
         title,
         description: description || null,
         milestone_date: new Date(milestone_date),
-        status,
         keyword,
-        relation__industry_or_company_milestone: {
-          create: [
-            ...industry_ids.map((industryId: number) => ({ industry_id: industryId })),
-            ...company_ids.map((companyId: number) => ({ company_id: companyId })),
-          ],
-        },
       },
+    })
+
+    // 为每个行业或公司计算 impact 并创建新的关联
+    const relationDataPromises: Promise<any>[] = []
+
+    // 处理行业关联
+    for (const industryId of industry_ids) {
+      const industry = await prisma.info__industry.findUnique({
+        where: { id: industryId },
+      })
+      if (industry) {
+        const impactContext = `行业: ${industry.name}`
+        const impact = await extractMilestoneImpact(title, description, impactContext)
+        relationDataPromises.push(
+          prisma.relation__industry_or_company_milestone.create({
+            data: {
+              milestone_id: id,
+              industry_id: industryId,
+              impact,
+            },
+          })
+        )
+      }
+    }
+
+    // 处理公司关联
+    for (const companyId of company_ids) {
+      const company = await prisma.info__stock_company.findUnique({
+        where: { id: companyId },
+      })
+      if (company) {
+        const impactContext = `公司: ${company.company_name}`
+        const impact = await extractMilestoneImpact(title, description, impactContext)
+        relationDataPromises.push(
+          prisma.relation__industry_or_company_milestone.create({
+            data: {
+              milestone_id: id,
+              company_id: companyId,
+              impact,
+            },
+          })
+        )
+      }
+    }
+
+    // 等待所有关联创建完成
+    await Promise.all(relationDataPromises)
+
+    // 重新获取完整的 milestone 数据
+    const fullMilestone = await prisma.info__milestone.findUnique({
+      where: { id },
       include: {
         relation__industry_or_company_milestone: {
           include: {
@@ -89,7 +135,7 @@ export async function PUT(
       },
     })
 
-    return NextResponse.json({ data: milestone })
+    return NextResponse.json({ data: fullMilestone })
   } catch (error) {
     console.error('Failed to update milestone:', error)
     return NextResponse.json(

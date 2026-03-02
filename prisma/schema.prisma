@@ -360,7 +360,6 @@ model info__milestone {
   title                                       String                                        @db.VarChar(200)
   description                                 String?                                       @db.Text
   milestone_date                              DateTime                                      @db.Date
-  status                                      String                                        @default("planned") @db.VarChar(20)
   keyword                                     String?                                       @db.VarChar(20)
   create_time                                 DateTime                                      @default(now()) @db.DateTime(0)
   update_time                                 DateTime                                      @default(now()) @updatedAt @db.DateTime(0)
@@ -375,6 +374,7 @@ model relation__industry_or_company_milestone {
   milestone_id      Int              @db.UnsignedInt
   industry_id       Int?             @db.UnsignedInt
   company_id        Int?             @db.UnsignedInt
+  impact            String?          @db.VarChar(20)
   create_time       DateTime         @default(now()) @db.DateTime(0)
   update_time       DateTime         @default(now()) @updatedAt @db.DateTime(0)
   info__milestone   info__milestone  @relation(fields: [milestone_id], references: [id], onDelete: Cascade, map: "fk_milestone_relation_milestone_id")
