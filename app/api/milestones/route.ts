@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { title, description, milestone_date, status = 'planned', industry_ids = [], company_ids = [] } = body
+    const { title, description, milestone_date, status = 'planned', keyword, industry_ids = [], company_ids = [] } = body
 
     if (!title || !milestone_date) {
       return NextResponse.json(
@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
         description: description || null,
         milestone_date: new Date(milestone_date),
         status,
+        keyword: keyword || null,
         relation__industry_or_company_milestone: {
           create: [
             ...industry_ids.map((id: number) => ({ industry_id: id })),

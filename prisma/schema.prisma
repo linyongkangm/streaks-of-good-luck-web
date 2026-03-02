@@ -361,6 +361,7 @@ model info__milestone {
   description                                 String?                                       @db.Text
   milestone_date                              DateTime                                      @db.Date
   status                                      String                                        @default("planned") @db.VarChar(20)
+  keyword                                     String?                                       @db.VarChar(20)
   create_time                                 DateTime                                      @default(now()) @db.DateTime(0)
   update_time                                 DateTime                                      @default(now()) @updatedAt @db.DateTime(0)
   relation__industry_or_company_milestone     relation__industry_or_company_milestone[]

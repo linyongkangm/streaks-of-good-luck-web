@@ -171,6 +171,7 @@ export interface CreateMilestoneRequest {
   description?: string
   milestone_date: string | Date
   status?: string
+  keyword?: string
   industry_ids?: number[]
   company_ids?: number[]
 }
@@ -180,6 +181,7 @@ export interface UpdateMilestoneRequest {
   description?: string
   milestone_date?: string | Date
   status?: string
+  keyword?: string
   industry_ids?: number[]
   company_ids?: number[]
 }

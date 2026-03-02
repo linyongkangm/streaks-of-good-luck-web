@@ -46,7 +46,7 @@ export async function PUT(
   try {
     const id = parseInt((await params).id)
     const body = await request.json()
-    const { title, description, milestone_date, status, industry_ids = [], company_ids = [] } = body
+    const { title, description, milestone_date, status, keyword, industry_ids = [], company_ids = [] } = body
 
     if (!title || !milestone_date) {
       return NextResponse.json(
@@ -67,6 +67,7 @@ export async function PUT(
         description: description || null,
         milestone_date: new Date(milestone_date),
         status,
+        keyword: keyword || null,
         relation__industry_or_company_milestone: {
           create: [
             ...industry_ids.map((industryId: number) => ({ industry_id: industryId })),
