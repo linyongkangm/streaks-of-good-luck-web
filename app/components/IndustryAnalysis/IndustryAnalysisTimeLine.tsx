@@ -432,11 +432,19 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
                                     onMouseLeave={() => setHoverDate(null)}
                                   >
                                     <div
-                                      className={`w-5 h-5 rounded cursor-pointer transition-all flex items-center justify-center text-[10px] font-medium ${hasMilestone
-                                          ? 'bg-blue-400 hover:bg-blue-500'
-                                          : 'bg-gray-200 hover:bg-gray-300'
-                                        }`}
-                                    />
+                                      className={`rounded cursor-pointer transition-all flex items-center justify-center text-[10px] font-medium ${
+                                        hasMilestone
+                                          ? 'bg-blue-400 hover:bg-blue-500 px-1.5 py-0.5 whitespace-nowrap text-white'
+                                          : 'w-5 h-5 bg-gray-200 hover:bg-gray-300'
+                                      }`}
+                                    >
+                                      {hasMilestone && dayMilestones.map((m, idx) => (
+                                        <span key={m.id}>
+                                          {idx > 0 && <span className="mx-0.5">|</span>}
+                                          {m.title.substring(0, 2)}
+                                        </span>
+                                      ))}
+                                    </div>
 
                                     {/* Hover 气泡 */}
                                     {isHovered && hasMilestone && (
