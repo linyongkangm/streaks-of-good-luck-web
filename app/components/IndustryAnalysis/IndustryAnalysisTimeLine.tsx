@@ -296,7 +296,7 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
               )}
             </div>
             {milestone.description && (
-              <div className="text-gray-400 mt-1 line-clamp-2">{milestone.description}</div>
+              <div className="text-gray-400 mt-1 line-clamp-5">{milestone.description}</div>
             )}
 
           </div>
