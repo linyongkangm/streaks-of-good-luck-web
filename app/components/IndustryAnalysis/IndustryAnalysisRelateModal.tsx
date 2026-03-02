@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { summary__article, IndustryWithArticles, MilestoneWithRelations } from '@/types'
 import * as tools from '@/app/tools'
 import Button from '@/app/widget/Button'
@@ -57,6 +57,36 @@ export default function IndustryAnalysisRelateModal({
       return
     }
     onAfterLink()
+  }
+
+  // 自动搜索包含行业名的文章
+  useEffect(() => {
+    if (open && industryDetail?.name) {
+      handleAutoSearchArticles()
+    }
+  }, [open, industryDetail?.name])
+
+  const handleAutoSearchArticles = async () => {
+    if (!industryDetail?.name) return
+    setSearchingArticles(true)
+    try {
+      const params = new URLSearchParams({ tags: industryDetail.name, limit: '100' })
+      const response = await fetch(`/api/article-summaries?${params}`)
+      const data = await response.json()
+      // 过滤：只保留未关联的文章（服务端已按tags包含行业名进行过滤）
+      const filtered = (data.data || []).filter((article: summary__article) => {
+        const alreadyLinked = industryDetail?.relation__industry_articles.some(
+          r => String(r.summary__article.id) === String(article.id)
+        )
+        return !alreadyLinked
+      })
+      setArticleSearchResults(filtered)
+      setArticleSearchTitle(industryDetail.name)
+    } catch (error) {
+      console.error('Failed to auto search articles:', error)
+    } finally {
+      setSearchingArticles(false)
+    }
   }
 
   const handleClose = () => {
@@ -157,7 +187,7 @@ export default function IndustryAnalysisRelateModal({
         </div>
       ) : (
         <div className="text-center py-8 text-slate-400 text-sm">
-          输入标题搜索文章后关联
+          {articleSearchTitle ? '未找到相关文章' : '打开弹窗时自动搜索包含行业名的文章'}
         </div>
       )}
       </Modal>
