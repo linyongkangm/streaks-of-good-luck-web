@@ -18,8 +18,12 @@ interface IndustryAnalysisTimeLineProps {
 interface MilestoneFormData {
   title: string
   description: string
-  milestone_date: DateTime
+  milestone_date: DateTime | string
   status: string
+}
+
+interface HoverDate {
+  isoDate: string
 }
 
 export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysisTimeLineProps) {
@@ -27,6 +31,9 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
   const [loading, setLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [editingMilestone, setEditingMilestone] = useState<MilestoneWithRelations | null>(null)
+  const [hoverDate, setHoverDate] = useState<HoverDate | null>(null)
+  const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
+  const [expandedYears, setExpandedYears] = useState<number[]>([new Date().getFullYear()])
 
   // 计算日期范围
   const dateRange = useMemo(() => {
@@ -94,6 +101,15 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
     setEditingMilestone(null)
   }
 
+  // 切换年份展开/折叠
+  const toggleYearExpanded = (year: number) => {
+    setExpandedYears(prev =>
+      prev.includes(year)
+        ? prev.filter(y => y !== year)
+        : [...prev, year]
+    )
+  }
+
   // 提交表单（创建或更新）
   const handleSubmit = async (e: React.FormEvent, values: MilestoneFormData) => {
     e.preventDefault()
@@ -104,13 +120,19 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
 
       const method = editingMilestone ? 'PUT' : 'POST'
 
+      // 确保日期被正确转换为字符串
+      const submissionData = {
+        ...values,
+        milestone_date: values.milestone_date instanceof DateTime 
+          ? values.milestone_date.toISODate()
+          : values.milestone_date,
+        industry_ids: industryId ? [industryId] : [],
+      }
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...values,
-          industry_ids: industryId ? [industryId] : [],
-        }),
+        body: JSON.stringify(submissionData),
       })
 
       if (response.ok) {
@@ -139,7 +161,33 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
     }
   }
 
-  // 按年份分组
+  // 按日期快速查找 milestone
+  const milestonesByDate = useMemo(() => {
+    const grouped: Record<string, MilestoneWithRelations[]> = {}
+    milestones.forEach(milestone => {
+      const isoDate = new Date(milestone.milestone_date).toISOString().split('T')[0]
+      if (!grouped[isoDate]) {
+        grouped[isoDate] = []
+      }
+      grouped[isoDate].push(milestone)
+    })
+    return grouped
+  }, [milestones])
+
+  // 按年月快速查找 milestone
+  const milestonesByMonth = useMemo(() => {
+    const grouped: Record<string, MilestoneWithRelations[]> = {}
+    milestones.forEach(milestone => {
+      const yearMonth = new Date(milestone.milestone_date).toISOString().slice(0, 7)
+      if (!grouped[yearMonth]) {
+        grouped[yearMonth] = []
+      }
+      grouped[yearMonth].push(milestone)
+    })
+    return grouped
+  }, [milestones])
+
+  // 按年份快速查找 milestone
   const milestonesByYear = useMemo(() => {
     const grouped: Record<number, MilestoneWithRelations[]> = {}
     milestones.forEach(milestone => {
@@ -151,6 +199,40 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
     })
     return grouped
   }, [milestones])
+
+  // 生成年份+月份数据结构
+  const yearMonthData = useMemo(() => {
+    const startDate = DateTime.fromJSDate(dateRange.startDate)
+    const endDate = DateTime.fromJSDate(dateRange.endDate)
+
+    const yearGroups: Record<number, { monthStart: DateTime; days: DateTime[] }[]> = {}
+
+    let currentMonth = startDate.startOf('month')
+    while (currentMonth <= endDate) {
+      const year = currentMonth.year
+      if (!yearGroups[year]) {
+        yearGroups[year] = []
+      }
+
+      const monthEnd = currentMonth.endOf('month')
+      const monthDays = []
+      let date = currentMonth
+
+      while (date <= monthEnd && date <= endDate) {
+        monthDays.push(date)
+        date = date.plus({ days: 1 })
+      }
+
+      yearGroups[year].push({
+        monthStart: currentMonth,
+        days: monthDays,
+      })
+
+      currentMonth = currentMonth.plus({ months: 1 })
+    }
+
+    return yearGroups
+  }, [dateRange])
 
   const statusOptions = [
     { label: '计划中', value: 'planned' },
@@ -166,6 +248,60 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
     cancelled: 'bg-gray-100 text-gray-800',
   }
 
+  const renderMilestoneHoverPopover = (
+    title: string,
+    list: MilestoneWithRelations[],
+    topOffset: number,
+    showActions = false
+  ) => (
+    <div
+      className="fixed z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-3 min-w-[280px] max-w-[400px]"
+      style={{
+        left: `${hoverPosition.x}px`,
+        top: `${hoverPosition.y + topOffset}px`,
+      }}
+    >
+      <div className="text-xs font-semibold text-gray-700 mb-2">{title}</div>
+      <div className="space-y-2 max-h-64 overflow-y-auto">
+        {list.map(milestone => (
+          <div key={milestone.id} className="text-xs">
+            <div className="flex items-center gap-2">
+              <span className={`px-1.5 py-0.5 rounded text-xs ${statusColors[milestone.status] || statusColors.planned}`}>
+                {statusOptions.find(opt => opt.value === milestone.status)?.label || milestone.status}
+              </span>
+            </div>
+            <div className="font-medium text-slate-800 mt-1">{milestone.title}</div>
+            {milestone.description && (
+              <div className="text-gray-600 mt-1 line-clamp-2">{milestone.description}</div>
+            )}
+            {showActions && (
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={() => {
+                    handleOpenEdit(milestone)
+                    setHoverDate(null)
+                  }}
+                  className="text-blue-600 hover:text-blue-800 text-xs"
+                >
+                  编辑
+                </button>
+                <button
+                  onClick={() => {
+                    handleDelete(milestone.id)
+                    setHoverDate(null)
+                  }}
+                  className="text-red-600 hover:text-red-800 text-xs"
+                >
+                  删除
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+
   if (!industryId) {
     return null
   }
@@ -179,66 +315,147 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
         </Button>
       }>
 
-
       {loading ? (
         <div className="text-center py-8 text-gray-500">加载中...</div>
       ) : milestones.length === 0 ? (
         <div className="text-center py-8 text-gray-500">暂无行业事件数据</div>
       ) : (
-        <div className="space-y-8">
-          {Object.keys(milestonesByYear)
-            .sort((a, b) => Number(a) - Number(b))
-            .map(year => (
-              <div key={year} className="relative">
-                <h4 className="text-lg font-semibold text-slate-700 mb-4 sticky top-0 bg-white py-2 z-10">
-                  {year} 年
-                </h4>
-                <div className="relative border-l-2 border-blue-300 pl-8 space-y-6">
-                  {milestonesByYear[Number(year)]
-                    .sort((a, b) => new Date(a.milestone_date).getTime() - new Date(b.milestone_date).getTime())
-                    .map(milestone => (
-                      <div key={milestone.id} className="relative">
-                        {/* 时间轴节点 */}
-                        <div className="absolute -left-[33px] w-4 h-4 rounded-full bg-blue-500 border-2 border-white"></div>
+        <div className="space-y-4">
+          {Object.keys(yearMonthData)
+            .map(Number)
+            .sort((a, b) => a - b)
+            .map(year => {
+              const yearMilestones = milestonesByYear[year] || []
+              const isExpanded = expandedYears.includes(year)
+              const yearHovered = hoverDate && hoverDate.isoDate === `${year}-year`
 
-                        {/* 卡片内容 */}
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
-                          <div className="flex justify-between items-start mb-2">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h5 className="font-semibold text-slate-800">{milestone.title}</h5>
-                                <span className={`text-xs px-2 py-1 rounded ${statusColors[milestone.status] || statusColors.planned}`}>
-                                  {statusOptions.find(opt => opt.value === milestone.status)?.label || milestone.status}
-                                </span>
+              return (
+                <div key={year} className="border border-gray-200 rounded-lg overflow-hidden">
+                  {/* 年份标题行 */}
+                  <div
+                    className="bg-slate-100 px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-slate-200 transition-colors relative"
+                    onClick={() => toggleYearExpanded(year)}
+                    onMouseEnter={(e) => {
+                      if (yearMilestones.length > 0) {
+                        const rect = (e.target as HTMLElement).getBoundingClientRect()
+                        setHoverDate({ isoDate: `${year}-year` })
+                        setHoverPosition({ x: rect.left, y: rect.top })
+                      }
+                    }}
+                    onMouseLeave={() => setHoverDate(null)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl font-bold text-slate-800">{year}</span>
+                      <span className="text-sm text-gray-600">
+                        ({yearMilestones.length} 个事件)
+                      </span>
+                      <span className={`inline-block transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
+                        ▶
+                      </span>
+                    </div>
+
+                    {/* 年份 hover 气泡 */}
+                    {yearHovered && yearMilestones.length > 0 && (
+                      renderMilestoneHoverPopover(
+                        `${year} 年所有事件 (${yearMilestones.length})`,
+                        yearMilestones,
+                        40
+                      )
+                    )}
+                  </div>
+
+                  {/* 月份行 - 展开时显示 */}
+                  {isExpanded && (
+                    <div className="space-y-2 p-4">
+                      {yearMonthData[year].map((month, mIndex) => {
+                        const monthKey = month.monthStart.toFormat('yyyy-MM')
+                        const monthMilestones = milestonesByMonth[monthKey] || []
+                        const monthNum = month.monthStart.month
+                        const monthHovered = hoverDate?.isoDate === monthKey
+
+                        return (
+                          <div key={mIndex} className="flex items-center gap-3">
+                            {/* 月份标签 */}
+                            <div
+                              className="relative"
+                              onMouseEnter={(e) => {
+                                if (monthMilestones.length > 0) {
+                                  const rect = (e.target as HTMLElement).getBoundingClientRect()
+                                  setHoverDate({ isoDate: monthKey })
+                                  setHoverPosition({ x: rect.left, y: rect.top })
+                                }
+                              }}
+                              onMouseLeave={() => setHoverDate(null)}
+                            >
+                              <div className="text-sm font-semibold text-slate-700 min-w-[50px]">
+                                {monthMilestones.length > 0 ? (
+                                  <>{monthNum}月</>
+                                ) : (
+                                  <span className="text-gray-400">{monthNum}月</span>
+                                )}
                               </div>
-                              <p className="text-sm text-gray-600 mb-2">
-                                {new Date(milestone.milestone_date).toLocaleDateString('zh-CN')}
-                              </p>
-                              {milestone.description && (
-                                <p className="text-sm text-gray-700 mt-2">{milestone.description}</p>
+
+                              {/* 月份 hover 气泡 */}
+                              {monthHovered && monthMilestones.length > 0 && (
+                                renderMilestoneHoverPopover(
+                                  `${month.monthStart.toFormat('MM 月')} (${monthMilestones.length})`,
+                                  monthMilestones,
+                                  30
+                                )
                               )}
                             </div>
-                            <div className="flex gap-2 ml-4">
-                              <button
-                                onClick={() => handleOpenEdit(milestone)}
-                                className="text-blue-600 hover:text-blue-800 text-sm"
-                              >
-                                编辑
-                              </button>
-                              <button
-                                onClick={() => handleDelete(milestone.id)}
-                                className="text-red-600 hover:text-red-800 text-sm"
-                              >
-                                删除
-                              </button>
+
+                            {/* 日历格子 - 一行展示该月所有天数 */}
+                            <div className="flex gap-0.5 overflow-x-auto pb-1 flex-1">
+                              {month.days.map((date, dayIndex) => {
+                                const isoDate = date.toISODate() || ''
+                                const dayMilestones: MilestoneWithRelations[] = isoDate ? (milestonesByDate[isoDate] || []) : []
+                                const hasMilestone = dayMilestones && dayMilestones.length > 0
+                                const isHovered = hoverDate?.isoDate === isoDate
+
+                                return (
+                                  <div
+                                    key={dayIndex}
+                                    className="relative flex-shrink-0"
+                                    onMouseEnter={(e) => {
+                                      if (hasMilestone && isoDate) {
+                                        const rect = (e.target as HTMLElement).getBoundingClientRect()
+                                        setHoverDate({ isoDate })
+                                        setHoverPosition({ x: rect.left, y: rect.top })
+                                      }
+                                    }}
+                                    onMouseLeave={() => setHoverDate(null)}
+                                  >
+                                    <div
+                                      className={`w-5 h-5 rounded cursor-pointer transition-all flex items-center justify-center text-[10px] font-medium ${
+                                        hasMilestone
+                                          ? 'bg-blue-400 hover:bg-blue-500'
+                                          : 'bg-gray-200 hover:bg-gray-300'
+                                      }`}
+                                      title={date.toFormat('yyyy-MM-dd')}
+                                    />
+
+                                    {/* Hover 气泡 */}
+                                    {isHovered && hasMilestone && (
+                                      renderMilestoneHoverPopover(
+                                        `${date?.toFormat('yyyy-MM-dd (cccc)')}`,
+                                        dayMilestones,
+                                        20,
+                                        true
+                                      )
+                                    )}
+                                  </div>
+                                )
+                              })}
                             </div>
                           </div>
-                        </div>
-                      </div>
-                    ))}
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
         </div>
       )}
 
@@ -253,7 +470,7 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
           title: editingMilestone?.title || '',
           description: editingMilestone?.description || '',
           milestone_date: editingMilestone
-            ? DateTime.fromISO(editingMilestone.milestone_date.toString())
+            ? DateTime.fromISO(new Date(editingMilestone.milestone_date).toISOString().split('T')[0])
             : DateTime.now(),
           status: editingMilestone?.status || 'planned',
         }}
