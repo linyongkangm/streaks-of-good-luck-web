@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { extractMilestoneKeyword } from '@/app/tools/extractMilestoneKeyword'
 
 // GET /api/milestones/:id - 获取单个里程碑详情
 export async function GET(
@@ -46,7 +47,7 @@ export async function PUT(
   try {
     const id = parseInt((await params).id)
     const body = await request.json()
-    const { title, description, milestone_date, status, keyword, industry_ids = [], company_ids = [] } = body
+    const { title, description, milestone_date, status, industry_ids = [], company_ids = [] } = body
 
     if (!title || !milestone_date) {
       return NextResponse.json(
@@ -54,6 +55,8 @@ export async function PUT(
         { status: 400 }
       )
     }
+
+    const keyword = await extractMilestoneKeyword(title, description)
 
     // 先删除旧的关联，再创建新的
     await prisma.relation__industry_or_company_milestone.deleteMany({
@@ -67,7 +70,7 @@ export async function PUT(
         description: description || null,
         milestone_date: new Date(milestone_date),
         status,
-        keyword: keyword || null,
+        keyword,
         relation__industry_or_company_milestone: {
           create: [
             ...industry_ids.map((industryId: number) => ({ industry_id: industryId })),

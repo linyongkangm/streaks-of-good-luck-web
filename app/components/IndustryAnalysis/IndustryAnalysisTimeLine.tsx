@@ -10,7 +10,6 @@ import DatePicker from "@/app/widget/DatePicker"
 import Select from "@/app/widget/Select"
 import type { MilestoneWithRelations } from "@/types"
 import { DateTime } from "luxon"
-import { extractCoreSummary } from "@/app/tools/extractCoreSummary"
 
 interface IndustryAnalysisTimeLineProps {
   industryId?: number
@@ -121,13 +120,9 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
 
       const method = editingMilestone ? 'PUT' : 'POST'
 
-      // 提取关键字
-      const keyword = extractCoreSummary(values.title)
-
       // 确保日期被正确转换为字符串
       const submissionData = {
         ...values,
-        keyword,
         milestone_date: values.milestone_date instanceof DateTime
           ? values.milestone_date.toISODate()
           : values.milestone_date,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { extractMilestoneKeyword } from '@/app/tools/extractMilestoneKeyword'
 
 // GET /api/milestones - 获取里程碑列表（支持按行业ID、公司ID和日期范围筛选）
 export async function GET(request: NextRequest) {
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { title, description, milestone_date, status = 'planned', keyword, industry_ids = [], company_ids = [] } = body
+    const { title, description, milestone_date, status = 'planned', industry_ids = [], company_ids = [] } = body
 
     if (!title || !milestone_date) {
       return NextResponse.json(
@@ -71,6 +72,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const keyword = await extractMilestoneKeyword(title, description)
+
     // 创建里程碑及其关联
     const milestone = await prisma.info__milestone.create({
       data: {
@@ -78,7 +81,7 @@ export async function POST(request: NextRequest) {
         description: description || null,
         milestone_date: new Date(milestone_date),
         status,
-        keyword: keyword || null,
+        keyword,
         relation__industry_or_company_milestone: {
           create: [
             ...industry_ids.map((id: number) => ({ industry_id: id })),

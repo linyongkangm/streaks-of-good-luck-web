@@ -46,6 +46,13 @@ class AkShareRequest(BaseModel):
     params: dict = {}  # 方法参数
 
 
+class MilestoneKeywordRequest(BaseModel):
+    """里程碑关键词提取请求模型"""
+
+    title: str
+    description: str | None = None
+
+
 # ==================== 数据库操作 ====================
 
 # 数据库操作由 Next.js 负责，Python API 不进行数据库操作
@@ -87,6 +94,33 @@ async def api_analyze_article(request: Request):
         import traceback
 
         logger.error(f"✗ 文章分析失败: {e}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# /extract-milestone-keyword 路由
+@app.post("/extract-milestone-keyword")
+async def api_extract_milestone_keyword(request: MilestoneKeywordRequest):
+    """API 接口：提取里程碑关键词（2-4个中文汉字）"""
+    logger = utils.locator.get_project_logger()
+
+    try:
+        if not request.title:
+            return {"success": False, "message": "title is required"}
+
+        keyword = await tasks.gen_milestone_keyword(
+            request.title,
+            request.description or "",
+        )
+
+        return {
+            "success": True,
+            "keyword": keyword,
+        }
+    except Exception as e:
+        import traceback
+
+        logger.error(f"✗ 里程碑关键词提取失败: {e}")
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
