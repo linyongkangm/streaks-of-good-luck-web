@@ -5,7 +5,7 @@ import Panel from "@/app/widget/Panel"
 import Button from "@/app/widget/Button"
 import ModalForm from "@/app/widget/ModalForm"
 import { FormItem, FormLabel } from "@/app/widget/Form"
-import Input from "@/app/widget/Input"
+import Input, { TextArea } from "@/app/widget/Input"
 import DatePicker from "@/app/widget/DatePicker"
 import Select from "@/app/widget/Select"
 import type { MilestoneWithRelations } from "@/types"
@@ -500,7 +500,7 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
         </FormLabel>
         <FormLabel label="描述">
           <FormItem field="description">
-            <Input placeholder="请输入描述（可选）" />
+            <TextArea placeholder="请输入描述（可选）" rows={10}/>
           </FormItem>
         </FormLabel>
         <FormLabel label="关键词">

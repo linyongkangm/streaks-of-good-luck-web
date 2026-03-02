@@ -232,7 +232,11 @@ export function NumberInput({
 }
 
 export function TextArea({ value, onChange, ...props }: { value?: string; onChange?: (value: string) => void } & Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'value' | 'onChange'>) {
-  return <textarea value={value} onChange={(e) => onChange?.(e.target.value)} {...props} />
+  return <textarea
+    className="w-full px-4 py-2 border rounded-lg border-slate-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-slate-900 transition-all duration-200 resize-y"
+    value={value}
+    onChange={(e) => onChange?.(e.target.value)}
+    {...props} />
 }
 
 // 默认导出 TextInput 以保持向后兼容

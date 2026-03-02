@@ -544,7 +544,6 @@ export default function ArticleAnalysis() {
             <TextArea
               placeholder="粘贴文章原文内容..."
               rows={10}
-              className="w-full px-4 py-2 border rounded-lg border-slate-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-slate-900 transition-all duration-200 resize-y"
             />
           </FormItem>
         </FormLabel>
