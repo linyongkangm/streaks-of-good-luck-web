@@ -123,7 +123,7 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
       // 确保日期被正确转换为字符串
       const submissionData = {
         ...values,
-        milestone_date: values.milestone_date instanceof DateTime 
+        milestone_date: values.milestone_date instanceof DateTime
           ? values.milestone_date.toISODate()
           : values.milestone_date,
         industry_ids: industryId ? [industryId] : [],
@@ -265,11 +265,7 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
       <div className="space-y-2 max-h-64 overflow-y-auto">
         {list.map(milestone => (
           <div key={milestone.id} className="text-xs">
-            <div className="flex items-center gap-2">
-              <span className={`px-1.5 py-0.5 rounded text-xs ${statusColors[milestone.status] || statusColors.planned}`}>
-                {statusOptions.find(opt => opt.value === milestone.status)?.label || milestone.status}
-              </span>
-            </div>
+
             <div className="font-medium text-slate-800 mt-1">{milestone.title}</div>
             {milestone.description && (
               <div className="text-gray-600 mt-1 line-clamp-2">{milestone.description}</div>
@@ -427,12 +423,10 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
                                     onMouseLeave={() => setHoverDate(null)}
                                   >
                                     <div
-                                      className={`w-5 h-5 rounded cursor-pointer transition-all flex items-center justify-center text-[10px] font-medium ${
-                                        hasMilestone
+                                      className={`w-5 h-5 rounded cursor-pointer transition-all flex items-center justify-center text-[10px] font-medium ${hasMilestone
                                           ? 'bg-blue-400 hover:bg-blue-500'
                                           : 'bg-gray-200 hover:bg-gray-300'
-                                      }`}
-                                      title={date.toFormat('yyyy-MM-dd')}
+                                        }`}
                                     />
 
                                     {/* Hover 气泡 */}
