@@ -272,32 +272,33 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
                 <span className="text-gray-500 font-normal">{getTitlePrefix(milestone)}</span>
               )}
               <span>{milestone.title}</span>
+              {showActions && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      handleOpenEdit(milestone)
+                      setHoverDate(null)
+                    }}
+                    className="text-blue-600 hover:text-blue-800 text-xs"
+                  >
+                    编辑
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleDelete(milestone.id)
+                      setHoverDate(null)
+                    }}
+                    className="text-red-600 hover:text-red-800 text-xs"
+                  >
+                    删除
+                  </button>
+                </div>
+              )}
             </div>
             {milestone.description && (
               <div className="text-gray-600 mt-1 line-clamp-2">{milestone.description}</div>
             )}
-            {showActions && (
-              <div className="flex gap-2 mt-2">
-                <button
-                  onClick={() => {
-                    handleOpenEdit(milestone)
-                    setHoverDate(null)
-                  }}
-                  className="text-blue-600 hover:text-blue-800 text-xs"
-                >
-                  编辑
-                </button>
-                <button
-                  onClick={() => {
-                    handleDelete(milestone.id)
-                    setHoverDate(null)
-                  }}
-                  className="text-red-600 hover:text-red-800 text-xs"
-                >
-                  删除
-                </button>
-              </div>
-            )}
+
           </div>
         ))}
       </div>
@@ -433,11 +434,10 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
                                     onMouseLeave={() => setHoverDate(null)}
                                   >
                                     <div
-                                      className={`rounded cursor-pointer transition-all flex items-center justify-center text-[10px] font-medium ${
-                                        hasMilestone
+                                      className={`rounded cursor-pointer transition-all flex items-center justify-center text-[10px] font-medium ${hasMilestone
                                           ? 'bg-blue-400 hover:bg-blue-500 px-1.5 py-0.5 whitespace-nowrap text-white'
                                           : 'w-5 h-5 bg-gray-200 hover:bg-gray-300'
-                                      }`}
+                                        }`}
                                     >
                                       {hasMilestone && dayMilestones.map((m, idx) => (
                                         <span key={m.id}>
