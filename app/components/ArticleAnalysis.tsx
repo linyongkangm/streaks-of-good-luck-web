@@ -349,7 +349,7 @@ export default function ArticleAnalysis() {
                 </div>
                 {article.tags && (
                   <div className="flex gap-2 mb-4 flex-wrap">
-                    {article.tags.split(',').map((tag, idx) => (
+                    {article.tags.split(/,|，/).map((tag, idx) => (
                       <span
                         key={idx}
                         className="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs rounded-md font-medium hover:bg-slate-200 transition-colors"
