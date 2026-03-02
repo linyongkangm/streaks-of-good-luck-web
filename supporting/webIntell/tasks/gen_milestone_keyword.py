@@ -8,7 +8,7 @@ MILESTONE_KEYWORD_PROMPT_TEMPLATE = """
 你是一名中文信息抽取助手。
 
 请根据以下输入，提取一个“里程碑关键词”：
-- 必须是 2 到 4 个中文汉字
+- 必须是 2 到 8 个中文汉字
 - 只输出最核心的短语，不要解释
 - 不要标点、空格、英文、数字
 
@@ -26,12 +26,12 @@ def _sanitize_keyword(keyword: str, fallback_text: str) -> str:
     normalized = "".join(chinese_chars)
 
     if len(normalized) >= 2:
-        return normalized[:4]
+        return normalized[:8]
 
     fallback_chars = re.findall(r"[\u4e00-\u9fff]", fallback_text or "")
     fallback = "".join(fallback_chars)
     if len(fallback) >= 2:
-        return fallback[:4]
+        return fallback[:8]
 
     if len(fallback) == 1:
         return fallback + "事件"

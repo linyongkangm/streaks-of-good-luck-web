@@ -20,6 +20,7 @@ interface MilestoneFormData {
   description: string
   milestone_date: DateTime | string
   status: string
+  keyword: string
 }
 
 interface HoverDate {
@@ -484,6 +485,7 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
             ? DateTime.fromISO(new Date(editingMilestone.milestone_date).toISOString().split('T')[0])
             : DateTime.now(),
           status: editingMilestone?.status || 'planned',
+          keyword: editingMilestone?.keyword || '',
         }}
       >
         <FormLabel label="标题" required>
@@ -499,6 +501,11 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
         <FormLabel label="描述">
           <FormItem field="description">
             <Input placeholder="请输入描述（可选）" />
+          </FormItem>
+        </FormLabel>
+        <FormLabel label="关键词">
+          <FormItem field="keyword">
+            <Input placeholder="最多 8 个汉字（可选，不填则自动生成）" maxLength={8} />
           </FormItem>
         </FormLabel>
       </ModalForm>

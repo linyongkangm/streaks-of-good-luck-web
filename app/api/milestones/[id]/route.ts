@@ -47,7 +47,7 @@ export async function PUT(
   try {
     const id = parseInt((await params).id)
     const body = await request.json()
-    const { title, description, milestone_date, status, industry_ids = [], company_ids = [] } = body
+    const { title, description, milestone_date, status, industry_ids = [], company_ids = [], keyword: clientKeyword } = body
 
     if (!title || !milestone_date) {
       return NextResponse.json(
@@ -56,7 +56,8 @@ export async function PUT(
       )
     }
 
-    const keyword = await extractMilestoneKeyword(title, description)
+    // 如果客户端提供了 keyword，就用客户端的；否则调用 LLM 生成
+    const keyword = clientKeyword ? clientKeyword : await extractMilestoneKeyword(title, description)
 
     // 先删除旧的关联，再创建新的
     await prisma.relation__industry_or_company_milestone.deleteMany({

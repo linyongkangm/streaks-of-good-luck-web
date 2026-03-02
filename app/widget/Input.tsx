@@ -32,6 +32,7 @@ interface BaseProps {
 interface TextInputProps extends BaseProps {
   value?: string
   onChange?: (value: string) => void
+  maxLength?: number
 }
 
 // NumberInput 属性
@@ -81,6 +82,7 @@ export function TextInput({
   className = '',
   disabled = false,
   error,
+  maxLength,
 }: TextInputProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange?.(e.target.value)
@@ -96,6 +98,7 @@ export function TextInput({
         onChange={handleChange}
         placeholder={placeholder}
         disabled={disabled}
+        maxLength={maxLength}
         className={inputClassName}
       />
       {error && (

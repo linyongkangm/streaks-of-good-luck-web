@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { title, description, milestone_date, status = 'planned', industry_ids = [], company_ids = [] } = body
+    const { title, description, milestone_date, status = 'planned', industry_ids = [], company_ids = [], keyword: clientKeyword } = body
 
     if (!title || !milestone_date) {
       return NextResponse.json(
@@ -72,7 +72,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const keyword = await extractMilestoneKeyword(title, description)
+    // 如果客户端提供了 keyword，就用客户端的；否则调用 LLM 生成
+    const keyword = clientKeyword ? clientKeyword : await extractMilestoneKeyword(title, description)
 
     // 创建里程碑及其关联
     const milestone = await prisma.info__milestone.create({

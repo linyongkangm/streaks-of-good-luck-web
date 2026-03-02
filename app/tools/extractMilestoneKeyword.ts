@@ -3,12 +3,12 @@ const PYTHON_API_URL = process.env.PYTHON_API_URL || 'http://127.0.0.1:8001'
 function sanitizeKeyword(keyword: string, fallbackText: string): string {
   const normalized = (keyword || '').replace(/[^\u4e00-\u9fff]/g, '')
   if (normalized.length >= 2) {
-    return normalized.slice(0, 4)
+    return normalized.slice(0, 8)
   }
 
   const fallback = (fallbackText || '').replace(/[^\u4e00-\u9fff]/g, '')
   if (fallback.length >= 2) {
-    return fallback.slice(0, 4)
+    return fallback.slice(0, 8)
   }
 
   if (fallback.length === 1) {
