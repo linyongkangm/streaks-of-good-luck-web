@@ -10,6 +10,7 @@ DatePicker 组件，
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { DateTime, MonthNumbers, QuarterNumbers } from 'luxon'
 
 type DatePickerMode = 'year' | 'month' | 'quarter' | 'date'
@@ -38,6 +39,9 @@ export default function DatePicker({
   const [selectedDate, setSelectedDate] = useState(now)
   const [datePanelView, setDatePanelView] = useState<DatePanelView>('date')
   const containerRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const pickerRef = useRef<HTMLDivElement>(null)
+  const [pickerPosition, setPickerPosition] = useState({ top: 0, left: 0, width: 0 })
 
   // 从value初始化选中的值
   useEffect(() => {
@@ -49,10 +53,26 @@ export default function DatePicker({
     }
   }, [value])
 
+  // 更新下拉面板位置
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      const rect = inputRef.current.getBoundingClientRect()
+      setPickerPosition({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      })
+    }
+  }, [isOpen])
+
   // 点击外部关闭
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node
+      const isOutsideContainer = containerRef.current && !containerRef.current.contains(target)
+      const isOutsidePicker = pickerRef.current && !pickerRef.current.contains(target)
+      
+      if (isOutsideContainer && isOutsidePicker) {
         setIsOpen(false)
       }
     }
@@ -359,9 +379,32 @@ export default function DatePicker({
     }
   }
 
+  // 渲染下拉面板（使用 Portal）
+  const renderPortalPicker = () => {
+    if (!isOpen || typeof window === 'undefined') return null
+
+    return createPortal(
+      <div
+        ref={pickerRef}
+        style={{
+          position: 'absolute',
+          top: `${pickerPosition.top + 8}px`,
+          left: `${pickerPosition.left}px`,
+          minWidth: pickerPosition.width > 280 ? `${pickerPosition.width}px` : '280px',
+          zIndex: 9999,
+        }}
+        className="bg-white border border-slate-300 rounded-lg shadow-lg"
+      >
+        {renderPicker()}
+      </div>,
+      document.body
+    )
+  }
+
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       <input
+        ref={inputRef}
         type="text"
         readOnly
         value={getDisplayText()}
@@ -376,11 +419,7 @@ export default function DatePicker({
         }}
         className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer text-slate-900 bg-white"
       />
-      {isOpen && (
-        <div className="absolute z-50 mt-2 bg-white border border-slate-300 rounded-lg shadow-lg min-w-[280px]">
-          {renderPicker()}
-        </div>
-      )}
+      {renderPortalPicker()}
     </div>
   )
 }
