@@ -7,7 +7,7 @@ import IndustryAnalysisIndustryList from './IndustryAnalysisIndustryList'
 import IndustryAnalysisIndustryInfo from './IndustryAnalysisIndustryInfo'
 import IndustryAnalysisRelateArticles from './IndustryAnalysisRelateArticles'
 import IndustryAnalysisRelateModal from './IndustryAnalysisRelateModal'
-
+import IndustryAnalysisTimeLine from './IndustryAnalysisTimeLine'
 export default function IndustryAnalysis() {
   const [selectedIndustryId, setSelectedIndustryId] = useState<number | null>(null)
   const [industryListRefreshKey, setIndustryListRefreshKey] = useState(0)
@@ -65,12 +65,13 @@ export default function IndustryAnalysis() {
           <Placeholder selected={!!selectedIndustryId} loading={loadingDetail} icon="👈" message="请从左侧选择一个行业">
             {industryDetail && (
               <div className="space-y-4">
+
                 {/* 行业信息头 */}
                 <IndustryAnalysisIndustryInfo
                   industryDetail={industryDetail}
                   onOpenLinkArticle={() => setShowLinkArticle(true)}
                 />
-
+                <IndustryAnalysisTimeLine />
                 {/* 文章按年份分组 */}
                 <IndustryAnalysisRelateArticles
                   industryDetail={industryDetail}
