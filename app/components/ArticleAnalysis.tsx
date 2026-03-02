@@ -171,6 +171,19 @@ export default function ArticleAnalysis() {
     })
   }
 
+  const handleUpdatePredictDate = (index: number, field: 'interval_start' | 'interval_end', date: DateTime) => {
+    if (!predictPreview) return
+    const newPredicts = [...predictPreview.predicts]
+    newPredicts[index] = {
+      ...newPredicts[index],
+      [field]: date.toFormat('yyyy-MM-dd')
+    }
+    setPredictPreview({
+      ...predictPreview,
+      predicts: newPredicts,
+    })
+  }
+
 
 
   const handleAddArticle = async (_e: React.FormEvent, values: { title: string, source_url: string, publication?: string, issue_date: DateTime, source_text: string, contributor?: string }) => {
@@ -466,14 +479,20 @@ export default function ArticleAnalysis() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2 text-sm text-slate-600">
                               <span className="font-medium">📅 时间区间：</span>
-                              <span className="font-mono bg-white px-2 py-0.5 rounded">
-                                {predict.interval_start}
-                              </span>
+                              <DatePicker
+                                mode="date"
+                                value={predict.interval_start ? DateTime.fromISO(predict.interval_start) : undefined}
+                                onChange={(date) => handleUpdatePredictDate(idx, 'interval_start', date)}
+                                placeholder="开始日期"
+                              />
                               <span className="text-slate-400">→</span>
-                              <span className="font-mono bg-white px-2 py-0.5 rounded">
-                                {predict.interval_end}
-                              </span>
-                              <Button onClick={() => handleRemovePredict(idx)} look="danger" size="tiny" className="ml-10">
+                              <DatePicker
+                                mode="date"
+                                value={predict.interval_end ? DateTime.fromISO(predict.interval_end) : undefined}
+                                onChange={(date) => handleUpdatePredictDate(idx, 'interval_end', date)}
+                                placeholder="结束日期"
+                              />
+                              <Button onClick={() => handleRemovePredict(idx)} look="danger" size="tiny" className="ml-4">
                                 ✕ 移除此预测
                               </Button>
                             </div>
