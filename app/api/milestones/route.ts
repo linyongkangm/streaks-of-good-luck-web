@@ -44,6 +44,7 @@ export async function GET(request: NextRequest) {
             info__stock_company: true,
           },
         },
+        summary__article: true,
       },
       orderBy: {
         milestone_date: 'asc',
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { title, description, milestone_date, industry_ids = [], company_ids = [], keyword: clientKeyword } = body
+    const { title, description, milestone_date, industry_ids = [], company_ids = [], keyword: clientKeyword, article_id } = body
 
     if (!title || !milestone_date) {
       return NextResponse.json(
@@ -83,6 +84,7 @@ export async function POST(request: NextRequest) {
         description: description || null,
         milestone_date: new Date(milestone_date),
         keyword,
+        article_id: article_id ? BigInt(article_id) : null,
       },
     })
 
@@ -142,6 +144,7 @@ export async function POST(request: NextRequest) {
             info__stock_company: true,
           },
         },
+        summary__article: true,
       },
     })
 

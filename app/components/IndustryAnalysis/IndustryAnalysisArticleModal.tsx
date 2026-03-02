@@ -98,7 +98,9 @@ export default function IndustryAnalysisArticleModal({
   }
 
   // 生成事件（打开事件编辑弹窗）
+  const [selectedArticleId, setSelectedArticleId] = useState<bigint | null>(null)
   const handleGenerateEvent = (article: summary__article) => {
+    setSelectedArticleId(article.id)
     setMilestoneInitialValues({
       title: article.title,
       description: article.summary || '',
@@ -198,9 +200,11 @@ export default function IndustryAnalysisArticleModal({
         onClose={() => {
           setMilestoneModalOpen(false)
           setMilestoneInitialValues(null)
+          setSelectedArticleId(null)
         }}
         onSuccess={handleMilestoneSuccess}
         industryId={industryDetail?.id}
+        articleId={selectedArticleId}
         initialValues={milestoneInitialValues}
       />
     </>

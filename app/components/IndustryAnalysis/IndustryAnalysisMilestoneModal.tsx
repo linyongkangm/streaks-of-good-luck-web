@@ -13,6 +13,7 @@ interface IndustryAnalysisMilestoneModalProps {
   onClose: () => void
   onSuccess: () => Promise<void>
   industryId?: number
+  articleId?: bigint | null
   initialValues?: Partial<MilestoneWithRelations> | null
 }
 
@@ -28,6 +29,7 @@ export default function IndustryAnalysisMilestoneModal({
   onClose,
   onSuccess,
   industryId,
+  articleId,
   initialValues,
 }: IndustryAnalysisMilestoneModalProps) {
   const [submitting, setSubmitting] = useState(false)
@@ -49,6 +51,7 @@ export default function IndustryAnalysisMilestoneModal({
           ? values.milestone_date.toISODate()
           : values.milestone_date,
         industry_ids: industryId ? [industryId] : [],
+        article_id: articleId ? articleId.toString() : null,
       }
 
       const response = await fetch(url, {

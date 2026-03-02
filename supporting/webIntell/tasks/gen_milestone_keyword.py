@@ -58,6 +58,7 @@ async def gen_milestone_keyword(title: str, description: str = "") -> str:
     ]
 
     try:
+        logger.info("Sending request to LLM for milestone keyword extraction")
         response_text = await asyncio.to_thread(llm_client.think, cast(List, messages))
         logger.info(f"LLM response for milestone keyword: {response_text}")
         if not response_text:

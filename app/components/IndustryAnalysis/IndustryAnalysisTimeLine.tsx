@@ -231,14 +231,23 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
       <div className="text-xs font-semibold text-gray-700 mb-2">{title}</div>
       <div className="space-y-2 max-h-64 overflow-y-auto">
         {list.map(milestone => (
-          <div key={milestone.id} className="text-xs">
+          <div 
+            key={milestone.id} 
+            className="text-xs cursor-pointer hover:bg-slate-100 p-2 rounded"
+            onClick={() => {
+              // 点击事件块时，如果有关联的文章，则跳转
+              if (milestone.summary__article?.source_url) {
+                window.open(milestone.summary__article.source_url, '_blank')
+              }
+            }}
+          >
             <div className="font-medium text-slate-800 mt-1 flex items-center  gap-2">
               {getTitlePrefix && (
                 <span className="text-gray-500 font-normal">{getTitlePrefix(milestone)}</span>
               )}
               <span className="flex-1">{milestone.title}</span>
               {showActions && (
-                <div className="flex gap-2">
+                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                   <button
                     onClick={() => {
                       setEditingMilestone(milestone)
@@ -405,6 +414,13 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
                                           ? `${getImpactColor(dayMilestones[0]?.relation__industry_or_company_milestone?.[0]?.impact)} hover:opacity-80 px-1.5 py-0.5 whitespace-nowrap text-white`
                                           : 'w-5 h-5 bg-gray-200 hover:bg-gray-300'
                                       }`}
+                                      onClick={() => {
+                                        // 点击时，如果有关联的文章，则跳转
+                                        const firstMilestone = dayMilestones[0]
+                                        if (firstMilestone?.summary__article?.source_url) {
+                                          window.open(firstMilestone.summary__article.source_url, '_blank')
+                                        }
+                                      }}
                                     >
                                       {hasMilestone && dayMilestones.map((m, idx) => (
                                         <span key={m.id}>

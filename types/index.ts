@@ -162,6 +162,7 @@ export interface MilestoneWithRelations extends info__milestone {
     info__industry: info__industry | null
     info__stock_company: info__stock_company | null
   })[]
+  summary__article?: summary__article | null
 }
 
 export type MilestoneDetailResponse = ApiResponse<MilestoneWithRelations>
