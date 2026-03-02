@@ -26,6 +26,11 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const [expandedYears, setExpandedYears] = useState<number[]>([new Date().getFullYear()])
 
+  // 计算今日的 ISO 日期
+  const todayISODate = useMemo(() => {
+    return new Date().toISOString().split('T')[0]
+  }, [])
+
   // 计算日期范围
   const dateRange = useMemo(() => {
     const now = new Date()
@@ -393,6 +398,7 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
                                 const isoDate = date.toISODate() || ''
                                 const dayMilestones: MilestoneWithRelations[] = isoDate ? (milestonesByDate[isoDate] || []) : []
                                 const hasMilestone = dayMilestones && dayMilestones.length > 0
+                                const isToday = isoDate === todayISODate
                                 const isHovered = hoverDate?.isoDate === isoDate
 
                                 return (
@@ -414,6 +420,7 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
                                           ? `${getImpactColor(dayMilestones[0]?.relation__industry_or_company_milestone?.[0]?.impact)} hover:opacity-80 px-1.5 py-0.5 whitespace-nowrap text-white`
                                           : 'w-5 h-5 bg-gray-200 hover:bg-gray-300'
                                       }`}
+                                      style={isToday ? { boxShadow: 'inset 0 0 0 2px rgb(251 146 60)' } : undefined}
                                       onClick={() => {
                                         // 点击时，如果有关联的文章，则跳转
                                         const firstMilestone = dayMilestones[0]
