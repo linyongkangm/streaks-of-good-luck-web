@@ -3,11 +3,7 @@
 import { useState, useEffect, useMemo } from "react"
 import Panel from "@/app/widget/Panel"
 import Button from "@/app/widget/Button"
-import ModalForm from "@/app/widget/ModalForm"
-import { FormItem, FormLabel } from "@/app/widget/Form"
-import Input, { TextArea } from "@/app/widget/Input"
-import DatePicker from "@/app/widget/DatePicker"
-import Select from "@/app/widget/Select"
+import IndustryAnalysisMilestoneModal from "./IndustryAnalysisMilestoneModal"
 import type { MilestoneWithRelations } from "@/types"
 import { DateTime } from "luxon"
 
@@ -15,12 +11,7 @@ interface IndustryAnalysisTimeLineProps {
   industryId?: number
 }
 
-interface MilestoneFormData {
-  title: string
-  description: string
-  milestone_date: DateTime | string
-  keyword: string
-}
+
 
 interface HoverDate {
   isoDate: string
@@ -29,7 +20,7 @@ interface HoverDate {
 export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysisTimeLineProps) {
   const [milestones, setMilestones] = useState<MilestoneWithRelations[]>([])
   const [loading, setLoading] = useState(false)
-  const [showModal, setShowModal] = useState(false)
+  const [milestoneModalOpen, setMilestoneModalOpen] = useState(false)
   const [editingMilestone, setEditingMilestone] = useState<MilestoneWithRelations | null>(null)
   const [hoverDate, setHoverDate] = useState<HoverDate | null>(null)
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
@@ -86,18 +77,18 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
   // 打开创建弹窗
   const handleOpenCreate = () => {
     setEditingMilestone(null)
-    setShowModal(true)
+    setMilestoneModalOpen(true)
   }
 
   // 打开编辑弹窗
   const handleOpenEdit = (milestone: MilestoneWithRelations) => {
     setEditingMilestone(milestone)
-    setShowModal(true)
+    setMilestoneModalOpen(true)
   }
 
   // 关闭弹窗
-  const handleCloseModal = () => {
-    setShowModal(false)
+  const handleCloseMilestoneModal = () => {
+    setMilestoneModalOpen(false)
     setEditingMilestone(null)
   }
 
@@ -110,38 +101,9 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
     )
   }
 
-  // 提交表单（创建或更新）
-  const handleSubmit = async (e: React.FormEvent, values: MilestoneFormData) => {
-    e.preventDefault()
-    try {
-      const url = editingMilestone
-        ? `/api/milestones/${editingMilestone.id}`
-        : '/api/milestones'
-
-      const method = editingMilestone ? 'PUT' : 'POST'
-
-      // 确保日期被正确转换为字符串
-      const submissionData = {
-        ...values,
-        milestone_date: values.milestone_date instanceof DateTime
-          ? values.milestone_date.toISODate()
-          : values.milestone_date,
-        industry_ids: industryId ? [industryId] : [],
-      }
-
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(submissionData),
-      })
-
-      if (response.ok) {
-        handleCloseModal()
-        await fetchMilestones()
-      }
-    } catch (error) {
-      console.error('Failed to save milestone:', error)
-    }
+  // 处理里程碑模态框成功回调
+  const handleMilestoneModalSuccess = async () => {
+    await fetchMilestones()
   }
 
   // 删除 milestone
@@ -279,7 +241,8 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
-                      handleOpenEdit(milestone)
+                      setEditingMilestone(milestone)
+                      setMilestoneModalOpen(true)
                       setHoverDate(null)
                     }}
                     className="text-blue-600 hover:text-blue-800 text-xs"
@@ -476,42 +439,13 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
       )}
 
       {/* 创建/编辑行业事件弹窗 */}
-      <ModalForm
-        open={showModal}
-        onClose={handleCloseModal}
-        title={editingMilestone ? '编辑行业事件' : '新增行业事件'}
-        onSubmit={handleSubmit}
-        submitText={editingMilestone ? '保存' : '创建'}
-        initialValues={{
-          title: editingMilestone?.title || '',
-          description: editingMilestone?.description || '',
-          milestone_date: editingMilestone
-            ? DateTime.fromISO(new Date(editingMilestone.milestone_date).toISOString().split('T')[0])
-            : DateTime.now(),
-          keyword: editingMilestone?.keyword || '',
-        }}
-      >
-        <FormLabel label="标题" required>
-          <FormItem field="title">
-            <Input placeholder="请输入行业事件标题" />
-          </FormItem>
-        </FormLabel>
-        <FormLabel label="日期" required>
-          <FormItem field="milestone_date">
-            <DatePicker />
-          </FormItem>
-        </FormLabel>
-        <FormLabel label="描述">
-          <FormItem field="description">
-            <TextArea placeholder="请输入描述（可选）" rows={10}/>
-          </FormItem>
-        </FormLabel>
-        <FormLabel label="关键词">
-          <FormItem field="keyword">
-            <Input placeholder="最多 8 个汉字（可选，不填则自动生成）" maxLength={8} />
-          </FormItem>
-        </FormLabel>
-      </ModalForm>
+      <IndustryAnalysisMilestoneModal
+        open={milestoneModalOpen}
+        onClose={handleCloseMilestoneModal}
+        onSuccess={handleMilestoneModalSuccess}
+        industryId={industryId}
+        initialValues={editingMilestone}
+      />
     </Panel>
   )
 }

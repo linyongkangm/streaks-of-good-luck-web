@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import type { summary__article, IndustryWithArticles } from '@/types'
+import type { summary__article, IndustryWithArticles, MilestoneWithRelations } from '@/types'
 import * as tools from '@/app/tools'
 import Button from '@/app/widget/Button'
 import Modal from '@/app/widget/Modal'
+import IndustryAnalysisMilestoneModal from './IndustryAnalysisMilestoneModal'
+import { DateTime } from 'luxon'
 
 interface Props {
   open: boolean
@@ -23,6 +25,8 @@ export default function IndustryAnalysisRelateModal({
   const [articleSearchTitle, setArticleSearchTitle] = useState('')
   const [articleSearchResults, setArticleSearchResults] = useState<summary__article[]>([])
   const [searchingArticles, setSearchingArticles] = useState(false)
+  const [milestoneModalOpen, setMilestoneModalOpen] = useState(false)
+  const [milestoneInitialValues, setMilestoneInitialValues] = useState<Partial<MilestoneWithRelations> | null>(null)
 
   const handleSearchArticles = async () => {
     if (!articleSearchTitle.trim()) return
@@ -58,16 +62,37 @@ export default function IndustryAnalysisRelateModal({
   const handleClose = () => {
     setArticleSearchTitle('')
     setArticleSearchResults([])
+    setMilestoneModalOpen(false)
+    setMilestoneInitialValues(null)
     onClose()
   }
 
+  // 生成事件（打开事件编辑弹窗）
+  const handleGenerateEvent = (article: summary__article) => {
+    setMilestoneInitialValues({
+      title: article.title,
+      description: article.summary || '',
+      milestone_date: article.issue_date ?? undefined,
+      keyword: '',
+    })
+    setMilestoneModalOpen(true)
+  }
+
+  // 事件创建成功后的处理
+  const handleMilestoneSuccess = async () => {
+    setMilestoneModalOpen(false)
+    setMilestoneInitialValues(null)
+    onAfterLink()
+  }
+
   return (
-    <Modal
-      open={open}
-      onClose={handleClose}
-      title="📎 关联文章"
-      maxWidth="2xl"
-    >
+    <>
+      <Modal
+        open={open}
+        onClose={handleClose}
+        title="📎 关联文章"
+        maxWidth="2xl"
+      >
       <div className="mb-4">
         <div className="flex gap-2">
           <input
@@ -109,7 +134,14 @@ export default function IndustryAnalysisRelateModal({
                 </div>
                 {alreadyLinked ? (
                   <span className="text-xs text-slate-400 flex-shrink-0">已关联</span>
-                ) : (
+                ) : (<>
+                  <Button
+                    size="tiny"
+                    look="primary"
+                    onClick={() => handleGenerateEvent(article)}
+                  >
+                    生成事件
+                  </Button>
                   <Button
                     size="tiny"
                     look="success"
@@ -117,6 +149,7 @@ export default function IndustryAnalysisRelateModal({
                   >
                     关联
                   </Button>
+                </>
                 )}
               </div>
             )
@@ -127,6 +160,19 @@ export default function IndustryAnalysisRelateModal({
           输入标题搜索文章后关联
         </div>
       )}
-    </Modal>
+      </Modal>
+
+      {/* 生成事件弹窗 */}
+      <IndustryAnalysisMilestoneModal
+        open={milestoneModalOpen}
+        onClose={() => {
+          setMilestoneModalOpen(false)
+          setMilestoneInitialValues(null)
+        }}
+        onSuccess={handleMilestoneSuccess}
+        industryId={industryDetail?.id}
+        initialValues={milestoneInitialValues}
+      />
+    </>
   )
 }
