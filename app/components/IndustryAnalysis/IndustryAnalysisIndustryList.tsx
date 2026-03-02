@@ -140,20 +140,21 @@ export default function IndustryAnalysisIndustryList({
                 </span>
               </div>
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                <button
+                <Button
+                  look="icon"
                   onClick={(e) => { e.stopPropagation(); openEditForm(industry) }}
-                  className="p-1 text-slate-400 hover:text-blue-600 transition-colors"
                   title="编辑"
                 >
                   ✏️
-                </button>
-                <button
+                </Button>
+                <Button
+                  look="icon"
+                  iconColor="red"
                   onClick={(e) => { e.stopPropagation(); handleDeleteIndustry(industry) }}
-                  className="p-1 text-slate-400 hover:text-red-600 transition-colors"
                   title="删除"
                 >
                   🗑️
-                </button>
+                </Button>
               </div>
             </div>
           ))}

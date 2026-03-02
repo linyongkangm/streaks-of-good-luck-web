@@ -5,12 +5,19 @@ interface ButtonProps {
   children?: React.ReactNode
   disabled?: boolean
   type?: 'button' | 'submit' | 'reset'
-  look?: 'primary' | 'secondary' | 'danger' | 'cancel' | 'success'
+  look?: 'primary' | 'secondary' | 'danger' | 'cancel' | 'success' | 'icon'
   size?: 'tiny' | 'small' | 'medium' | 'large'
   className?: string
+  title?: string
+  iconColor?: 'blue' | 'red'
 }
 
-function getButtonClass(look: ButtonProps['look'], size: ButtonProps['size']): string {
+function getButtonClass(look: ButtonProps['look'], size: ButtonProps['size'], iconColor: ButtonProps['iconColor']): string {
+  if (look === 'icon') {
+    const hoverColor = iconColor === 'red' ? 'hover:text-red-600' : 'hover:text-blue-600'
+    return `flex items-center justify-center p-1 text-slate-400 ${hoverColor} transition-colors rounded disabled:opacity-50 disabled:cursor-not-allowed`
+  }
+
   let baseClass = "flex items-center justify-center whitespace-nowrap rounded-lg bg-gradient-to-r text-white shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
   if (size) {
     baseClass += {
@@ -33,12 +40,13 @@ function getButtonClass(look: ButtonProps['look'], size: ButtonProps['size']): s
   return baseClass;
 }
 
-export default function Button({ onClick, children, disabled = false, type = 'button', look = 'primary', size = 'medium', className = '' }: ButtonProps) {
+export default function Button({ onClick, children, disabled = false, type = 'button', look = 'primary', size = 'medium', className = '', title, iconColor }: ButtonProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   return (
     <button
       type={type}
-      className={`${getButtonClass(look, size)} ${className}`}
+      className={`${getButtonClass(look, size, iconColor)} ${className}`}
+      title={title}
       onClick={async (e) => {
         if (isProcessing) return
         setIsProcessing(true)
