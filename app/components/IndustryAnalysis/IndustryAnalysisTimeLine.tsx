@@ -252,7 +252,8 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
     title: string,
     list: MilestoneWithRelations[],
     topOffset: number,
-    showActions = false
+    showActions = false,
+    getTitlePrefix?: (milestone: MilestoneWithRelations) => string
   ) => (
     <div
       className="fixed z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-3 min-w-[280px] max-w-[400px]"
@@ -265,8 +266,12 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
       <div className="space-y-2 max-h-64 overflow-y-auto">
         {list.map(milestone => (
           <div key={milestone.id} className="text-xs">
-
-            <div className="font-medium text-slate-800 mt-1">{milestone.title}</div>
+            <div className="font-medium text-slate-800 mt-1 flex items-center gap-2">
+              {getTitlePrefix && (
+                <span className="text-gray-500 font-normal">{getTitlePrefix(milestone)}</span>
+              )}
+              <span>{milestone.title}</span>
+            </div>
             {milestone.description && (
               <div className="text-gray-600 mt-1 line-clamp-2">{milestone.description}</div>
             )}
@@ -355,7 +360,9 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
                       renderMilestoneHoverPopover(
                         `${year} 年所有事件 (${yearMilestones.length})`,
                         yearMilestones,
-                        40
+                        40,
+                        false,
+                        (milestone) => DateTime.fromJSDate(new Date(milestone.milestone_date)).toFormat('MM月dd日')
                       )
                     )}
                   </div>
@@ -396,7 +403,9 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
                                 renderMilestoneHoverPopover(
                                   `${month.monthStart.toFormat('MM 月')} (${monthMilestones.length})`,
                                   monthMilestones,
-                                  30
+                                  30,
+                                  false,
+                                  (milestone) => DateTime.fromJSDate(new Date(milestone.milestone_date)).toFormat('dd日')
                                 )
                               )}
                             </div>
