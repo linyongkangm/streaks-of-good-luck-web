@@ -488,11 +488,6 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
             <DatePicker />
           </FormItem>
         </FormLabel>
-        <FormLabel label="状态">
-          <FormItem field="status">
-            <Select options={statusOptions} />
-          </FormItem>
-        </FormLabel>
         <FormLabel label="描述">
           <FormItem field="description">
             <Input placeholder="请输入描述（可选）" />
