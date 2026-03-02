@@ -31,7 +31,7 @@ export async function extractMilestoneKeyword(title: string, description?: strin
         title,
         description: description || '',
       }),
-      signal: AbortSignal.timeout(1000 * 20),
+      signal: AbortSignal.timeout(1000 * 60),
     })
 
     if (!response.ok) {
