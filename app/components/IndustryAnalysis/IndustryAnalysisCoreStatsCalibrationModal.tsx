@@ -41,6 +41,10 @@ export default function IndustryAnalysisCoreStatsCalibrationModal({
   const [newCalibrationDescription, setNewCalibrationDescription] = useState('')
   const [createSubIndustryIds, setCreateSubIndustryIds] = useState<number[]>([])
 
+  // 编辑已关联口径的子行业
+  const [editingCalibrationId, setEditingCalibrationId] = useState<number | null>(null)
+  const [editingSubIndustryIds, setEditingSubIndustryIds] = useState<number[]>([])
+
   useEffect(() => {
     if (open) {
       loadData()
@@ -121,6 +125,102 @@ export default function IndustryAnalysisCoreStatsCalibrationModal({
         ? prev.filter(id => id !== subIndustryId)
         : [...prev, subIndustryId]
     )
+  }
+
+  // 开始编辑已关联口径的子行业
+  const handleEditLinkedCalibration = (group: { calibration: info__calibration; subIndustries: info__industry[] }) => {
+    setEditingCalibrationId(group.calibration.id)
+    setEditingSubIndustryIds(group.subIndustries.map(s => s.id))
+  }
+
+  const toggleEditingSubIndustrySelection = (subIndustryId: number) => {
+    setEditingSubIndustryIds(prev =>
+      prev.includes(subIndustryId)
+        ? prev.filter(id => id !== subIndustryId)
+        : [...prev, subIndustryId]
+    )
+  }
+
+  // 保存已关联口径的子行业变更
+  const handleSaveLinkedCalibrationEdit = async () => {
+    if (!editingCalibrationId) return
+
+    const currentGroup = linkedCalibrationGroups.find(g => g.calibration.id === editingCalibrationId)
+    if (!currentGroup) return
+
+    const currentIds = currentGroup.subIndustries.map(s => s.id)
+    const toAdd = editingSubIndustryIds.filter(id => !currentIds.includes(id))
+    const toRemove = currentIds.filter(id => !editingSubIndustryIds.includes(id))
+
+    setLoading(true)
+    try {
+      // 添加新的子行业
+      if (toAdd.length > 0) {
+        const addResponse = await fetch(`/api/industries/${industryId}/calibrations`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            calibration_id: editingCalibrationId,
+            sub_industry_ids: toAdd,
+          }),
+        })
+
+        const addResult = await addResponse.json()
+        if (addResult.error) {
+          alert(addResult.error)
+          return
+        }
+
+        // 自动为新添加的子行业关联父行业的模板
+        await autoLinkParentTemplatesToSubIndustries(toAdd)
+      }
+
+      // 删除移除的子行业
+      if (toRemove.length > 0) {
+        await Promise.all(
+          toRemove.map(subIndustryId =>
+            fetch(`/api/industries/${industryId}/calibrations?calibration_id=${editingCalibrationId}&sub_industry_id=${subIndustryId}`, {
+              method: 'DELETE',
+            })
+          )
+        )
+      }
+
+      loadData()
+      setEditingCalibrationId(null)
+    } catch (error) {
+      console.error('Failed to save linked calibration:', error)
+      alert('保存失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 取消关联口径（删除该口径的所有子行业）
+  const handleUnlinkCalibration = async (calibrationId: number) => {
+    if (!window.confirm('确定要取消关联此口径吗？')) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/industries/${industryId}/calibrations?calibration_id=${calibrationId}`, {
+        method: 'DELETE',
+      })
+
+      const result = await response.json()
+      if (result.error) {
+        alert(result.error)
+        return
+      }
+
+      loadData()
+    } catch (error) {
+      console.error('Failed to unlink calibration:', error)
+      alert('取消关联失败')
+    } finally {
+      setLoading(false)
+    }
   }
 
   // 为子行业自动关联父行业的模板
@@ -285,6 +385,8 @@ export default function IndustryAnalysisCoreStatsCalibrationModal({
     setNewCalibrationName('')
     setNewCalibrationDescription('')
     setCreateSubIndustryIds([])
+    setEditingCalibrationId(null)
+    setEditingSubIndustryIds([])
     onClose()
   }
 
@@ -312,14 +414,82 @@ export default function IndustryAnalysisCoreStatsCalibrationModal({
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {linkedCalibrationGroups.map(group => (
-                  <div key={group.calibration.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                    <h4 className="font-medium text-gray-900">{group.calibration.name}</h4>
-                    {group.calibration.description && (
-                      <p className="text-sm text-gray-600 mt-1">{group.calibration.description}</p>
+                  <div key={group.calibration.id}>
+                    {editingCalibrationId === group.calibration.id ? (
+                      // 编辑模式
+                      <div className="border border-blue-500 rounded-lg p-4 bg-blue-50 space-y-3">
+                        <div>
+                          <h4 className="font-medium text-gray-900 mb-3">{group.calibration.name}</h4>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            选择关联的子行业
+                          </label>
+                          <div className="max-h-48 overflow-y-auto border border-blue-200 rounded-lg p-2 space-y-2">
+                            {availableSubIndustries.map(subIndustry => (
+                              <label key={subIndustry.id} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={editingSubIndustryIds.includes(subIndustry.id)}
+                                  onChange={() => toggleEditingSubIndustrySelection(subIndustry.id)}
+                                  className="h-4 w-4"
+                                />
+                                <span>{subIndustry.name}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex justify-end gap-2 pt-2 border-t border-blue-200">
+                          <Button
+                            look="cancel"
+                            size="small"
+                            onClick={() => setEditingCalibrationId(null)}
+                            disabled={loading}
+                          >
+                            取消
+                          </Button>
+                          <Button
+                            look="primary"
+                            size="small"
+                            onClick={handleSaveLinkedCalibrationEdit}
+                            disabled={loading}
+                          >
+                            保存
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      // 查看模式
+                      <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900">{group.calibration.name}</h4>
+                            {group.calibration.description && (
+                              <p className="text-sm text-gray-600 mt-1">{group.calibration.description}</p>
+                            )}
+                            <p className="text-xs text-gray-500 mt-2">
+                              子行业：{group.subIndustries.map(item => item.name).join('、')}
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              look="secondary"
+                              size="tiny"
+                              onClick={() => handleEditLinkedCalibration(group)}
+                              disabled={loading}
+                            >
+                              编辑
+                            </Button>
+                            <Button
+                              look="secondary"
+                              size="tiny"
+                              onClick={() => handleUnlinkCalibration(group.calibration.id)}
+                              disabled={loading}
+                            >
+                              取消关联
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
                     )}
-                    <p className="text-xs text-gray-500 mt-2">
-                      子行业：{group.subIndustries.map(item => item.name).join('、')}
-                    </p>
                   </div>
                 ))}
               </div>

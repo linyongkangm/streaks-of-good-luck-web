@@ -31,6 +31,10 @@ export default function IndustryAnalysisCoreStatsTemplateModal({
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null)
   const [customName, setCustomName] = useState('')
 
+  // 编辑已关联模板
+  const [editingRelationId, setEditingRelationId] = useState<number | null>(null)
+  const [editingCustomName, setEditingCustomName] = useState('')
+
   // 创建模板表单
   const [newTemplateName, setNewTemplateName] = useState('')
   const [newTemplateRelateTable, setNewTemplateRelateTable] = useState('')
@@ -90,6 +94,68 @@ export default function IndustryAnalysisCoreStatsTemplateModal({
     }
     setFormulaError('')
     return true
+  }
+
+  // 编辑已关联模板的自定义名称
+  const handleEditRelation = (relation: IndustryTemplateRelation) => {
+    setEditingRelationId(relation.id)
+    setEditingCustomName(relation.rename || '')
+  }
+
+  const handleSaveRelationEdit = async () => {
+    if (!editingRelationId) return
+
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/industries/${industryId}/templates/${editingRelationId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rename: editingCustomName.trim() || null,
+        }),
+      })
+
+      const result = await response.json()
+      if (result.error) {
+        alert(result.error)
+        return
+      }
+
+      loadTemplates()
+      setEditingRelationId(null)
+    } catch (error) {
+      console.error('Failed to save template relation:', error)
+      alert('保存失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 取消关联模板
+  const handleUnlinkTemplate = async (templateId: number, relationId: number) => {
+    if (!window.confirm('确定要取消关联此模板吗？')) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/industries/${industryId}/templates?template_id=${templateId}`, {
+        method: 'DELETE',
+      })
+
+      const result = await response.json()
+      if (result.error) {
+        alert(result.error)
+        return
+      }
+
+      loadTemplates()
+    } catch (error) {
+      console.error('Failed to unlink template:', error)
+      alert('取消关联失败')
+    } finally {
+      setLoading(false)
+    }
   }
 
   // 关联现有模板
@@ -226,26 +292,81 @@ export default function IndustryAnalysisCoreStatsTemplateModal({
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {linkedTemplateRelations.map(relation => (
-                  <div
-                    key={relation.id}
-                    className="border border-gray-200 rounded-lg p-4 bg-gray-50"
-                  >
-                    <div className="flex justify-between items-start gap-4">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">
-                          {relation.rename || relation.info__core_statistic_template.name}
-                        </h4>
-                        <p className="text-sm text-gray-600 mt-1 font-mono">
+                  <div key={relation.id}>
+                    {editingRelationId === relation.id ? (
+                      // 编辑模式
+                      <div className="border border-blue-500 rounded-lg p-4 bg-blue-50 space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            自定义显示名称（可选）
+                          </label>
+                          <TextInput
+                            value={editingCustomName}
+                            onChange={setEditingCustomName}
+                            placeholder={relation.info__core_statistic_template.name}
+                          />
+                        </div>
+                        <p className="text-sm text-gray-600 font-mono">
                           {relation.info__core_statistic_template.core_formula}
                         </p>
-                        <div className="flex gap-4 mt-2 text-xs text-gray-500">
-                          <span>数据表: {relation.info__core_statistic_template.relate_table}</span>
-                          {relation.info__core_statistic_template.description && (
-                            <span className="flex-1 truncate">{relation.info__core_statistic_template.description}</span>
-                          )}
+                        <div className="flex justify-end gap-2 pt-2 border-t border-blue-200">
+                          <Button
+                            look="cancel"
+                            size="small"
+                            onClick={() => setEditingRelationId(null)}
+                            disabled={loading}
+                          >
+                            取消
+                          </Button>
+                          <Button
+                            look="primary"
+                            size="small"
+                            onClick={handleSaveRelationEdit}
+                            disabled={loading}
+                          >
+                            保存
+                          </Button>
                         </div>
                       </div>
-                    </div>
+                    ) : (
+                      // 查看模式
+                      <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900">
+                              {relation.rename || relation.info__core_statistic_template.name}
+                            </h4>
+                            <p className="text-sm text-gray-600 mt-1 font-mono">
+                              {relation.info__core_statistic_template.core_formula}
+                            </p>
+                            <div className="flex gap-4 mt-2 text-xs text-gray-500">
+                              <span>数据表: {relation.info__core_statistic_template.relate_table}</span>
+                              {relation.info__core_statistic_template.description && (
+                                <span className="flex-1 truncate">{relation.info__core_statistic_template.description}</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              look="secondary"
+                              size="tiny"
+                              onClick={() => handleEditRelation(relation)}
+                              disabled={loading}
+                            >
+                              编辑
+                            </Button>
+                            <Button
+                              look="secondary"
+                              size="tiny"
+                              onClick={() => handleUnlinkTemplate(relation.core_statistic_template_id, relation.id)}
+                              disabled={loading}
+                            >
+                              取消关联
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
