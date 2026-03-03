@@ -222,11 +222,11 @@ export default function IndustryAnalysisCoreStatsCard({
                   },
                   ...parsedFormula.variables.map(variable => ({
                     title: variable,
-                    dataIndex: 'data',
-                    key: `var_${variable}`,
+                    dataIndex: `var_${variable}`,
+
                     width: '80px',
-                    render: (value: any) => {
-                      const data = value as Record<string, any>
+                    render: (value: any, row: any) => {
+                      const data = row.data as Record<string, any>
                       const val = data[variable]
                       return val !== undefined ? formatNumber(Number(val), 4) : '-'
                     },
@@ -286,11 +286,10 @@ export default function IndustryAnalysisCoreStatsCard({
                   },
                   ...parsedFormula.variables.map(variable => ({
                     title: variable,
-                    dataIndex: 'data',
-                    key: `var_${variable}`,
+                    dataIndex: `var_${variable}`,
                     width: '80px',
-                    render: (value: any) => {
-                      const data = value as Record<string, any>
+                    render: (value: any, row: any) => {
+                      const data = row.data as Record<string, any>
                       const val = data[variable]
                       return val !== undefined ? formatNumber(Number(val), 4) : '-'
                     },
