@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 // GET /api/calibrations/[id] - 获取单个口径
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const id = parseInt((await params).id)
@@ -42,7 +42,7 @@ export async function GET(
 // PUT /api/calibrations/[id] - 更新口径
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const id = parseInt((await params).id)
@@ -74,7 +74,7 @@ export async function PUT(
 // DELETE /api/calibrations/[id] - 删除口径
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const id = parseInt((await params).id)

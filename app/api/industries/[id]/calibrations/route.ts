@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 // POST /api/industries/[id]/calibrations - 关联口径及子行业到行业
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const industryId = parseInt((await params).id)
@@ -61,7 +61,7 @@ export async function POST(
 // DELETE /api/industries/[id]/calibrations - 取消行业的口径关联
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const industryId = parseInt((await params).id)

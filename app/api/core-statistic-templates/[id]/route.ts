@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 // GET /api/core-statistic-templates/[id] - 获取单个核心统计模板
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const id = parseInt((await params).id)
@@ -41,7 +41,7 @@ export async function GET(
 // PUT /api/core-statistic-templates/[id] - 更新核心统计模板
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const id = parseInt((await params).id)
@@ -75,7 +75,7 @@ export async function PUT(
 // DELETE /api/core-statistic-templates/[id] - 删除核心统计模板
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const id = parseInt((await params).id)
