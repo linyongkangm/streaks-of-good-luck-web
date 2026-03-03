@@ -166,13 +166,13 @@ export default function IndustryAnalysisCoreStatsCard({
 
     // 添加等号和最终结果
     if (evaluationResult?.success && evaluationResult.result !== undefined) {
-      sequence.push({
+      sequence.unshift({
         type: 'operator',
         label: '=',
         value: '=',
         isOperator: true,
       })
-      sequence.push({
+      sequence.unshift({
         type: 'variable',
         label: parsedFormula.resultName || '结果',
         value: formatNumber(evaluationResult.result, 4),
