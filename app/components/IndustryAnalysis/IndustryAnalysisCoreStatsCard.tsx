@@ -89,17 +89,26 @@ export default function IndustryAnalysisCoreStatsCard({
 
     const data = selectedData.data as Record<string, any>
 
-    // 将数据转换为数字类型
+    // 将数据转换为数字类型，未定义的值默认为0
     const numericData: Record<string, number> = {}
-    for (const [key, value] of Object.entries(data)) {
-      const num = Number(value)
-      if (!isNaN(num)) {
-        numericData[key] = num
+    
+    // 获取公式中所有变量
+    const formulaVariables = parsedFormula.variables
+    
+    // 为每个变量设置值，未定义的默认为0
+    for (const variable of formulaVariables) {
+      const value = data[variable]
+      if (value !== undefined && value !== null) {
+        const num = Number(value)
+        numericData[variable] = !isNaN(num) ? num : 0
+      } else {
+        // undefined或null值默认为0
+        numericData[variable] = 0
       }
     }
 
     return evaluateFormula(template.core_formula, numericData)
-  }, [template.core_formula, selectedData])
+  }, [template.core_formula, selectedData, parsedFormula.variables])
 
   // 获取公式的有序 tokens
   const formulaTokens = useMemo(() => {
@@ -112,10 +121,19 @@ export default function IndustryAnalysisCoreStatsCard({
 
     const data = selectedData.data as Record<string, any>
     const numericData: Record<string, number> = {}
-    for (const [key, value] of Object.entries(data)) {
-      const num = Number(value)
-      if (!isNaN(num)) {
-        numericData[key] = num
+    
+    // 获取公式中所有变量
+    const formulaVariables = parsedFormula.variables
+    
+    // 为每个变量设置值，未定义的默认为0
+    for (const variable of formulaVariables) {
+      const value = data[variable]
+      if (value !== undefined && value !== null) {
+        const num = Number(value)
+        numericData[variable] = !isNaN(num) ? num : 0
+      } else {
+        // undefined或null值默认为0
+        numericData[variable] = 0
       }
     }
 
@@ -133,7 +151,7 @@ export default function IndustryAnalysisCoreStatsCard({
         sequence.push({
           type: 'variable',
           label: token.value,
-          value: value !== undefined ? formatNumber(value, 2) : '?',
+          value: value !== undefined ? formatNumber(value, 2) : '0',
         })
       } else if (token.type === 'operator') {
         sequence.push({
@@ -174,7 +192,7 @@ export default function IndustryAnalysisCoreStatsCard({
     }
 
     return sequence
-  }, [formulaTokens, selectedData, evaluationResult, parsedFormula.resultName])
+  }, [formulaTokens, selectedData, evaluationResult, parsedFormula.resultName, parsedFormula.variables])
 
   // 显示状态
   const hasData = sortedData.length > 0

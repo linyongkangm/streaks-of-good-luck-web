@@ -34,6 +34,8 @@ export default function IndustryAnalysisCoreStatsTemplateModal({
   // 编辑已关联模板
   const [editingRelationId, setEditingRelationId] = useState<number | null>(null)
   const [editingCustomName, setEditingCustomName] = useState('')
+  const [editingCoreFormula, setEditingCoreFormula] = useState('')
+  const [editingFormulaError, setEditingFormulaError] = useState('')
 
   // 创建模板表单
   const [newTemplateName, setNewTemplateName] = useState('')
@@ -100,10 +102,21 @@ export default function IndustryAnalysisCoreStatsTemplateModal({
   const handleEditRelation = (relation: IndustryTemplateRelation) => {
     setEditingRelationId(relation.id)
     setEditingCustomName(relation.rename || '')
+    setEditingCoreFormula(relation.info__core_statistic_template.core_formula || '')
+    setEditingFormulaError('')
   }
 
   const handleSaveRelationEdit = async () => {
     if (!editingRelationId) return
+
+    // 验证公式
+    if (editingCoreFormula.trim()) {
+      const validation = validateFormula(editingCoreFormula)
+      if (!validation.valid) {
+        setEditingFormulaError(validation.error || '公式格式错误')
+        return
+      }
+    }
 
     setLoading(true)
     try {
@@ -112,6 +125,7 @@ export default function IndustryAnalysisCoreStatsTemplateModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           rename: editingCustomName.trim() || null,
+          core_formula: editingCoreFormula.trim() || null,
         }),
       })
 
@@ -123,6 +137,7 @@ export default function IndustryAnalysisCoreStatsTemplateModal({
 
       loadTemplates()
       setEditingRelationId(null)
+      setEditingFormulaError('')
     } catch (error) {
       console.error('Failed to save template relation:', error)
       alert('保存失败')
@@ -257,6 +272,10 @@ export default function IndustryAnalysisCoreStatsTemplateModal({
     setNewTemplateCoreFormula('')
     setNewTemplateDescription('')
     setFormulaError('')
+    setEditingRelationId(null)
+    setEditingCustomName('')
+    setEditingCoreFormula('')
+    setEditingFormulaError('')
     onClose()
   }
 
@@ -306,14 +325,31 @@ export default function IndustryAnalysisCoreStatsTemplateModal({
                             placeholder={relation.info__core_statistic_template.name}
                           />
                         </div>
-                        <p className="text-sm text-gray-600 font-mono">
-                          {relation.info__core_statistic_template.core_formula}
-                        </p>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            计算公式（可选）
+                          </label>
+                          <TextInput
+                            value={editingCoreFormula}
+                            onChange={(value) => {
+                              setEditingCoreFormula(value)
+                              setEditingFormulaError('')
+                            }}
+                            placeholder={relation.info__core_statistic_template.core_formula}
+                            error={editingFormulaError}
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            支持运算符：+ - × ÷ * / ( )，变量名使用中文或英文。值为 undefined 时默认为 0
+                          </p>
+                        </div>
                         <div className="flex justify-end gap-2 pt-2 border-t border-blue-200">
                           <Button
                             look="cancel"
                             size="small"
-                            onClick={() => setEditingRelationId(null)}
+                            onClick={() => {
+                              setEditingRelationId(null)
+                              setEditingFormulaError('')
+                            }}
                             disabled={loading}
                           >
                             取消

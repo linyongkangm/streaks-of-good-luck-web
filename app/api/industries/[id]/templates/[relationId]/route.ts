@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
-// PUT /api/industries/[id]/templates/[relationId] - 更新模板关联的自定义名称
+// PUT /api/industries/[id]/templates/[relationId] - 更新模板关联的自定义名称和公式
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string; relationId: string } }
@@ -15,11 +15,12 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { rename } = body
+    const { rename, core_formula } = body
 
     // 验证该关联确实属于该行业
     const existingRelation = await prisma.relation__industry_or_company_core_statistic_template.findUnique({
       where: { id: relationId },
+      include: { info__core_statistic_template: true },
     })
 
     if (!existingRelation || existingRelation.industry_id !== industryId) {
@@ -29,10 +30,22 @@ export async function PUT(
       )
     }
 
+    // 如果要更新公式，先更新模板
+    let templateData = existingRelation.info__core_statistic_template
+    if (core_formula !== undefined && core_formula !== null) {
+      templateData = await prisma.info__core_statistic_template.update({
+        where: { id: existingRelation.core_statistic_template_id },
+        data: {
+          core_formula: core_formula || templateData.core_formula,
+        },
+      })
+    }
+
+    // 更新关联关系中的rename字段
     const updatedRelation = await prisma.relation__industry_or_company_core_statistic_template.update({
       where: { id: relationId },
       data: {
-        rename: rename || null,
+        rename: rename !== undefined ? (rename || null) : undefined,
       },
       include: {
         info__core_statistic_template: true,
