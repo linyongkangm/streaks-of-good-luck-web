@@ -202,7 +202,7 @@ export default function TweetAnalysis() {
               <Button
                 onClick={fetchLatestTweets}
                 disabled={isFetchingLatest}
-                size="medium"
+                size="small"
                 look="success"
               >
                 {isFetchingLatest ? (
