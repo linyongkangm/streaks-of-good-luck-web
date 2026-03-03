@@ -166,7 +166,7 @@ export default function StockAnalysisStockList({ companies, selectedCompany, sin
                     <span>{formatter.ratio(summary?.pe)}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className={`${isSelected ? 'text-blue-100/90' : 'text-slate-500'}`}>三年分位</span>
+                    <span className={`${isSelected ? 'text-blue-100/90' : 'text-slate-500'}`}>三年位</span>
                     <span>{formatter.percentile(summary?.pe_percentile_3y)}</span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -174,7 +174,7 @@ export default function StockAnalysisStockList({ companies, selectedCompany, sin
                     <span>{formatter.ratio(summary?.pb)}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className={`${isSelected ? 'text-blue-100/90' : 'text-slate-500'}`}>三年分位</span>
+                    <span className={`${isSelected ? 'text-blue-100/90' : 'text-slate-500'}`}>三年位</span>
                     <span>{formatter.percentile(summary?.pb_percentile_3y)}</span>
                   </div>
                 </div>
