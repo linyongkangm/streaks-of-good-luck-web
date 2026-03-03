@@ -240,40 +240,39 @@ export default function IndustryAnalysisCoreStatsCard({
 
           {/* 方格序列 */}
           {gridSequence.length > 0 && (
-            <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
-              <div className="flex flex-wrap gap-2 items-end">
-                <div className="mb-2 text-xs text-gray-500">{currentQuarterData?.date ? new Date(currentQuarterData.date).toLocaleDateString('zh-CN') : '-'}</div>
+            <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+              <div className="flex flex-wrap items-end">
+                <div className="flex items-center justify-center h-10 text-gray-500 w-20">
+                  <span>{currentQuarterData?.date ? new Date(currentQuarterData.date).toLocaleDateString('zh-CN') : '-'}</span>
+                </div>
                 {gridSequence.map((item, idx) => (
-                  <div key={idx} className="flex flex-col items-center gap-1">
-                    {item.isOperator ? (
-                      // 运算符和等号
-                      <div className="flex items-center justify-center w-10 h-10 border-2 border-gray-400 rounded text-sm font-medium text-gray-700">
+                  item.isOperator ? (
+                    // 运算符和等号
+                    <div key={idx} className="flex items-center justify-center w-10 h-10 border-2 border-gray-400 rounded text-sm font-medium text-gray-700">
+                      {item.value}
+                    </div>
+                  ) : (
+                    // 变量或数字
+                    <div key={idx} className="flex-1 flex flex-col items-center">
+                      <div className="text-xs text-gray-600 font-medium text-center max-w-[80px] line-clamp-2">
+                        {item.label}
+                      </div>
+                      <div className="flex items-center justify-center w-[80px] h-10 border-2 border-blue-400 rounded bg-white text-sm font-semibold text-blue-600">
                         {item.value}
                       </div>
-                    ) : (
-                      // 变量或数字
-                      <div className="flex flex-col items-center">
-                        <div className="text-xs text-gray-600 font-medium text-center max-w-[80px] line-clamp-2">
-                          {item.label}
-                        </div>
-                        <div className="flex items-center justify-center w-[80px] h-10 border-2 border-blue-400 rounded bg-white text-sm font-semibold text-blue-600">
-                          {item.value}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                    </div>
+                  )
                 ))}
               </div>
             </div>
           )}
           {/* 过去数据表格 */}
           {pastData.length > 0 && (
-            <div className="mt-4">
               <Table
                 columns={[
-                  { title: '日期', dataIndex: 'date', key: 'date', width: '100px', render: (value: any) => new Date(value).toLocaleDateString('zh-CN') },
+                  { title: '日期', dataIndex: 'date', key: 'date', render: (value: any) => new Date(value).toLocaleDateString('zh-CN') },
                   {
-                    title: '结果', dataIndex: 'data', key: 'result', width: '80px', render: (value: any, row: info__core_data) => {
+                    title: '结果', dataIndex: 'data', key: 'result', render: (value: any, row: info__core_data) => {
                       const data = row.data as Record<string, any>
                       const numericData: Record<string, number> = {}
                       for (const [k, v] of Object.entries(data)) {
@@ -287,7 +286,6 @@ export default function IndustryAnalysisCoreStatsCard({
                   ...parsedFormula.variables.map(variable => ({
                     title: variable,
                     dataIndex: `var_${variable}`,
-                    width: '80px',
                     render: (value: any, row: any) => {
                       const data = row.data as Record<string, any>
                       const val = data[variable]
@@ -298,7 +296,6 @@ export default function IndustryAnalysisCoreStatsCard({
                 ]}
                 dataSource={pastData}
               />
-            </div>
           )}
         </div>
       ) : (
