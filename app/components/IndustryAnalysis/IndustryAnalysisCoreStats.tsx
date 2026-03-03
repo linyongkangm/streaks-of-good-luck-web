@@ -3,8 +3,11 @@
 import { useState, useEffect } from 'react'
 import Panel from '@/app/widget/Panel'
 import Select from '@/app/widget/Select'
+import Button from '@/app/widget/Button'
 import Loading from '@/app/widget/Loading'
 import IndustryAnalysisCoreStatsCard from './IndustryAnalysisCoreStatsCard'
+import IndustryAnalysisCoreStatsTemplateModal from './IndustryAnalysisCoreStatsTemplateModal'
+import IndustryAnalysisCoreDataModal from './IndustryAnalysisCoreDataModal'
 import type {
   IndustryTemplateRelation,
   IndustryCalibrationRelation,
@@ -26,6 +29,8 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
   const [coreDataList, setCoreDataList] = useState<info__core_data[]>([])
   const [calibrations, setCalibrations] = useState<IndustryCalibrationRelation[]>([])
   const [selectedCalibrationId, setSelectedCalibrationId] = useState<number | null>(null)
+  const [showTemplateModal, setShowTemplateModal] = useState(false)
+  const [showCoreDataModal, setShowCoreDataModal] = useState(false)
 
   // 加载行业数据
   useEffect(() => {
@@ -78,98 +83,121 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
     return coreDataList.filter(cd => cd.industry_id === subIndustryId)
   }
 
-  // 如果没有模板，显示提示
-  if (!loading && templates.length === 0) {
-    return (
-      <Panel title="核心统计">
-        <div className="text-gray-500 text-center py-8">
-          暂无核心统计模板，请先关联模板
-        </div>
-      </Panel>
-    )
-  }
-
   return (
-    <Panel
-      title="核心统计"
-      headerAction={
-        calibrationOptions.length > 0 ? (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">统计口径：</span>
-            <Select<number>
-              options={calibrationOptions}
-              value={selectedCalibrationId ?? undefined}
-              onChange={(value: number) => setSelectedCalibrationId(value)}
-              placeholder="选择口径..."
-              className="w-48"
-            />
+    <>
+      <Panel
+        title="核心统计"
+        headerAction={
+          <div className="flex items-center gap-3">
+            <Button
+              look="secondary"
+              size="small"
+              onClick={() => setShowCoreDataModal(true)}
+              disabled={templates.length === 0}
+            >
+              + 增加数据
+            </Button>
+            <Button look="primary" size="small" onClick={() => setShowTemplateModal(true)}>
+              + 关联模板
+            </Button>
+            {calibrationOptions.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">统计口径：</span>
+                <Select<number>
+                  options={calibrationOptions}
+                  value={selectedCalibrationId ?? undefined}
+                  onChange={(value: number) => setSelectedCalibrationId(value)}
+                  placeholder="选择口径..."
+                  className="w-48"
+                />
+              </div>
+            )}
           </div>
-        ) : undefined
-      }
-    >
-      {loading ? (
-        <div className="flex justify-center py-8">
-          <Loading />
-        </div>
-      ) : (
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-3">当前行业</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {templates.map(template => {
-                const relatedData = coreDataList.find(
-                  cd => cd.table === template.info__core_statistic_template.relate_table &&
-                    cd.industry_id === industryId
-                )
-                return (
-                  <IndustryAnalysisCoreStatsCard
-                    key={template.id}
-                    template={template.info__core_statistic_template}
-                    customName={template.rename}
-                    coreData={relatedData}
-                  />
-                )
-              })}
+        }
+      >
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <Loading />
+          </div>
+        ) : templates.length === 0 ? (
+          <div className="text-gray-500 text-center py-8">
+            暂无核心统计模板，请先关联模板
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 mb-3">当前行业</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {templates.map(template => {
+                  const relatedData = coreDataList.find(
+                    cd => cd.table === template.info__core_statistic_template.relate_table &&
+                      cd.industry_id === industryId
+                  )
+                  return (
+                    <IndustryAnalysisCoreStatsCard
+                      key={template.id}
+                      template={template.info__core_statistic_template}
+                      customName={template.rename}
+                      coreData={relatedData}
+                    />
+                  )
+                })}
+              </div>
             </div>
-          </div>
 
-          {/* 如果选择了口径，按子行业分组显示 */}
-          {selectedCalibrationId && subIndustries.length > 0 && (
-            <div className="space-y-6">
-              {subIndustries.map(subIndustry => (
-                <div key={subIndustry.id}>
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">
-                    {subIndustry.name}
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {templates.map(template => {
-                      const relatedData = coreDataList.find(
-                        cd => cd.table === template.info__core_statistic_template.relate_table &&
-                          cd.industry_id === subIndustry.id
-                      )
-                      return (
-                        <IndustryAnalysisCoreStatsCard
-                          key={`${subIndustry.id}-${template.id}`}
-                          template={template.info__core_statistic_template}
-                          customName={template.rename}
-                          coreData={relatedData}
-                        />
-                      )
-                    })}
+            {/* 如果选择了口径，按子行业分组显示 */}
+            {selectedCalibrationId && subIndustries.length > 0 && (
+              <div className="space-y-6">
+                {subIndustries.map(subIndustry => (
+                  <div key={subIndustry.id}>
+                    <h3 className="text-sm font-medium text-gray-700 mb-3">
+                      {subIndustry.name}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {templates.map(template => {
+                        const relatedData = coreDataList.find(
+                          cd => cd.table === template.info__core_statistic_template.relate_table &&
+                            cd.industry_id === subIndustry.id
+                        )
+                        return (
+                          <IndustryAnalysisCoreStatsCard
+                            key={`${subIndustry.id}-${template.id}`}
+                            template={template.info__core_statistic_template}
+                            customName={template.rename}
+                            coreData={relatedData}
+                          />
+                        )
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
 
-          {/* 如果选择了口径但没有子行业 */}
-          {selectedCalibrationId && subIndustries.length === 0 && (
-            <div className="text-gray-500 text-center py-8">
-              该口径下暂无子行业数据
-            </div>
-          )}
-        </div>
-      )}
-    </Panel>
+            {/* 如果选择了口径但没有子行业 */}
+            {selectedCalibrationId && subIndustries.length === 0 && (
+              <div className="text-gray-500 text-center py-8">
+                该口径下暂无子行业数据
+              </div>
+            )}
+          </div>
+        )}
+      </Panel>
+      
+      <IndustryAnalysisCoreStatsTemplateModal
+        open={showTemplateModal}
+        onClose={() => setShowTemplateModal(false)}
+        industryId={industryId}
+        onAfterLink={loadIndustryData}
+      />
+
+      <IndustryAnalysisCoreDataModal
+        open={showCoreDataModal}
+        onClose={() => setShowCoreDataModal(false)}
+        industryId={industryId}
+        templates={templates}
+        onAfterSave={loadIndustryData}
+      />
+    </>
   )
 }

@@ -7,7 +7,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const industryId = parseInt(params.id)
+    const industryId = parseInt((await params).id)
     if (isNaN(industryId)) {
       return NextResponse.json({ error: 'Invalid industry ID' }, { status: 400 })
     }

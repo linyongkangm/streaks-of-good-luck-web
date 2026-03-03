@@ -30,7 +30,7 @@ export default function Radio<T extends string = string>({
   className = '',
 }: RadioProps<T>) {
   return (
-    <div className={`flex rounded-lg overflow-hidden border border-slate-300 ${className}`}>
+    <div className={`inline-flex rounded-lg overflow-hidden border border-slate-300 ${className}`}>
       {options.map((option, index) => (
         <button
           key={option.value}
