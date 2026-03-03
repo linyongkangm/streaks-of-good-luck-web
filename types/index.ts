@@ -150,7 +150,11 @@ export interface IndustryWithArticles extends info__industry {
 }
 
 export interface IndustryWithCount extends info__industry {
-  _count: { relation__industry_articles: number }
+  _count: {
+    relation__industry_articles: number
+    relation__industry_or_company_calibration_industry: number
+    sub_industry_calibrations: number
+  }
 }
 
 export type PredictDetail = info__predict & {

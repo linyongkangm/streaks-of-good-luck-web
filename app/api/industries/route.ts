@@ -17,7 +17,11 @@ export async function GET(request: NextRequest) {
       orderBy: { create_time: 'desc' },
       include: {
         _count: {
-          select: { relation__industry_articles: true }
+          select: {
+            relation__industry_articles: true,
+            relation__industry_or_company_calibration_industry: true,
+            sub_industry_calibrations: true,
+          }
         }
       }
     })

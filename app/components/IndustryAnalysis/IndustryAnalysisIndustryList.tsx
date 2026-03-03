@@ -35,7 +35,29 @@ export default function IndustryAnalysisIndustryList({
       if (searchName) params.append('name', searchName)
       const response = await fetch(`/api/industries?${params}`)
       const data = await response.json()
-      setIndustries(data.data || [])
+      const rawIndustries: IndustryWithCount[] = data.data || []
+
+      const sortedIndustries = [...rawIndustries].sort((a, b) => {
+        const aHasChildren = a._count.relation__industry_or_company_calibration_industry > 0
+        const aSubOnly =
+          a._count.relation__industry_or_company_calibration_industry === 0 &&
+          a._count.sub_industry_calibrations > 0
+
+        const bHasChildren = b._count.relation__industry_or_company_calibration_industry > 0
+        const bSubOnly =
+          b._count.relation__industry_or_company_calibration_industry === 0 &&
+          b._count.sub_industry_calibrations > 0
+
+        const rank = (hasChildren: boolean, subOnly: boolean) => {
+          if (hasChildren) return 0
+          if (subOnly) return 2
+          return 1
+        }
+
+        return rank(aHasChildren, aSubOnly) - rank(bHasChildren, bSubOnly)
+      })
+
+      setIndustries(sortedIndustries)
     } catch (error) {
       console.error('Failed to fetch industries:', error)
     } finally {
