@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { evaluateFormula, parseFormula, formatNumber } from '@/app/tools/formulaParser'
+import { evaluateFormula, parseFormula, formatNumber, tokenizeExpression } from '@/app/tools/formulaParser'
 import Button from '@/app/widget/Button'
 import type { info__core_statistic_template, info__core_data } from '@/types'
 
@@ -45,6 +45,81 @@ export default function IndustryAnalysisCoreStatsCard({
     return evaluateFormula(template.core_formula, numericData)
   }, [template.core_formula, coreData])
 
+  // 获取公式的有序 tokens
+  const formulaTokens = useMemo(() => {
+    return tokenizeExpression(parsedFormula.expression)
+  }, [parsedFormula.expression])
+
+  // 生成可显示的方格序列数据
+  const gridSequence = useMemo(() => {
+    if (!coreData) return []
+
+    const data = coreData.data as Record<string, any>
+    const numericData: Record<string, number> = {}
+    for (const [key, value] of Object.entries(data)) {
+      const num = Number(value)
+      if (!isNaN(num)) {
+        numericData[key] = num
+      }
+    }
+
+    const sequence: Array<{
+      type: 'variable' | 'operator' | 'bracket' | 'number'
+      label: string
+      value: string | number
+      isOperator?: boolean
+    }> = []
+
+    // 添加表达式中的 tokens
+    for (const token of formulaTokens) {
+      if (token.type === 'variable') {
+        const value = numericData[token.value]
+        sequence.push({
+          type: 'variable',
+          label: token.value,
+          value: value !== undefined ? formatNumber(value, 4) : '?',
+        })
+      } else if (token.type === 'operator') {
+        sequence.push({
+          type: 'operator',
+          label: token.value,
+          value: token.value,
+          isOperator: true,
+        })
+      } else if (token.type === 'bracket') {
+        sequence.push({
+          type: 'bracket',
+          label: token.value,
+          value: token.value,
+          isOperator: true,
+        })
+      } else if (token.type === 'number') {
+        sequence.push({
+          type: 'number',
+          label: token.value,
+          value: token.value,
+        })
+      }
+    }
+
+    // 添加等号和最终结果
+    if (evaluationResult?.success && evaluationResult.result !== undefined) {
+      sequence.push({
+        type: 'operator',
+        label: '=',
+        value: '=',
+        isOperator: true,
+      })
+      sequence.push({
+        type: 'variable',
+        label: parsedFormula.resultName || '结果',
+        value: formatNumber(evaluationResult.result, 4),
+      })
+    }
+
+    return sequence
+  }, [formulaTokens, coreData, evaluationResult, parsedFormula.resultName])
+
   // 显示状态
   const hasData = !!coreData
   const hasResult = evaluationResult?.success && evaluationResult.result !== undefined
@@ -64,12 +139,38 @@ export default function IndustryAnalysisCoreStatsCard({
       {/* 结果显示 */}
       {hasResult ? (
         <div className="mb-3">
-          <div className="text-2xl font-bold text-blue-600">
-            {formatNumber(evaluationResult.result!)}
-          </div>
-          <div className="text-xs text-gray-500 mt-1">
-            {parsedFormula.resultName || '计算结果'}
-          </div>
+          {/* 方格序列 */}
+          {gridSequence.length > 0 && (
+            <div className="mb-3 flex flex-wrap gap-2">
+              {gridSequence.map((item, idx) => (
+                <div key={idx} className="flex flex-col items-center gap-1">
+                  {item.isOperator ? (
+                    // 运算符和等号
+                    <div className="flex items-center justify-center w-10 h-10 border-2 border-gray-400 rounded text-sm font-medium text-gray-700">
+                      {item.value}
+                    </div>
+                  ) : (
+                    // 变量或数字
+                    <div className="flex flex-col items-center">
+                      <div className="text-xs text-gray-600 font-medium text-center max-w-[80px] line-clamp-2">
+                        {item.label}
+                      </div>
+                      <div className="flex items-center justify-center w-[80px] h-10 border-2 border-blue-400 rounded bg-blue-50 text-sm font-semibold text-blue-600">
+                        {item.value}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {/* 日期信息 */}
+          {coreData?.date && (
+            <div className="text-xs text-gray-500">
+              数据日期: {new Date(coreData.date).toLocaleDateString('zh-CN')}
+            </div>
+          )}
         </div>
       ) : (
         <div className="mb-3">
@@ -81,12 +182,12 @@ export default function IndustryAnalysisCoreStatsCard({
       )}
 
       {/* 公式显示 */}
-      <div className="border-t border-gray-100 pt-3">
+      {/* <div className="border-t border-gray-100 pt-3">
         <div className="text-xs text-gray-500 mb-2">计算公式：</div>
         <div className="text-xs text-gray-700 font-mono bg-gray-50 p-2 rounded break-words">
           {template.core_formula}
         </div>
-      </div>
+      </div> */}
 
       {/* 错误提示 */}
       {evaluationResult && !evaluationResult.success && (
@@ -101,9 +202,9 @@ export default function IndustryAnalysisCoreStatsCard({
       )}
 
       {/* 数据表类型 */}
-      <div className="mt-2 text-xs text-gray-400">
+      {/* <div className="mt-2 text-xs text-gray-400">
         数据表: {template.relate_table}
-      </div>
+      </div> */}
 
       {/* 描述 */}
       {template.description && (

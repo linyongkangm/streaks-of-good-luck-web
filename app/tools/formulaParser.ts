@@ -212,3 +212,70 @@ export function validateFormula(formula: string): {
 
   return { valid: true }
 }
+
+/**
+ * 将公式表达式分解为有序的 tokens（变量、运算符、括号等）
+ * @param expression - 表达式部分（不包含结果名称）
+ * @returns Token 数组，每个 token 有类型和值
+ */
+export function tokenizeExpression(expression: string): Array<{
+  type: 'variable' | 'operator' | 'bracket' | 'number'
+  value: string
+}> {
+  const tokens: Array<{ type: 'variable' | 'operator' | 'bracket' | 'number'; value: string }> = []
+  let current = ''
+
+  for (let i = 0; i < expression.length; i++) {
+    const char = expression[i]
+    const nextChar = i + 1 < expression.length ? expression[i + 1] : ''
+
+    // 处理空格
+    if (char === ' ') {
+      if (current) {
+        pushToken(current)
+        current = ''
+      }
+      continue
+    }
+
+    // 处理括号
+    if (char === '(' || char === ')') {
+      if (current) {
+        pushToken(current)
+        current = ''
+      }
+      tokens.push({ type: 'bracket', value: char })
+      continue
+    }
+
+    // 处理运算符
+    if (['+', '-', '×', '÷', '*', '/'].includes(char)) {
+      if (current) {
+        pushToken(current)
+        current = ''
+      }
+      tokens.push({ type: 'operator', value: char })
+      continue
+    }
+
+    // 累积其他字符
+    current += char
+  }
+
+  // 处理最后剩余的 token
+  if (current) {
+    pushToken(current)
+  }
+
+  function pushToken(token: string) {
+    // 判断是变量还是数字
+    if (/^\d+(\.\d+)?$/.test(token)) {
+      tokens.push({ type: 'number', value: token })
+    } else {
+      tokens.push({ type: 'variable', value: token })
+    }
+  }
+
+  return tokens
+}
+

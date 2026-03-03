@@ -122,7 +122,7 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
           <div className="space-y-6">
             <div>
               <h3 className="text-sm font-medium text-gray-700 mb-3">当前行业</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="gap-4">
                 {templates.map(template => {
                   const relatedData = coreDataList.find(
                     cd => cd.table === template.info__core_statistic_template.relate_table &&
@@ -149,7 +149,7 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
                     <h3 className="text-sm font-medium text-gray-700 mb-3">
                       {subIndustry.name}
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="gap-4">
                       {templates.map(template => {
                         const relatedData = coreDataList.find(
                           cd => cd.table === template.info__core_statistic_template.relate_table &&
