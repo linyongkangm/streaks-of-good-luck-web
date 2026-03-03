@@ -4,6 +4,12 @@ import { useState, useEffect } from 'react'
 import type { summary__tweet, info__tweet } from '@/types'
 import * as ctools from '@/app/tools/ctools';
 import { DATE_FORMAT, DATE_TIME_FORMAT, toBeijing, toEastern, toLuxon } from '../tools';
+import Button from '@/app/widget/Button'
+import { TextInput } from '@/app/widget/Input'
+import DatePicker from '@/app/widget/DatePicker'
+import Radio from '@/app/widget/Radio'
+import Panel from '@/app/widget/Panel'
+import { DateTime } from 'luxon';
 import * as luxon from 'luxon';
 
 export default function TweetAnalysis() {
@@ -176,132 +182,106 @@ export default function TweetAnalysis() {
   return (
     <div className="p-6 max-w-[1800px] mx-auto">
       {/* 顶部筛选栏 */}
-      <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              推文来源筛选
-            </label>
-            <div className="flex flex-wrap gap-2 mb-4">
+      <Panel title="推文来源筛选" className='mb-4'>
+        <div className="flex-1">
+          <div className="flex flex-wrap gap-2 mb-4">
+            <Radio
+              value={selectedCollectFrom}
+              onChange={(value) => {
+                setSelectedCollectFrom(value)
+                setPage(1)
+              }}
+              options={[
+                { label: '全部', value: 'all' },
+                ...collectFromList.map(item => ({ label: item, value: item }))
+              ]}
+            />
+            {selectedCollectFrom !== 'all' && (
+              <Button
+                onClick={fetchLatestTweets}
+                disabled={isFetchingLatest}
+                size="medium"
+                look="success"
+              >
+                {isFetchingLatest ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                    获取中...
+                  </>
+                ) : (
+                  <>
+                    <span className="mr-2">🔄</span>
+                    获取最新推文
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {/* 增加 CollectFrom 输入框 */}
+            <div className="flex gap-2 mr-16">
+              <TextInput
+                value={newCollectFrom}
+                onChange={(value) => setNewCollectFrom(value)}
+                placeholder="输入新的推文来源 (如: https://x.com/username)"
+                className="flex-1 text-sm"
+              />
+              <Button
+                onClick={handleAddCollectFrom}
+                disabled={isAddingCollectFrom || !newCollectFrom.trim()}
+                size="small"
+                look="primary"
+              >
+                增加来源
+              </Button>
+            </div>
+
+            {/* 日期选择和生成分析 */}
+            {selectedCollectFrom !== 'all' && (
               <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    setSelectedCollectFrom('all')
-                    setPage(1)
-                  }}
-                  className={`px-4 py-2 rounded-lg transition-all ${selectedCollectFrom === 'all'
-                    ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    }`}
+                <DatePicker
+                  mode="date"
+                  value={selectedDate ? DateTime.fromISO(selectedDate) : undefined}
+                  onChange={(value) => setSelectedDate(value.toISODate() || '')}
+                  placeholder="选择日期"
+                  className="flex-1 text-sm"
+                />
+                <Button
+                  onClick={generateAnalysisForDate}
+                  disabled={isGeneratingAnalysis || !selectedDate}
+                  size="small"
+                  look="danger"
                 >
-                  全部
-                </button>
-                {collectFromList.map((collectFrom) => (
-                  <button
-                    key={collectFrom}
-                    onClick={() => {
-                      setSelectedCollectFrom(collectFrom)
-                      setPage(1)
-                    }}
-                    className={`px-4 py-2 rounded-lg transition-all ${selectedCollectFrom === collectFrom
-                      ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                      }`}
-                  >
-                    {collectFrom}
-                  </button>
-                ))}
-              </div>
-              {
-                /* 获取最新推文按钮 */
-                selectedCollectFrom !== 'all' && (<button
-                  onClick={fetchLatestTweets}
-                  disabled={isFetchingLatest}
-                  className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg hover:from-green-600 hover:to-emerald-600 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
-                >
-                  {isFetchingLatest ? (
+                  {isGeneratingAnalysis ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                      获取中...
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent inline-block mr-2"></div>
+                      生成中...
                     </>
                   ) : (
-                    <>
-                      <span>🔄</span>
-                      获取最新推文
-                    </>
+                    <>✨ 生成分析</>
                   )}
-                </button>)
-              }
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {/* 增加 CollectFrom 输入框 */}
-              <div className="flex gap-2 mr-16">
-                <input
-                  type="text"
-                  value={newCollectFrom}
-                  onChange={(e) => setNewCollectFrom(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      handleAddCollectFrom()
-                    }
-                  }}
-                  placeholder="输入新的推文来源 (如: https://x.com/username)"
-                  className="text-slate-900 flex-1 px-4 py-2 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 transition-all text-sm"
-                />
-                <button
-                  onClick={handleAddCollectFrom}
-                  disabled={isAddingCollectFrom || !newCollectFrom.trim()}
-                  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                >
-                  增加来源
-                </button>
+                </Button>
               </div>
-
-              {/* 日期选择和生成分析 */}
-              {selectedCollectFrom !== 'all' && (
-                <div className="flex gap-2">
-                  <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="text-slate-900 flex-1 px-4 py-2 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 transition-all text-sm"
-                  />
-                  <button
-                    onClick={generateAnalysisForDate}
-                    disabled={isGeneratingAnalysis || !selectedDate}
-                    className="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                  >
-                    {isGeneratingAnalysis ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent inline-block mr-2"></div>
-                        生成中...
-                      </>
-                    ) : (
-                      <>✨ 生成分析</>
-                    )}
-                  </button>
-                </div>
-              )}
-            </div>
+            )}
           </div>
-
-
-
         </div>
-      </div>
+
+      </Panel>
 
       <div className="grid grid-cols-12 gap-6">
         {/* 左侧：推文摘要列表 */}
         <div className="col-span-4">
-          <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
-            <h2 className="text-xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          <Panel title={
+            <span>
               推文摘要
               {selectedCollectFrom !== 'all' && (
                 <span className="text-sm text-slate-500 font-normal ml-2">
                   ({selectedCollectFrom})
                 </span>
               )}
-            </h2>
+            </span>
+          }>
+
             <div className="space-y-3 max-h-[calc(100vh-380px)] overflow-y-auto scrollbar-thin pr-2">
               {summaries.map((summary) => (
                 <button
@@ -333,25 +313,27 @@ export default function TweetAnalysis() {
 
             {/* 分页 */}
             <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t border-slate-200">
-              <button
+              <Button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-4 py-2 rounded-lg text-slate-900 border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 hover:border-slate-300 transition-all"
+                look="cancel"
+                size="small"
               >
                 ←
-              </button>
+              </Button>
               <span className="px-4 py-2 text-sm font-medium text-slate-700">
                 {page} / {totalPages}
               </span>
-              <button
+              <Button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="px-4 py-2 rounded-lg text-slate-900 border-2 border-slate-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 hover:border-slate-300 transition-all"
+                look="cancel"
+                size="small"
               >
                 →
-              </button>
+              </Button>
             </div>
-          </div>
+          </Panel>
         </div>
 
         {/* 右侧：相关推文 */}
@@ -382,11 +364,7 @@ export default function TweetAnalysis() {
                 </p>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  <span>相关推文</span>
-                  <span className="text-lg text-slate-500 font-normal">({relatedTweets.length})</span>
-                </h3>
+              <Panel title="相关推文">
                 <div className="space-y-4 max-h-[calc(100vh-450px)] overflow-y-auto scrollbar-thin pr-2">
                   {relatedTweets.map((tweet) => (
                     <div key={tweet.id} className="border-2 border-slate-200 rounded-lg p-5 hover:border-blue-300 hover:shadow-md transition-all bg-gradient-to-br from-white to-slate-50">
@@ -435,7 +413,7 @@ export default function TweetAnalysis() {
                     <p className="text-center text-slate-500 py-8">暂无相关推文</p>
                   )}
                 </div>
-              </div>
+              </Panel>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-[60vh] bg-white rounded-xl shadow-lg">
