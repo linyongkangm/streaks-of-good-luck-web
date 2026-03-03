@@ -134,25 +134,9 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
         title="核心统计"
         headerAction={
           <div className="flex items-center gap-3">
-            {calibrationOptions.length > 0 && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600 whitespace-nowrap">统计口径：</span>
-                <Select<number>
-                  options={calibrationOptions}
-                  value={selectedCalibrationId ?? undefined}
-                  onChange={(value: number) => setSelectedCalibrationId(value)}
-                  placeholder="选择口径..."
-                  className="w-48"
-                />
-              </div>
-            )}
             <Button look="primary" size="small" onClick={() => setShowTemplateModal(true)}>
               + 关联模板
             </Button>
-            <Button look="primary" size="small" onClick={() => setShowCalibrationModal(true)}>
-              + 关联口径
-            </Button>
-
           </div>
         }
       >
@@ -166,27 +150,41 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
           </div>
         ) : (
           <div className="space-y-6">
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-3">当前行业</h3>
-              <div className="space-y-2">
-                {templates.map(template => {
-                  const relatedDataList = coreDataList.filter(
-                    cd => cd.table === template.info__core_statistic_template.relate_table &&
-                      cd.industry_id === industryId
-                  )
-                  return (
-                    <IndustryAnalysisCoreStatsCard
-                      key={template.id}
-                      template={template.info__core_statistic_template}
-                      customName={template.rename}
-                      coreDataList={relatedDataList}
-                      industryId={industryId}
-                      onAddData={() => openCoreDataModal(template, industryId)}
-                      onUnlink={loadIndustryData}
-                    />
-                  )
-                })}
-              </div>
+            <div className="space-y-2">
+              {templates.map(template => {
+                const relatedDataList = coreDataList.filter(
+                  cd => cd.table === template.info__core_statistic_template.relate_table &&
+                    cd.industry_id === industryId
+                )
+                return (
+                  <IndustryAnalysisCoreStatsCard
+                    key={template.id}
+                    template={template.info__core_statistic_template}
+                    customName={template.rename}
+                    coreDataList={relatedDataList}
+                    industryId={industryId}
+                    onAddData={() => openCoreDataModal(template, industryId)}
+                    onUnlink={loadIndustryData}
+                  />
+                )
+              })}
+            </div>
+            <div className="flex items-center gap-3">
+              {calibrationOptions.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600 whitespace-nowrap">统计口径：</span>
+                  <Select<number>
+                    options={calibrationOptions}
+                    value={selectedCalibrationId ?? undefined}
+                    onChange={(value: number) => setSelectedCalibrationId(value)}
+                    placeholder="选择口径..."
+                    className="w-48"
+                  />
+                </div>
+              )}
+              <Button look="primary" size="small" onClick={() => setShowCalibrationModal(true)}>
+                + 关联口径
+              </Button>
             </div>
 
             {/* 如果选择了口径，按子行业分组显示 */}
