@@ -9,6 +9,7 @@ import IndustryAnalysisCoreStatsCard from './IndustryAnalysisCoreStatsCard'
 import IndustryAnalysisCoreStatsTemplateModal from './IndustryAnalysisCoreStatsTemplateModal'
 import IndustryAnalysisCoreDataModal from './IndustryAnalysisCoreDataModal'
 import IndustryAnalysisCoreStatsCalibrationModal from './IndustryAnalysisCoreStatsCalibrationModal'
+import IndustryAnalysisAddSubIndustryModal from './IndustryAnalysisAddSubIndustryModal'
 import type {
   IndustryTemplateRelation,
   IndustryCalibrationRelation,
@@ -32,6 +33,7 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
   const [selectedCalibrationId, setSelectedCalibrationId] = useState<number | null>(null)
   const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [showCalibrationModal, setShowCalibrationModal] = useState(false)
+  const [showAddSubIndustryModal, setShowAddSubIndustryModal] = useState(false)
   const [showCoreDataModal, setShowCoreDataModal] = useState(false)
   const [coreDataTemplate, setCoreDataTemplate] = useState<IndustryTemplateRelation | null>(null)
   const [coreDataIndustryId, setCoreDataIndustryId] = useState<number>(industryId)
@@ -185,6 +187,14 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
               <Button look="primary" size="small" onClick={() => setShowCalibrationModal(true)}>
                 + 关联口径
               </Button>
+              <Button 
+                look="primary" 
+                size="small" 
+                onClick={() => setShowAddSubIndustryModal(true)}
+                disabled={!selectedCalibrationId}
+              >
+                + 增加子行业
+              </Button>
             </div>
 
             {/* 如果选择了口径，按子行业分组显示 */}
@@ -261,6 +271,15 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
         onClose={() => setShowCalibrationModal(false)}
         industryId={industryId}
         onAfterLink={loadIndustryData}
+      />
+
+      <IndustryAnalysisAddSubIndustryModal
+        open={showAddSubIndustryModal}
+        onClose={() => setShowAddSubIndustryModal(false)}
+        industryId={industryId}
+        calibrationId={selectedCalibrationId || 0}
+        existingSubIndustryIds={subIndustries.map(s => s.id)}
+        onAfterAdd={loadIndustryData}
       />
 
       <IndustryAnalysisCoreDataModal
