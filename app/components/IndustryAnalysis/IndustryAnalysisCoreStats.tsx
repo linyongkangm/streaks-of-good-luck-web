@@ -8,6 +8,7 @@ import Loading from '@/app/widget/Loading'
 import IndustryAnalysisCoreStatsCard from './IndustryAnalysisCoreStatsCard'
 import IndustryAnalysisCoreStatsTemplateModal from './IndustryAnalysisCoreStatsTemplateModal'
 import IndustryAnalysisCoreDataModal from './IndustryAnalysisCoreDataModal'
+import IndustryAnalysisCoreStatsCalibrationModal from './IndustryAnalysisCoreStatsCalibrationModal'
 import type {
   IndustryTemplateRelation,
   IndustryCalibrationRelation,
@@ -30,6 +31,7 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
   const [calibrations, setCalibrations] = useState<IndustryCalibrationRelation[]>([])
   const [selectedCalibrationId, setSelectedCalibrationId] = useState<number | null>(null)
   const [showTemplateModal, setShowTemplateModal] = useState(false)
+  const [showCalibrationModal, setShowCalibrationModal] = useState(false)
   const [showCoreDataModal, setShowCoreDataModal] = useState(false)
   const [coreDataTemplate, setCoreDataTemplate] = useState<IndustryTemplateRelation | null>(null)
   const [coreDataIndustryId, setCoreDataIndustryId] = useState<number>(industryId)
@@ -92,9 +94,6 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
         title="核心统计"
         headerAction={
           <div className="flex items-center gap-3">
-            <Button look="primary" size="small" onClick={() => setShowTemplateModal(true)}>
-              + 关联模板
-            </Button>
             {calibrationOptions.length > 0 && (
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">统计口径：</span>
@@ -107,6 +106,13 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
                 />
               </div>
             )}
+            <Button look="primary" size="small" onClick={() => setShowTemplateModal(true)}>
+              + 关联模板
+            </Button>
+            <Button look="primary" size="small" onClick={() => setShowCalibrationModal(true)}>
+              + 关联口径
+            </Button>
+
           </div>
         }
       >
@@ -180,10 +186,17 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
           </div>
         )}
       </Panel>
-      
+
       <IndustryAnalysisCoreStatsTemplateModal
         open={showTemplateModal}
         onClose={() => setShowTemplateModal(false)}
+        industryId={industryId}
+        onAfterLink={loadIndustryData}
+      />
+
+      <IndustryAnalysisCoreStatsCalibrationModal
+        open={showCalibrationModal}
+        onClose={() => setShowCalibrationModal(false)}
         industryId={industryId}
         onAfterLink={loadIndustryData}
       />
