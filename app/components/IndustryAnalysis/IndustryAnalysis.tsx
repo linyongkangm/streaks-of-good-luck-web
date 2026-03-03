@@ -8,6 +8,7 @@ import IndustryAnalysisIndustryInfo from './IndustryAnalysisIndustryInfo'
 import IndustryAnalysisRelateArticles from './IndustryAnalysisRelateArticles'
 import IndustryAnalysisArticleModal from './IndustryAnalysisArticleModal'
 import IndustryAnalysisTimeLine from './IndustryAnalysisTimeLine'
+import IndustryAnalysisCoreStats from './IndustryAnalysisCoreStats'
 export default function IndustryAnalysis() {
   const [selectedIndustryId, setSelectedIndustryId] = useState<number | null>(null)
   const [industryListRefreshKey, setIndustryListRefreshKey] = useState(0)
@@ -65,12 +66,14 @@ export default function IndustryAnalysis() {
           <Placeholder selected={!!selectedIndustryId} loading={loadingDetail} icon="👈" message="请从左侧选择一个行业">
             {industryDetail && selectedIndustryId && (
               <div className="space-y-4">
-
                 {/* 行业信息头 */}
                 <IndustryAnalysisIndustryInfo
                   industryDetail={industryDetail}
                   onOpenLinkArticle={() => setShowLinkArticle(true)}
                 />
+                
+                {/* 核心统计和统计口径 */}
+                <IndustryAnalysisCoreStats industryId={selectedIndustryId} />
                 
                 {/* 行业里程碑时间轴 */}
                 <IndustryAnalysisTimeLine industryId={selectedIndustryId} />

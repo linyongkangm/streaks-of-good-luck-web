@@ -37,22 +37,25 @@ model info__stock_board {
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model info__stock_company {
-  id                                      Int                                           @id @default(autoincrement()) @db.UnsignedInt
-  company_name                            String                                        @unique(map: "idx_company_name") @db.VarChar(50)
-  company_code                            String                                        @unique(map: "idx_company_code") @db.VarChar(20)
-  company_akshare_code                    String                                        @unique(map: "idx_company_akshare_code") @db.VarChar(20)
-  create_time                             DateTime                                      @default(now()) @db.DateTime(0)
-  update_time                             DateTime                                      @default(now()) @updatedAt @db.DateTime(0)
-  industry                                String?                                       @db.VarChar(20)
-  ipo_date                                DateTime?                                     @db.Date
-  circulating_shares                      Decimal?                                      @db.Decimal(20, 2)
-  total_shares                            Decimal?                                      @db.Decimal(20, 2)
-  quote__balance_sheet                    quote__balance_sheet[]
-  quote__cash_flow_sheet                  quote__cash_flow_sheet[]
-  quote__profit_sheet                     quote__profit_sheet[]
-  quote__stock_constituent_daily          quote__stock_constituent_daily[]
-  relation__stock_board_company           relation__stock_board_company[]
-  relation__industry_or_company_milestone relation__industry_or_company_milestone[]
+  id                                                    Int                                                      @id @default(autoincrement()) @db.UnsignedInt
+  company_name                                          String                                                   @unique(map: "idx_company_name") @db.VarChar(50)
+  company_code                                          String                                                   @unique(map: "idx_company_code") @db.VarChar(20)
+  company_akshare_code                                  String                                                   @unique(map: "idx_company_akshare_code") @db.VarChar(20)
+  create_time                                           DateTime                                                 @default(now()) @db.DateTime(0)
+  update_time                                           DateTime                                                 @default(now()) @updatedAt @db.DateTime(0)
+  industry                                              String?                                                  @db.VarChar(20)
+  ipo_date                                              DateTime?                                                @db.Date
+  circulating_shares                                    Decimal?                                                 @db.Decimal(20, 2)
+  total_shares                                          Decimal?                                                 @db.Decimal(20, 2)
+  quote__balance_sheet                                  quote__balance_sheet[]
+  quote__cash_flow_sheet                                quote__cash_flow_sheet[]
+  quote__profit_sheet                                   quote__profit_sheet[]
+  quote__stock_constituent_daily                        quote__stock_constituent_daily[]
+  relation__stock_board_company                         relation__stock_board_company[]
+  relation__industry_or_company_milestone               relation__industry_or_company_milestone[]
+  info__core_data                                       info__core_data[]
+  relation__industry_or_company_core_statistic_template relation__industry_or_company_core_statistic_template[]
+  relation__industry_or_company_calibration_industry    relation__industry_or_company_calibration_industry[]
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -165,13 +168,17 @@ model summary__article {
 
 /// 行业表
 model info__industry {
-  id                                      Int                                           @id @default(autoincrement()) @db.UnsignedInt
-  name                                    String                                        @unique(map: "uk_industry_name") @db.VarChar(100)
-  description                             String?                                       @db.Text
-  create_time                             DateTime                                      @default(now()) @db.DateTime(0)
-  update_time                             DateTime                                      @default(now()) @updatedAt @db.DateTime(0)
-  relation__industry_articles             relation__industry_article[]
-  relation__industry_or_company_milestone relation__industry_or_company_milestone[]
+  id                                                     Int                                                      @id @default(autoincrement()) @db.UnsignedInt
+  name                                                   String                                                   @unique(map: "uk_industry_name") @db.VarChar(100)
+  description                                            String?                                                  @db.Text
+  create_time                                            DateTime                                                 @default(now()) @db.DateTime(0)
+  update_time                                            DateTime                                                 @default(now()) @updatedAt @db.DateTime(0)
+  relation__industry_articles                            relation__industry_article[]
+  relation__industry_or_company_milestone                relation__industry_or_company_milestone[]
+  info__core_data                                        info__core_data[]
+  relation__industry_or_company_core_statistic_template  relation__industry_or_company_core_statistic_template[]
+  relation__industry_or_company_calibration_industry     relation__industry_or_company_calibration_industry[]
+  sub_industry_calibrations                              relation__industry_or_company_calibration_industry[]    @relation("sub_industry_calibration")
 }
 
 /// 行业-文章关联表
@@ -387,4 +394,85 @@ model relation__industry_or_company_milestone {
   @@index([milestone_id], map: "idx_milestone_id")
   @@index([industry_id], map: "idx_industry_id")
   @@index([company_id], map: "idx_company_id")
+}
+
+/// 核心统计模板表
+model info__core_statistic_template {
+  id                                                     Int                                                      @id @default(autoincrement()) @db.UnsignedInt
+  name                                                   String                                                   @db.VarChar(100)
+  relate_table                                           String                                                   @db.VarChar(50)
+  core_formula                                           String                                                   @db.Text
+  description                                            String?                                                  @db.Text
+  create_time                                            DateTime                                                 @default(now()) @db.DateTime(0)
+  update_time                                            DateTime                                                 @default(now()) @updatedAt @db.DateTime(0)
+  relation__industry_or_company_core_statistic_template  relation__industry_or_company_core_statistic_template[]
+
+  @@index([relate_table], map: "idx_relate_table")
+}
+
+/// 核心数据表
+model info__core_data {
+  id                Int                 @id @default(autoincrement()) @db.UnsignedInt
+  industry_id       Int?                @db.UnsignedInt
+  company_id        Int?                @db.UnsignedInt
+  table             String              @db.VarChar(50)
+  data              Json
+  create_time       DateTime            @default(now()) @db.DateTime(0)
+  update_time       DateTime            @default(now()) @updatedAt @db.DateTime(0)
+  info__industry    info__industry?     @relation(fields: [industry_id], references: [id], onDelete: Cascade, map: "fk_core_data_industry_id")
+  info__stock_company info__stock_company? @relation(fields: [company_id], references: [id], onDelete: Cascade, map: "fk_core_data_company_id")
+
+  @@index([industry_id], map: "idx_core_data_industry_id")
+  @@index([company_id], map: "idx_core_data_company_id")
+  @@index([table], map: "idx_core_data_table")
+}
+
+/// 行业/公司-核心统计模板关联表
+model relation__industry_or_company_core_statistic_template {
+  id                            Int                            @id @default(autoincrement()) @db.UnsignedInt
+  industry_id                   Int?                           @db.UnsignedInt
+  company_id                    Int?                           @db.UnsignedInt
+  core_statistic_template_id    Int                            @db.UnsignedInt
+  rename                        String?                        @db.VarChar(100)
+  create_time                   DateTime                       @default(now()) @db.DateTime(0)
+  update_time                   DateTime                       @default(now()) @updatedAt @db.DateTime(0)
+  info__core_statistic_template info__core_statistic_template @relation(fields: [core_statistic_template_id], references: [id], onDelete: Cascade, map: "fk_template_relation_template_id")
+  info__industry                info__industry?                @relation(fields: [industry_id], references: [id], onDelete: Cascade, map: "fk_template_relation_industry_id")
+  info__stock_company           info__stock_company?           @relation(fields: [company_id], references: [id], onDelete: Cascade, map: "fk_template_relation_company_id")
+
+  @@unique([industry_id, company_id, core_statistic_template_id], map: "uk_industry_company_template")
+  @@index([industry_id], map: "idx_template_relation_industry_id")
+  @@index([company_id], map: "idx_template_relation_company_id")
+  @@index([core_statistic_template_id], map: "idx_template_relation_template_id")
+}
+
+/// 口径表
+model info__calibration {
+  id                                          Int                                           @id @default(autoincrement()) @db.UnsignedInt
+  name                                        String                                        @db.VarChar(100)
+  description                                 String?                                       @db.Text
+  create_time                                 DateTime                                      @default(now()) @db.DateTime(0)
+  update_time                                 DateTime                                      @default(now()) @updatedAt @db.DateTime(0)
+  relation__industry_or_company_calibration_industry relation__industry_or_company_calibration_industry[]
+}
+
+/// 行业/公司-口径-行业关联表
+model relation__industry_or_company_calibration_industry {
+  id                  Int                  @id @default(autoincrement()) @db.UnsignedInt
+  industry_id         Int?                 @db.UnsignedInt
+  company_id          Int?                 @db.UnsignedInt
+  calibration_id      Int                  @db.UnsignedInt
+  sub_industry_id     Int                  @db.UnsignedInt
+  create_time         DateTime             @default(now()) @db.DateTime(0)
+  update_time         DateTime             @default(now()) @updatedAt @db.DateTime(0)
+  info__calibration   info__calibration    @relation(fields: [calibration_id], references: [id], onDelete: Cascade, map: "fk_calibration_relation_calibration_id")
+  info__industry      info__industry?      @relation(fields: [industry_id], references: [id], onDelete: Cascade, map: "fk_calibration_relation_industry_id")
+  info__stock_company info__stock_company? @relation(fields: [company_id], references: [id], onDelete: Cascade, map: "fk_calibration_relation_company_id")
+  sub_industry        info__industry       @relation("sub_industry_calibration", fields: [sub_industry_id], references: [id], onDelete: Cascade, map: "fk_calibration_relation_sub_industry_id")
+
+  @@unique([industry_id, company_id, calibration_id, sub_industry_id], map: "uk_industry_company_calibration_subindustry")
+  @@index([industry_id], map: "idx_calibration_relation_industry_id")
+  @@index([company_id], map: "idx_calibration_relation_company_id")
+  @@index([calibration_id], map: "idx_calibration_relation_calibration_id")
+  @@index([sub_industry_id], map: "idx_calibration_relation_sub_industry_id")
 }

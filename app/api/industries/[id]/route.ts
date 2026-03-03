@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
-// GET /api/industries/:id - 获取行业详情（含关联文章）
+// GET /api/industries/:id - 获取行业详情（含关联文章、核心统计）
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -19,6 +19,20 @@ export async function GET(
           orderBy: {
             summary__article: { issue_date: 'desc' }
           }
+        },
+        relation__industry_or_company_core_statistic_template: {
+          include: {
+            info__core_statistic_template: true,
+          },
+        },
+        info__core_data: {
+          orderBy: { create_time: 'desc' },
+        },
+        relation__industry_or_company_calibration_industry: {
+          include: {
+            info__calibration: true,
+            sub_industry: true,
+          },
         },
       },
     })
