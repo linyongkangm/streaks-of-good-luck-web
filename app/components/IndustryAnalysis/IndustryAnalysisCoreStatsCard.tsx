@@ -91,10 +91,10 @@ export default function IndustryAnalysisCoreStatsCard({
 
     // 将数据转换为数字类型，未定义的值默认为0
     const numericData: Record<string, number> = {}
-    
+
     // 获取公式中所有变量
     const formulaVariables = parsedFormula.variables
-    
+
     // 为每个变量设置值，未定义的默认为0
     for (const variable of formulaVariables) {
       const value = data[variable]
@@ -121,10 +121,10 @@ export default function IndustryAnalysisCoreStatsCard({
 
     const data = selectedData.data as Record<string, any>
     const numericData: Record<string, number> = {}
-    
+
     // 获取公式中所有变量
     const formulaVariables = parsedFormula.variables
-    
+
     // 为每个变量设置值，未定义的默认为0
     for (const variable of formulaVariables) {
       const value = data[variable]
@@ -229,7 +229,7 @@ export default function IndustryAnalysisCoreStatsCard({
               // 方格序列渲染（选中项）
               return (
                 <div key={index} className="py-3 bg-blue-50 rounded-lg border-2 border-blue-300 cursor-pointer">
-                  <div className="flex flex-wrap items-end">
+                  <div className="flex flex-wrap items-end gap-1">
                     <div className="flex items-center justify-center h-10 text-gray-500 w-[100px]">
                       <span>{dataItem.date ? toLuxon(dataItem.date).toFormat('yyyy-Qq') : '-'}</span>
                     </div>
@@ -259,7 +259,7 @@ export default function IndustryAnalysisCoreStatsCard({
               return (
                 <div
                   key={index}
-                  className="flex flex-wrap items-center py-1 cursor-pointer hover:bg-gray-50 rounded px-1 transition-colors"
+                  className="flex flex-wrap items-center px-1 py-1 cursor-pointer hover:bg-gray-50 rounded  transition-colors"
                   onClick={() => setSelectedDataIndex(index)}
                 >
                   {/* 日期 */}
@@ -276,7 +276,7 @@ export default function IndustryAnalysisCoreStatsCard({
                   {parsedFormula.variables.map((variable, varIdx) => {
                     const val = data[variable]
                     return (
-                      <div key={varIdx} className="ml-10 flex items-center justify-center h-8 w-[80px] text-xs text-gray-600">
+                      <div key={varIdx} className="ml-12 flex items-center justify-center h-8 w-[80px] text-xs text-gray-600">
                         {val !== undefined ? formatNumber(Number(val)) : '-'}
                       </div>
                     )
