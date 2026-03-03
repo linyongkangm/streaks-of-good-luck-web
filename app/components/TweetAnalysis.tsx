@@ -9,6 +9,8 @@ import { TextInput } from '@/app/widget/Input'
 import DatePicker from '@/app/widget/DatePicker'
 import Radio from '@/app/widget/Radio'
 import Panel from '@/app/widget/Panel'
+import Pagination from '@/app/widget/Pagination'
+import Placeholder from '@/app/widget/Placeholder'
 import { DateTime } from 'luxon';
 import * as luxon from 'luxon';
 
@@ -312,58 +314,32 @@ export default function TweetAnalysis() {
             </div>
 
             {/* 分页 */}
-            <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t border-slate-200">
-              <Button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                look="cancel"
-                size="small"
-              >
-                ←
-              </Button>
-              <span className="px-4 py-2 text-sm font-medium text-slate-700">
-                {page} / {totalPages}
-              </span>
-              <Button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                look="cancel"
-                size="small"
-              >
-                →
-              </Button>
-            </div>
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
           </Panel>
         </div>
 
         {/* 右侧：相关推文 */}
         <div className="col-span-8">
-          {tweetsLoading ? (
-            <div className="flex items-center justify-center p-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-            </div>
-          ) : selectedSummary ? (
+          <Placeholder
+            selected={!!selectedSummary}
+            loading={tweetsLoading}
+            icon="💬"
+            message="请从左侧选择一个推文摘要"
+          >
             <div className="space-y-6">
-              <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg p-6 text-white">
-                <div className="flex items-start gap-3 mb-3">
-                  <span className="text-2xl">💬</span>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-xl mb-2">{selectedSummary.collect_from}</h3>
-                    <div className="text-sm opacity-90 flex items-center gap-2">
-                      <span>📅</span>
-                      {new Date(selectedSummary.date).toLocaleDateString('zh-CN', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </div>
-                  </div>
-                </div>
+              <Panel
+                title={
+                  <span className='text-white'>{`${selectedSummary?.collect_from} ${selectedSummary && toLuxon(selectedSummary?.date).toFormat(DATE_FORMAT)}的推文摘要`}</span>
+                }
+                className="bg-gradient-to-br from-blue-500 to-indigo-600 ">
                 <p className="text-white/95 whitespace-pre-wrap leading-relaxed">
-                  {selectedSummary.summary}
+                  {selectedSummary?.summary}
                 </p>
-              </div>
-
+              </Panel>
               <Panel title="相关推文">
                 <div className="space-y-4 max-h-[calc(100vh-450px)] overflow-y-auto scrollbar-thin pr-2">
                   {relatedTweets.map((tweet) => (
@@ -415,12 +391,7 @@ export default function TweetAnalysis() {
                 </div>
               </Panel>
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-[60vh] bg-white rounded-xl shadow-lg">
-              <div className="text-6xl mb-4">💬</div>
-              <p className="text-slate-500 text-lg">请从左侧选择一个推文摘要</p>
-            </div>
-          )}
+          </Placeholder>
         </div>
       </div>
     </div>
