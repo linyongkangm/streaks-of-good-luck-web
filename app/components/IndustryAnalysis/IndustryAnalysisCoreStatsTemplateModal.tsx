@@ -50,6 +50,33 @@ export default function IndustryAnalysisCoreStatsTemplateModal({
       loadTemplates()
     }
   }, [open, mode])
+  // 删除模板
+  const handleDeleteTemplate = async (templateId: number) => {
+    if (!window.confirm('确定要删除此模板吗？删除后将无法恢复。')) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/core-statistic-templates/${templateId}`, {
+        method: 'DELETE',
+      })
+
+      const result = await response.json()
+      if (result.error) {
+        alert(result.error)
+        return
+      }
+
+      loadTemplates()
+      setSelectedTemplateId(null)
+    } catch (error) {
+      console.error('Failed to delete template:', error)
+      alert('删除模板失败')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const loadTemplates = async () => {
     setLoading(true)
@@ -457,6 +484,20 @@ export default function IndustryAnalysisCoreStatsTemplateModal({
                             </svg>
                           </div>
                         )}
+                          {selectedTemplateId === template.id && (
+                            <Button
+                              look="secondary"
+                              size="tiny"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteTemplate(template.id)
+                              }}
+                              disabled={loading}
+                              className="ml-2"
+                            >
+                              删除
+                            </Button>
+                          )}
                       </div>
                     </div>
                   ))}
