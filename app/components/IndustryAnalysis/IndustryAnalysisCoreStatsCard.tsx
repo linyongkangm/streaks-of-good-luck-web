@@ -189,12 +189,14 @@ export default function IndustryAnalysisCoreStatsCard({
   return (
     <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white">
       {/* 标题 */}
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-center mb-4">
         <h4 className="text-base font-medium text-gray-900">{displayName}</h4>
-        {hasData && (
-          <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">
-            已录入
-          </span>
+        {onAddData && (
+          <div className="ml-3 border-t border-gray-100 ">
+            <Button look="secondary" size="tiny" onClick={onAddData}>
+              + 增加数据
+            </Button>
+          </div>
         )}
       </div>
 
@@ -268,34 +270,34 @@ export default function IndustryAnalysisCoreStatsCard({
           )}
           {/* 过去数据表格 */}
           {pastData.length > 0 && (
-              <Table
-                columns={[
-                  { title: '日期', dataIndex: 'date', key: 'date', render: (value: any) => new Date(value).toLocaleDateString('zh-CN') },
-                  {
-                    title: '结果', dataIndex: 'data', key: 'result', render: (value: any, row: info__core_data) => {
-                      const data = row.data as Record<string, any>
-                      const numericData: Record<string, number> = {}
-                      for (const [k, v] of Object.entries(data)) {
-                        const num = Number(v)
-                        if (!isNaN(num)) numericData[k] = num
-                      }
-                      const result = evaluateFormula(template.core_formula, numericData)
-                      return result.success ? formatNumber(result.result!, 4) : '-'
+            <Table
+              columns={[
+                { title: '日期', dataIndex: 'date', key: 'date', render: (value: any) => new Date(value).toLocaleDateString('zh-CN') },
+                {
+                  title: '结果', dataIndex: 'data', key: 'result', render: (value: any, row: info__core_data) => {
+                    const data = row.data as Record<string, any>
+                    const numericData: Record<string, number> = {}
+                    for (const [k, v] of Object.entries(data)) {
+                      const num = Number(v)
+                      if (!isNaN(num)) numericData[k] = num
                     }
+                    const result = evaluateFormula(template.core_formula, numericData)
+                    return result.success ? formatNumber(result.result!, 4) : '-'
+                  }
+                },
+                ...parsedFormula.variables.map(variable => ({
+                  title: variable,
+                  dataIndex: `var_${variable}`,
+                  render: (value: any, row: any) => {
+                    const data = row.data as Record<string, any>
+                    const val = data[variable]
+                    return val !== undefined ? formatNumber(Number(val), 4) : '-'
                   },
-                  ...parsedFormula.variables.map(variable => ({
-                    title: variable,
-                    dataIndex: `var_${variable}`,
-                    render: (value: any, row: any) => {
-                      const data = row.data as Record<string, any>
-                      const val = data[variable]
-                      return val !== undefined ? formatNumber(Number(val), 4) : '-'
-                    },
-                  })),
+                })),
 
-                ]}
-                dataSource={pastData}
-              />
+              ]}
+              dataSource={pastData}
+            />
           )}
         </div>
       ) : (
@@ -339,13 +341,7 @@ export default function IndustryAnalysisCoreStatsCard({
         </div>
       )}
 
-      {onAddData && (
-        <div className="mt-3 pt-3 border-t border-gray-100 flex justify-end">
-          <Button look="secondary" size="tiny" onClick={onAddData}>
-            + 增加数据
-          </Button>
-        </div>
-      )}
+
     </div>
   )
 }
