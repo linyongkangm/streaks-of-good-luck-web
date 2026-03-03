@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useContext, useState, forwardRef, useImperativeHandle } from 'react'
 
 /**
  * Form Context - 管理表单数据
@@ -10,6 +10,16 @@ interface FormContextValue {
 }
 
 const FormContext = createContext<FormContextValue | null>(null)
+
+/**
+ * Form Ref - 通过ref操作Form
+ */
+export interface FormRef {
+  setValues: (values: Record<string, any>) => void
+  setFieldValue: (field: string, value: any) => void
+  getValues: () => Record<string, any>
+  resetValues: (values?: Record<string, any>) => void
+}
 
 /**
  * Form 组件 - 表单容器，支持受控和非受控模式
@@ -32,6 +42,20 @@ const FormContext = createContext<FormContextValue | null>(null)
  *     <Input />
  *   </FormItem>
  * </Form>
+ * 
+ * @example 通过Ref修改values
+ * const formRef = useRef<FormRef>(null)
+ * <Form 
+ *   ref={formRef}
+ *   initialValues={{ name: 'John' }}
+ *   onSubmit={(e, values) => console.log(values)}
+ * >
+ *   <FormItem field="name">
+ *     <Input />
+ *   </FormItem>
+ * </Form>
+ * // 通过ref修改表单值
+ * formRef.current?.setFieldValue('name', 'Jane')
  */
 interface FormProps<T> {
   onSubmit: (e: React.FormEvent, values: T) => void
@@ -42,15 +66,15 @@ interface FormProps<T> {
   className?: string
 }
 
-export function Form<T extends Record<string, any>>({
+export const Form = forwardRef<FormRef, FormProps<Record<string, any>>>(function Form({
   onSubmit,
-  initialValues = {} as T,
+  initialValues = {} as Record<string, any>,
   values: controlledValues,
   onValuesChange,
   children,
   className = ''
-}: FormProps<T>) {
-  const [internalValues, setInternalValues] = useState<T>(initialValues)
+}: FormProps<Record<string, any>>, ref: React.Ref<FormRef>) {
+  const [internalValues, setInternalValues] = useState<Record<string, any>>(initialValues)
 
   // 使用受控值或内部值
   const values = controlledValues !== undefined ? controlledValues : internalValues
@@ -74,6 +98,25 @@ export function Form<T extends Record<string, any>>({
     onSubmit(e, values)
   }
 
+  // 暴露ref接口
+  useImperativeHandle(ref, () => ({
+    setValues: (newValues: Record<string, any>) => {
+      if (controlledValues === undefined) {
+        setInternalValues(newValues)
+      }
+      onValuesChange?.(newValues)
+    },
+    setFieldValue,
+    getValues: () => values,
+    resetValues: (newValues?: Record<string, any>) => {
+      const resetVal = newValues ?? initialValues
+      if (controlledValues === undefined) {
+        setInternalValues(resetVal)
+      }
+      onValuesChange?.(resetVal)
+    }
+  }), [values, controlledValues, initialValues, onValuesChange])
+
   return (
     <FormContext.Provider value={{ values, setFieldValue, getFieldValue }}>
       <form onSubmit={handleSubmit} className={`space-y-4 ${className}`}>
@@ -81,7 +124,7 @@ export function Form<T extends Record<string, any>>({
       </form>
     </FormContext.Provider>
   )
-}
+})
 
 /**
  * useFormContext - 获取Form上下文

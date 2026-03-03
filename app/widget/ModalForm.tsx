@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import Modal from './Modal'
-import { Form, FormLabel } from './Form'
+import { Form, FormLabel, FormRef } from './Form'
 import Button from './Button'
 
 /**
@@ -46,6 +46,18 @@ import Button from './Button'
  * >
  *   ...
  * </ModalForm>
+ * 
+ * @example 通过Ref修改表单值
+ * const formRef = useRef<FormRef>(null)
+ * <ModalForm
+ *   ref={formRef}
+ *   open={showModal}
+ *   onClose={onClose}
+ *   title="编辑"
+ *   onSubmit={handleSubmit}
+ * >
+ *   ...
+ * </ModalForm>
  */
 interface ModalFormProps<T = Record<string, any>> {
   open: boolean
@@ -62,6 +74,7 @@ interface ModalFormProps<T = Record<string, any>> {
   footer?: (submitting: boolean, onClose: () => void) => React.ReactNode
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl'
   className?: string
+  formRef?: React.Ref<FormRef>
 }
 
 export default function ModalForm<T = Record<string, any>>({
@@ -78,9 +91,12 @@ export default function ModalForm<T = Record<string, any>>({
   showFooter = true,
   footer,
   maxWidth,
-  className
+  className,
+  formRef
 }: ModalFormProps<T>) {
   const [submitting, setSubmitting] = useState(false)
+  const internalFormRef = useRef<FormRef>(null)
+  const finalFormRef = formRef || internalFormRef
 
   const handleSubmit = async (e: React.FormEvent, formValues: T) => {
     setSubmitting(true)
@@ -111,6 +127,7 @@ export default function ModalForm<T = Record<string, any>>({
   return (
     <Modal open={open} onClose={onClose} title={title} maxWidth={maxWidth} className={className}>
       <Form
+        ref={finalFormRef as React.Ref<FormRef>}
         values={values as Record<string, any>}
         initialValues={initialValues as Record<string, any>}
         onValuesChange={handleValuesChange}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { info__stock_company } from '@/types'
 import { DateTime } from 'luxon'
 import Table, { Column } from '@/app/widget/Table'
@@ -9,7 +9,7 @@ import { TextInput } from '@/app/widget/Input'
 import Select from '@/app/widget/Select'
 import DatePicker from '@/app/widget/DatePicker'
 import ModalForm from '@/app/widget/ModalForm'
-import { FormItem, FormLabel } from '@/app/widget/Form'
+import { FormItem, FormLabel, Form, FormRef } from '@/app/widget/Form'
 import Loading from '@/app/widget/Loading'
 import Panel from '@/app/widget/Panel'
 import Pagination from '@/app/widget/Pagination'
@@ -42,6 +42,7 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
     start_date: DateTime,
     end_date: DateTime,
   }>()
+  const quoteFormRef = useRef<FormRef>(null)
   const [fetchingQuotes, setFetchingQuotes] = useState(false)
   const [fetchingFinancials, setFetchingFinancials] = useState(false)
   const [syncingAllQuotes, setSyncingAllQuotes] = useState(false)
@@ -49,6 +50,17 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
   useEffect(() => {
     fetchCompanies()
   }, [page, search])
+
+  // 当quoteParams改变时，更新表单值
+  useEffect(() => {
+    if (quoteParams && quoteFormRef.current) {
+      quoteFormRef.current.setValues({
+        company: quoteParams.company,
+        start_date: quoteParams.start_date,
+        end_date: quoteParams.end_date,
+      })
+    }
+  }, [quoteParams])
 
   const fetchCompanies = async () => {
     setLoading(true)
@@ -564,20 +576,39 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
         }}
         title="获取历史行情"
         maxWidth="md"
-        initialValues={quoteParams}
-        onSubmit={async (e, values) => {
-          await handleFetchQuotes(values)
+        formRef={quoteFormRef}
+        onSubmit={async (e, values: any) => {
+          await handleFetchQuotes(values as typeof quoteParams)
         }}
       >
         <h2 className='text-slate-800'>{quoteParams?.company?.company_name} ({quoteParams?.company?.company_code})</h2>
         <FormLabel label="开始日期" required>
-          <FormItem field="start_date">
-            <DatePicker
-              mode="date"
-
-            />
-          </FormItem>
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <FormItem field="start_date">
+                <DatePicker
+                  mode="date"
+                />
+              </FormItem>
+            </div>
+            <Button
+              onClick={() => {
+                if (quoteParams?.company?.ipo_date) {
+                  const ipoDate = DateTime.fromISO(new Date(quoteParams.company.ipo_date).toISOString().split('T')[0])
+                  setQuoteParams({
+                    ...quoteParams,
+                    start_date: ipoDate
+                  })
+                }
+              }}
+              look="secondary"
+              size="small"
+            >
+              设为上市日期
+            </Button>
+          </div>
         </FormLabel>
+        {/* 结束日期 */}
         <FormLabel label="结束日期" required>
           <FormItem field="end_date">
             <DatePicker
