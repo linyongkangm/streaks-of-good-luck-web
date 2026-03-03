@@ -29,7 +29,7 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
   const [templates, setTemplates] = useState<IndustryTemplateRelation[]>([])
   const [coreDataList, setCoreDataList] = useState<info__core_data[]>([])
   const [calibrations, setCalibrations] = useState<IndustryCalibrationRelation[]>([])
-  const [selectedCalibrationId, setSelectedCalibrationId] = useState<number | null>(null)
+  const [selectedCalibration, setSelectedCalibration] = useState<IndustryCalibrationRelation | null>(null)
   const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [showCalibrationModal, setShowCalibrationModal] = useState(false)
   const [showCoreDataModal, setShowCoreDataModal] = useState(false)
@@ -59,7 +59,7 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
         // 默认选择第一个口径
         if (result.data.relation__industry_or_company_calibration_industry?.length > 0) {
           const firstCalibration = result.data.relation__industry_or_company_calibration_industry[0]
-          setSelectedCalibrationId(firstCalibration.calibration_id)
+          setSelectedCalibration(firstCalibration)
         }
       }
     } catch (error) {
@@ -80,15 +80,15 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
   )
 
   // 根据选中的口径获取子行业列表
-  const subIndustries = selectedCalibrationId
+  const subIndustries = selectedCalibration
     ? calibrations
-      .filter(c => c.calibration_id === selectedCalibrationId)
+      .filter(c => c.calibration_id === selectedCalibration.calibration_id)
       .map(c => c.sub_industry)
     : []
 
   // 加载子行业的模板和数据
   useEffect(() => {
-    if (!selectedCalibrationId || subIndustries.length === 0) {
+    if (!selectedCalibration || subIndustries.length === 0) {
       setSubIndustriesData({})
       return
     }
@@ -121,7 +121,7 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
     }
 
     loadSubIndustriesData()
-  }, [selectedCalibrationId, subIndustries.length])
+  }, [selectedCalibration, subIndustries.length])
 
   const openCoreDataModal = (template: IndustryTemplateRelation, targetIndustryId: number, dataItem?: info__core_data) => {
     setCoreDataTemplate(template)
@@ -177,8 +177,8 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
                   <span className="text-sm text-gray-600 whitespace-nowrap">统计口径：</span>
                   <Select<number>
                     options={calibrationOptions}
-                    value={selectedCalibrationId ?? undefined}
-                    onChange={(value: number) => setSelectedCalibrationId(value)}
+                    value={selectedCalibration?.calibration_id ?? undefined}
+                    onChange={(value: number) => setSelectedCalibration(calibrations.find(c => c.calibration_id === value) || null)}
                     placeholder="选择口径..."
                     className="w-48"
                   />
@@ -190,8 +190,11 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
             </div>
 
             {/* 如果选择了口径，按子行业分组显示 */}
-            {selectedCalibrationId && subIndustries.length > 0 && (
+            {selectedCalibration && subIndustries.length > 0 && (
               <div className="space-y-6">
+                <div className="text-gray-500 whitespace-pre-line break-words">
+                  {selectedCalibration.info__calibration.description}
+                </div>
                 {subIndustries.map(subIndustry => {
                   const subIndustryData = subIndustriesData[subIndustry.id]
                   if (!subIndustryData) {
@@ -207,9 +210,6 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
 
                   return (
                     <div key={subIndustry.id}>
-                      <h3 className="text-sm font-medium text-gray-700 mb-3">
-                        {subIndustry.name}
-                      </h3>
                       {subIndustryData.templates.length === 0 ? (
                         <div className="text-gray-500 text-sm py-4">
                           该行业暂无关联模板
@@ -225,7 +225,7 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
                               <IndustryAnalysisCoreStatsCard
                                 key={`${subIndustry.id}-${template.id}`}
                                 template={template.info__core_statistic_template}
-                                customName={template.rename}
+                                customName={`${subIndustry.name} - ${template.rename ? template.rename : template.info__core_statistic_template.name}`}
                                 coreDataList={relatedDataList}
                                 industryId={subIndustry.id}
                                 onAddData={(dataItem) => openCoreDataModal(template, subIndustry.id, dataItem)}
@@ -242,7 +242,7 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
             )}
 
             {/* 如果选择了口径但没有子行业 */}
-            {selectedCalibrationId && subIndustries.length === 0 && (
+            {selectedCalibration && subIndustries.length === 0 && (
               <div className="text-gray-500 text-center py-8">
                 该口径下暂无子行业数据
               </div>

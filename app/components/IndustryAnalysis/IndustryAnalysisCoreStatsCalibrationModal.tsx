@@ -515,7 +515,7 @@ export default function IndustryAnalysisCoreStatsCalibrationModal({
                           <div className="flex-1">
                             <h4 className="font-medium text-gray-900">{group.calibration.name}</h4>
                             {group.calibration.description && (
-                              <p className="text-sm text-gray-600 mt-1">{group.calibration.description}</p>
+                              <p className="text-sm text-gray-600 mt-1 whitespace-pre-line break-words">{group.calibration.description}</p>
                             )}
                             <p className="text-xs text-gray-500 mt-2">
                               子行业：{group.subIndustries.map(item => item.name).join('、')}
