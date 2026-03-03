@@ -124,7 +124,7 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
               <h3 className="text-sm font-medium text-gray-700 mb-3">当前行业</h3>
               <div className="gap-4">
                 {templates.map(template => {
-                  const relatedData = coreDataList.find(
+                  const relatedDataList = coreDataList.filter(
                     cd => cd.table === template.info__core_statistic_template.relate_table &&
                       cd.industry_id === industryId
                   )
@@ -133,7 +133,7 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
                       key={template.id}
                       template={template.info__core_statistic_template}
                       customName={template.rename}
-                      coreData={relatedData}
+                      coreDataList={relatedDataList}
                       onAddData={() => openCoreDataModal(template, industryId)}
                     />
                   )
@@ -151,7 +151,7 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
                     </h3>
                     <div className="gap-4">
                       {templates.map(template => {
-                        const relatedData = coreDataList.find(
+                        const relatedDataList = coreDataList.filter(
                           cd => cd.table === template.info__core_statistic_template.relate_table &&
                             cd.industry_id === subIndustry.id
                         )
@@ -160,7 +160,7 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
                             key={`${subIndustry.id}-${template.id}`}
                             template={template.info__core_statistic_template}
                             customName={template.rename}
-                            coreData={relatedData}
+                            coreDataList={relatedDataList}
                             onAddData={() => openCoreDataModal(template, subIndustry.id)}
                           />
                         )
