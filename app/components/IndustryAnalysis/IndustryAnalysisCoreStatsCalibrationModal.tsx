@@ -5,7 +5,7 @@ import Modal from '@/app/widget/Modal'
 import Button from '@/app/widget/Button'
 import Radio from '@/app/widget/Radio'
 import Loading from '@/app/widget/Loading'
-import { TextInput } from '@/app/widget/Input'
+import { TextArea, TextInput } from '@/app/widget/Input'
 import type {
   info__calibration,
   info__industry,
@@ -44,6 +44,8 @@ export default function IndustryAnalysisCoreStatsCalibrationModal({
   // 编辑已关联口径的子行业
   const [editingCalibrationId, setEditingCalibrationId] = useState<number | null>(null)
   const [editingSubIndustryIds, setEditingSubIndustryIds] = useState<number[]>([])
+  const [editingCalibrationName, setEditingCalibrationName] = useState('')
+  const [editingCalibrationDescription, setEditingCalibrationDescription] = useState('')
 
   useEffect(() => {
     if (open) {
@@ -131,6 +133,8 @@ export default function IndustryAnalysisCoreStatsCalibrationModal({
   const handleEditLinkedCalibration = (group: { calibration: info__calibration; subIndustries: info__industry[] }) => {
     setEditingCalibrationId(group.calibration.id)
     setEditingSubIndustryIds(group.subIndustries.map(s => s.id))
+    setEditingCalibrationName(group.calibration.name || '')
+    setEditingCalibrationDescription(group.calibration.description || '')
   }
 
   const toggleEditingSubIndustrySelection = (subIndustryId: number) => {
@@ -145,6 +149,11 @@ export default function IndustryAnalysisCoreStatsCalibrationModal({
   const handleSaveLinkedCalibrationEdit = async () => {
     if (!editingCalibrationId) return
 
+    if (!editingCalibrationName.trim()) {
+      alert('请填写口径名称')
+      return
+    }
+
     const currentGroup = linkedCalibrationGroups.find(g => g.calibration.id === editingCalibrationId)
     if (!currentGroup) return
 
@@ -154,6 +163,21 @@ export default function IndustryAnalysisCoreStatsCalibrationModal({
 
     setLoading(true)
     try {
+      const updateCalibrationResponse = await fetch(`/api/calibrations/${editingCalibrationId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editingCalibrationName.trim(),
+          description: editingCalibrationDescription.trim() || null,
+        }),
+      })
+
+      const updateCalibrationResult = await updateCalibrationResponse.json()
+      if (updateCalibrationResult.error) {
+        alert(updateCalibrationResult.error)
+        return
+      }
+
       // 添加新的子行业
       if (toAdd.length > 0) {
         const addResponse = await fetch(`/api/industries/${industryId}/calibrations`, {
@@ -188,6 +212,8 @@ export default function IndustryAnalysisCoreStatsCalibrationModal({
 
       loadData()
       setEditingCalibrationId(null)
+      setEditingCalibrationName('')
+      setEditingCalibrationDescription('')
     } catch (error) {
       console.error('Failed to save linked calibration:', error)
       alert('保存失败')
@@ -229,7 +255,7 @@ export default function IndustryAnalysisCoreStatsCalibrationModal({
       // 获取父行业的所有模板
       const parentResponse = await fetch(`/api/industries/${industryId}`)
       const parentResult = await parentResponse.json()
-      
+
       if (!parentResult.data?.relation__industry_or_company_core_statistic_template) {
         return
       }
@@ -243,7 +269,7 @@ export default function IndustryAnalysisCoreStatsCalibrationModal({
             // 获取子行业已有的模板
             const subResponse = await fetch(`/api/industries/${subIndustryId}`)
             const subResult = await subResponse.json()
-            
+
             const subTemplateIds = new Set(
               (subResult.data?.relation__industry_or_company_core_statistic_template || [])
                 .map((t: any) => t.core_statistic_template_id)
@@ -387,6 +413,8 @@ export default function IndustryAnalysisCoreStatsCalibrationModal({
     setCreateSubIndustryIds([])
     setEditingCalibrationId(null)
     setEditingSubIndustryIds([])
+    setEditingCalibrationName('')
+    setEditingCalibrationDescription('')
     onClose()
   }
 
@@ -419,7 +447,27 @@ export default function IndustryAnalysisCoreStatsCalibrationModal({
                       // 编辑模式
                       <div className="border border-blue-500 rounded-lg p-4 bg-blue-50 space-y-3">
                         <div>
-                          <h4 className="font-medium text-gray-900 mb-3">{group.calibration.name}</h4>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            口径名称
+                          </label>
+                          <TextInput
+                            value={editingCalibrationName}
+                            onChange={setEditingCalibrationName}
+                            placeholder="请输入口径名称"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            口径说明（可选）
+                          </label>
+                          <TextArea
+                            value={editingCalibrationDescription}
+                            onChange={setEditingCalibrationDescription}
+                            rows={1}
+                            placeholder="描述该口径的适用范围..."
+                          />
+                        </div>
+                        <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             选择关联的子行业
                           </label>
@@ -441,7 +489,11 @@ export default function IndustryAnalysisCoreStatsCalibrationModal({
                           <Button
                             look="cancel"
                             size="small"
-                            onClick={() => setEditingCalibrationId(null)}
+                            onClick={() => {
+                              setEditingCalibrationId(null)
+                              setEditingCalibrationName('')
+                              setEditingCalibrationDescription('')
+                            }}
                             disabled={loading}
                           >
                             取消
