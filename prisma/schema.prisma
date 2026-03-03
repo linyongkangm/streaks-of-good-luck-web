@@ -415,6 +415,7 @@ model info__core_data {
   id                Int                 @id @default(autoincrement()) @db.UnsignedInt
   industry_id       Int?                @db.UnsignedInt
   company_id        Int?                @db.UnsignedInt
+  date              DateTime?           @db.Date
   table             String              @db.VarChar(50)
   data              Json
   create_time       DateTime            @default(now()) @db.DateTime(0)
@@ -424,6 +425,7 @@ model info__core_data {
 
   @@index([industry_id], map: "idx_core_data_industry_id")
   @@index([company_id], map: "idx_core_data_company_id")
+  @@index([date], map: "idx_core_data_date")
   @@index([table], map: "idx_core_data_table")
 }
 

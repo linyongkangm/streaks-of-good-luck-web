@@ -222,11 +222,13 @@ export type CoreDataDetailResponse = ApiResponse<info__core_data>
 export interface CreateCoreDataRequest {
   industry_id?: number
   company_id?: number
+  date?: string | Date
   table: string
   data: Record<string, any>
 }
 
 export interface UpdateCoreDataRequest {
+  date?: string | Date
   table?: string
   data?: Record<string, any>
 }

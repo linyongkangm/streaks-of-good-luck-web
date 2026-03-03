@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { DateTime } from 'luxon'
 import Modal from '@/app/widget/Modal'
 import Button from '@/app/widget/Button'
-import Select from '@/app/widget/Select'
+import DatePicker from '@/app/widget/DatePicker'
 import { NumberInput } from '@/app/widget/Input'
 import { parseFormula } from '@/app/tools/formulaParser'
 import type { IndustryTemplateRelation } from '@/types'
@@ -12,7 +13,7 @@ interface Props {
   open: boolean
   onClose: () => void
   industryId: number
-  templates: IndustryTemplateRelation[]
+  templateRelation: IndustryTemplateRelation | null
   onAfterSave: () => void
 }
 
@@ -20,25 +21,14 @@ export default function IndustryAnalysisCoreDataModal({
   open,
   onClose,
   industryId,
-  templates,
+  templateRelation,
   onAfterSave,
 }: Props) {
   const [loading, setLoading] = useState(false)
-  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null)
   const [variableValues, setVariableValues] = useState<Record<string, number | undefined>>({})
+  const [selectedQuarterDate, setSelectedQuarterDate] = useState<DateTime | undefined>(undefined)
 
-  const templateOptions = useMemo(
-    () => templates.map(item => ({
-      label: item.rename || item.info__core_statistic_template.name,
-      value: item.info__core_statistic_template.id,
-    })),
-    [templates]
-  )
-
-  const selectedTemplate = useMemo(
-    () => templates.find(item => item.info__core_statistic_template.id === selectedTemplateId),
-    [templates, selectedTemplateId]
-  )
+  const selectedTemplate = templateRelation
 
   const formulaVariables = useMemo(() => {
     if (!selectedTemplate) return []
@@ -48,12 +38,9 @@ export default function IndustryAnalysisCoreDataModal({
   useEffect(() => {
     if (!open) return
 
-    if (templateOptions.length > 0) {
-      setSelectedTemplateId(templateOptions[0].value)
-    } else {
-      setSelectedTemplateId(null)
-    }
-  }, [open, templateOptions])
+    const now = DateTime.now()
+    setSelectedQuarterDate(now)
+  }, [open])
 
   useEffect(() => {
     if (!selectedTemplate) {
@@ -71,6 +58,11 @@ export default function IndustryAnalysisCoreDataModal({
   const handleSave = async () => {
     if (!selectedTemplate) {
       alert('请先选择模板')
+      return
+    }
+
+    if (!selectedQuarterDate) {
+      alert('请选择季度')
       return
     }
 
@@ -96,11 +88,13 @@ export default function IndustryAnalysisCoreDataModal({
 
     setLoading(true)
     try {
+      const dateString = selectedQuarterDate.toFormat('yyyy-MM-dd')
       const response = await fetch(`/api/industries/${industryId}/core-data`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           table: selectedTemplate.info__core_statistic_template.relate_table,
+          date: dateString,
           data: parsedData,
         }),
       })
@@ -124,25 +118,30 @@ export default function IndustryAnalysisCoreDataModal({
   return (
     <Modal open={open} onClose={onClose} title="增加核心数据" maxWidth="xl">
       <div className="space-y-4">
-        {templateOptions.length === 0 ? (
+        {!selectedTemplate ? (
           <div className="text-gray-500 text-center py-8">
-            暂无已关联模板，请先关联模板
+            模板信息缺失，请关闭后重试
           </div>
         ) : (
           <>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">选择模板</label>
-              <Select<number>
-                options={templateOptions}
-                value={selectedTemplateId ?? undefined}
-                onChange={(value: number) => setSelectedTemplateId(value)}
-                placeholder="请选择模板"
+              <label className="block text-sm font-medium text-gray-700 mb-2">模板</label>
+              <div className="text-sm text-gray-800 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                {selectedTemplate.rename || selectedTemplate.info__core_statistic_template.name}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                数据表: {selectedTemplate.info__core_statistic_template.relate_table}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">季度</label>
+              <DatePicker
+                mode="quarter"
+                value={selectedQuarterDate}
+                onChange={(value: DateTime) => setSelectedQuarterDate(value)}
+                placeholder="请选择季度"
               />
-              {selectedTemplate && (
-                <p className="text-xs text-gray-500 mt-2">
-                  数据表: {selectedTemplate.info__core_statistic_template.relate_table}
-                </p>
-              )}
             </div>
 
             <div>

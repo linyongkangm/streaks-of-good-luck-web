@@ -2,18 +2,21 @@
 
 import { useMemo } from 'react'
 import { evaluateFormula, parseFormula, formatNumber } from '@/app/tools/formulaParser'
+import Button from '@/app/widget/Button'
 import type { info__core_statistic_template, info__core_data } from '@/types'
 
 interface Props {
   template: info__core_statistic_template
   customName?: string | null
   coreData?: info__core_data
+  onAddData?: () => void
 }
 
 export default function IndustryAnalysisCoreStatsCard({ 
   template, 
   customName,
-  coreData 
+  coreData,
+  onAddData,
 }: Props) {
   const displayName = customName || template.name
 
@@ -106,6 +109,14 @@ export default function IndustryAnalysisCoreStatsCard({
       {template.description && (
         <div className="mt-2 text-xs text-gray-600 border-t border-gray-100 pt-2">
           {template.description}
+        </div>
+      )}
+
+      {onAddData && (
+        <div className="mt-3 pt-3 border-t border-gray-100 flex justify-end">
+          <Button look="secondary" size="tiny" onClick={onAddData}>
+            + 增加数据
+          </Button>
         </div>
       )}
     </div>

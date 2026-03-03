@@ -22,7 +22,10 @@ export async function GET(
 
     const coreData = await prisma.info__core_data.findMany({
       where,
-      orderBy: { create_time: 'desc' },
+      orderBy: [
+        { date: 'desc' },
+        { create_time: 'desc' },
+      ],
     })
 
     return NextResponse.json({ data: coreData })
@@ -41,17 +44,25 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const industryId = parseInt(params.id)
+    const industryId = parseInt((await params).id)
     if (isNaN(industryId)) {
       return NextResponse.json({ error: 'Invalid industry ID' }, { status: 400 })
     }
 
     const body = await request.json()
-    const { table, data } = body
+    const { table, data, date } = body
 
-    if (!table || !data) {
+    if (!table || !data || !date) {
       return NextResponse.json(
-        { error: 'Missing required fields: table, data' },
+        { error: 'Missing required fields: table, data, date' },
+        { status: 400 }
+      )
+    }
+
+    const parsedDate = new Date(date)
+    if (Number.isNaN(parsedDate.getTime())) {
+      return NextResponse.json(
+        { error: 'Invalid date format' },
         { status: 400 }
       )
     }
@@ -59,6 +70,7 @@ export async function POST(
     const coreData = await prisma.info__core_data.create({
       data: {
         industry_id: industryId,
+        date: parsedDate,
         table,
         data,
       },
@@ -80,17 +92,25 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const industryId = parseInt(params.id)
+    const industryId = parseInt((await params).id)
     if (isNaN(industryId)) {
       return NextResponse.json({ error: 'Invalid industry ID' }, { status: 400 })
     }
 
     const body = await request.json()
-    const { core_data_id, table, data } = body
+    const { core_data_id, table, data, date } = body
 
     if (!core_data_id) {
       return NextResponse.json(
         { error: 'Missing required field: core_data_id' },
+        { status: 400 }
+      )
+    }
+
+    const parsedDate = date !== undefined ? new Date(date) : undefined
+    if (date !== undefined && parsedDate && Number.isNaN(parsedDate.getTime())) {
+      return NextResponse.json(
+        { error: 'Invalid date format' },
         { status: 400 }
       )
     }
@@ -101,6 +121,7 @@ export async function PUT(
         industry_id: industryId,
       },
       data: {
+        ...(date !== undefined && { date: parsedDate }),
         ...(table !== undefined && { table }),
         ...(data !== undefined && { data }),
       },
@@ -122,7 +143,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const industryId = parseInt(params.id)
+    const industryId = parseInt((await params).id)
     if (isNaN(industryId)) {
       return NextResponse.json({ error: 'Invalid industry ID' }, { status: 400 })
     }

@@ -31,6 +31,8 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
   const [selectedCalibrationId, setSelectedCalibrationId] = useState<number | null>(null)
   const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [showCoreDataModal, setShowCoreDataModal] = useState(false)
+  const [coreDataTemplate, setCoreDataTemplate] = useState<IndustryTemplateRelation | null>(null)
+  const [coreDataIndustryId, setCoreDataIndustryId] = useState<number>(industryId)
 
   // 加载行业数据
   useEffect(() => {
@@ -78,9 +80,10 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
       .map(c => c.sub_industry)
     : []
 
-  // 获取子行业的核心数据
-  const getSubIndustryCoreData = (subIndustryId: number) => {
-    return coreDataList.filter(cd => cd.industry_id === subIndustryId)
+  const openCoreDataModal = (template: IndustryTemplateRelation, targetIndustryId: number) => {
+    setCoreDataTemplate(template)
+    setCoreDataIndustryId(targetIndustryId)
+    setShowCoreDataModal(true)
   }
 
   return (
@@ -89,14 +92,6 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
         title="核心统计"
         headerAction={
           <div className="flex items-center gap-3">
-            <Button
-              look="secondary"
-              size="small"
-              onClick={() => setShowCoreDataModal(true)}
-              disabled={templates.length === 0}
-            >
-              + 增加数据
-            </Button>
             <Button look="primary" size="small" onClick={() => setShowTemplateModal(true)}>
               + 关联模板
             </Button>
@@ -139,6 +134,7 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
                       template={template.info__core_statistic_template}
                       customName={template.rename}
                       coreData={relatedData}
+                      onAddData={() => openCoreDataModal(template, industryId)}
                     />
                   )
                 })}
@@ -165,6 +161,7 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
                             template={template.info__core_statistic_template}
                             customName={template.rename}
                             coreData={relatedData}
+                            onAddData={() => openCoreDataModal(template, subIndustry.id)}
                           />
                         )
                       })}
@@ -193,9 +190,12 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
 
       <IndustryAnalysisCoreDataModal
         open={showCoreDataModal}
-        onClose={() => setShowCoreDataModal(false)}
-        industryId={industryId}
-        templates={templates}
+        onClose={() => {
+          setShowCoreDataModal(false)
+          setCoreDataTemplate(null)
+        }}
+        industryId={coreDataIndustryId}
+        templateRelation={coreDataTemplate}
         onAfterSave={loadIndustryData}
       />
     </>
