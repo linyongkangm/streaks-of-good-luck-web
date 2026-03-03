@@ -35,6 +35,9 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
   const [showCoreDataModal, setShowCoreDataModal] = useState(false)
   const [coreDataTemplate, setCoreDataTemplate] = useState<IndustryTemplateRelation | null>(null)
   const [coreDataIndustryId, setCoreDataIndustryId] = useState<number>(industryId)
+  const [subIndustriesData, setSubIndustriesData] = useState<
+    Record<number, { templates: IndustryTemplateRelation[]; coreDataList: info__core_data[] }>
+  >({})
 
   // 加载行业数据
   useEffect(() => {
@@ -81,6 +84,43 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
       .filter(c => c.calibration_id === selectedCalibrationId)
       .map(c => c.sub_industry)
     : []
+
+  // 加载子行业的模板和数据
+  useEffect(() => {
+    if (!selectedCalibrationId || subIndustries.length === 0) {
+      setSubIndustriesData({})
+      return
+    }
+
+    const loadSubIndustriesData = async () => {
+      const newSubIndustriesData: Record<
+        number,
+        { templates: IndustryTemplateRelation[]; coreDataList: info__core_data[] }
+      > = {}
+
+      await Promise.all(
+        subIndustries.map(async (subIndustry) => {
+          try {
+            const response = await fetch(`/api/industries/${subIndustry.id}`)
+            const result = await response.json()
+
+            if (result.data) {
+              newSubIndustriesData[subIndustry.id] = {
+                templates: result.data.relation__industry_or_company_core_statistic_template || [],
+                coreDataList: result.data.info__core_data || [],
+              }
+            }
+          } catch (error) {
+            console.error(`Failed to load sub-industry ${subIndustry.id} data:`, error)
+          }
+        })
+      )
+
+      setSubIndustriesData(newSubIndustriesData)
+    }
+
+    loadSubIndustriesData()
+  }, [selectedCalibrationId, subIndustries.length])
 
   const openCoreDataModal = (template: IndustryTemplateRelation, targetIndustryId: number) => {
     setCoreDataTemplate(template)
@@ -152,32 +192,52 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
             {/* 如果选择了口径，按子行业分组显示 */}
             {selectedCalibrationId && subIndustries.length > 0 && (
               <div className="space-y-6">
-                {subIndustries.map(subIndustry => (
-                  <div key={subIndustry.id}>
-                    <h3 className="text-sm font-medium text-gray-700 mb-3">
-                      {subIndustry.name}
-                    </h3>
-                    <div className="space-y-2">
-                      {templates.map(template => {
-                        const relatedDataList = coreDataList.filter(
-                          cd => cd.table === template.info__core_statistic_template.relate_table &&
-                            cd.industry_id === subIndustry.id
-                        )
-                        return (
-                          <IndustryAnalysisCoreStatsCard
-                            key={`${subIndustry.id}-${template.id}`}
-                            template={template.info__core_statistic_template}
-                            customName={template.rename}
-                            coreDataList={relatedDataList}
-                            industryId={subIndustry.id}
-                            onAddData={() => openCoreDataModal(template, subIndustry.id)}
-                            onUnlink={loadIndustryData}
-                          />
-                        )
-                      })}
+                {subIndustries.map(subIndustry => {
+                  const subIndustryData = subIndustriesData[subIndustry.id]
+                  if (!subIndustryData) {
+                    return (
+                      <div key={subIndustry.id}>
+                        <h3 className="text-sm font-medium text-gray-700 mb-3">
+                          {subIndustry.name}
+                        </h3>
+                        <div className="text-gray-500 text-sm py-4">加载中...</div>
+                      </div>
+                    )
+                  }
+
+                  return (
+                    <div key={subIndustry.id}>
+                      <h3 className="text-sm font-medium text-gray-700 mb-3">
+                        {subIndustry.name}
+                      </h3>
+                      {subIndustryData.templates.length === 0 ? (
+                        <div className="text-gray-500 text-sm py-4">
+                          该行业暂无关联模板
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {subIndustryData.templates.map(template => {
+                            const relatedDataList = subIndustryData.coreDataList.filter(
+                              cd => cd.table === template.info__core_statistic_template.relate_table &&
+                                cd.industry_id === subIndustry.id
+                            )
+                            return (
+                              <IndustryAnalysisCoreStatsCard
+                                key={`${subIndustry.id}-${template.id}`}
+                                template={template.info__core_statistic_template}
+                                customName={template.rename}
+                                coreDataList={relatedDataList}
+                                industryId={subIndustry.id}
+                                onAddData={() => openCoreDataModal(template, subIndustry.id)}
+                                onUnlink={loadIndustryData}
+                              />
+                            )
+                          })}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
 

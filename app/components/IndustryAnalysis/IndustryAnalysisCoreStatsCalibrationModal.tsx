@@ -123,6 +123,64 @@ export default function IndustryAnalysisCoreStatsCalibrationModal({
     )
   }
 
+  // 为子行业自动关联父行业的模板
+  const autoLinkParentTemplatesToSubIndustries = async (subIndustryIds: number[]) => {
+    try {
+      // 获取父行业的所有模板
+      const parentResponse = await fetch(`/api/industries/${industryId}`)
+      const parentResult = await parentResponse.json()
+      
+      if (!parentResult.data?.relation__industry_or_company_core_statistic_template) {
+        return
+      }
+
+      const parentTemplates = parentResult.data.relation__industry_or_company_core_statistic_template
+
+      // 为每个子行业关联模板
+      await Promise.all(
+        subIndustryIds.map(async (subIndustryId) => {
+          try {
+            // 获取子行业已有的模板
+            const subResponse = await fetch(`/api/industries/${subIndustryId}`)
+            const subResult = await subResponse.json()
+            
+            const subTemplateIds = new Set(
+              (subResult.data?.relation__industry_or_company_core_statistic_template || [])
+                .map((t: any) => t.core_statistic_template_id)
+            )
+
+            // 找出需要关联的模板（父行业有但子行业没有）
+            const templatesToLink = parentTemplates.filter(
+              (t: any) => !subTemplateIds.has(t.core_statistic_template_id)
+            )
+
+            // 批量关联模板
+            await Promise.all(
+              templatesToLink.map(async (template: any) => {
+                try {
+                  await fetch(`/api/industries/${subIndustryId}/templates`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      template_id: template.core_statistic_template_id,
+                      rename: template.rename,
+                    }),
+                  })
+                } catch (error) {
+                  console.error(`Failed to link template ${template.id} to sub-industry ${subIndustryId}:`, error)
+                }
+              })
+            )
+          } catch (error) {
+            console.error(`Failed to process sub-industry ${subIndustryId}:`, error)
+          }
+        })
+      )
+    } catch (error) {
+      console.error('Failed to auto-link templates:', error)
+    }
+  }
+
   const handleLinkCalibration = async () => {
     if (!selectedCalibrationId) {
       alert('请选择一个口径')
@@ -150,6 +208,9 @@ export default function IndustryAnalysisCoreStatsCalibrationModal({
         alert(result.error)
         return
       }
+
+      // 自动为子行业关联父行业的模板
+      await autoLinkParentTemplatesToSubIndustries(selectedSubIndustryIds)
 
       onAfterLink()
       handleClose()
@@ -203,6 +264,9 @@ export default function IndustryAnalysisCoreStatsCalibrationModal({
         alert(linkResult.error)
         return
       }
+
+      // 自动为子行业关联父行业的模板
+      await autoLinkParentTemplatesToSubIndustries(createSubIndustryIds)
 
       onAfterLink()
       handleClose()
