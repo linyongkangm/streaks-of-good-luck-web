@@ -231,7 +231,7 @@ export default function IndustryAnalysisCoreStatsCard({
               return (
                 <div
                   key={index}
-                  className="flex flex-wrap items-center justify-between py-3 px-4 bg-blue-50 rounded-lg border-2 border-blue-300"
+                  className="flex flex-wrap items-center justify-between py-3 bg-blue-50 rounded-lg border-2 border-blue-300"
                   onMouseEnter={() => setHoveredDataIndex(index)}
                   onMouseLeave={() => setHoveredDataIndex(null)}
                 >
@@ -266,7 +266,7 @@ export default function IndustryAnalysisCoreStatsCard({
                         e.stopPropagation()
                         onAddData(dataItem)
                       }}
-                      className="ml-2 flex-shrink-0"
+                      className="mr-1 flex-shrink-0"
                     >
                       修改
                     </Button>
@@ -314,7 +314,7 @@ export default function IndustryAnalysisCoreStatsCard({
                         e.stopPropagation()
                         onAddData(dataItem)
                       }}
-                      className="ml-2 flex-shrink-0"
+                      className="mr-1 flex-shrink-0"
                     >
                       修改
                     </Button>
