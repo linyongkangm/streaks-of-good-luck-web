@@ -96,7 +96,7 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
           <div className="flex items-center gap-3">
             {calibrationOptions.length > 0 && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">统计口径：</span>
+                <span className="text-sm text-gray-600 whitespace-nowrap">统计口径：</span>
                 <Select<number>
                   options={calibrationOptions}
                   value={selectedCalibrationId ?? undefined}
