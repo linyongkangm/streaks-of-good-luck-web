@@ -1,10 +1,10 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { evaluateFormula, parseFormula, formatNumber, tokenizeExpression } from '@/app/tools/formulaParser'
 import Button from '@/app/widget/Button'
-import Table from '@/app/widget/Table'
 import type { info__core_statistic_template, info__core_data } from '@/types'
+import { toLuxon } from '@/app/tools'
 
 interface Props {
   template: info__core_statistic_template
@@ -21,79 +21,66 @@ export default function IndustryAnalysisCoreStatsCard({
 }: Props) {
   const displayName = customName || template.name
 
-  // 获取当季度日期范围
-  const getCurrentQuarter = () => {
-    const now = new Date()
-    const year = now.getFullYear()
-    const month = now.getMonth()
-    const quarter = Math.floor(month / 3) + 1
-    const endMonths = [3, 6, 9, 12]
-    const endMonth = endMonths[quarter - 1]
-    return new Date(year, endMonth - 1, 1) // 季末日期（用于比较）
-  }
+  // 选中的数据索引
+  const [selectedDataIndex, setSelectedDataIndex] = useState<number | null>(null)
 
-  // 分类数据
-  const { currentQuarterData, pastData, futureData } = useMemo(() => {
-    if (!coreDataList || coreDataList.length === 0) {
-      return { currentQuarterData: null, pastData: [], futureData: [] }
-    }
-
-    const sortedData = [...coreDataList].sort((a, b) => {
+  // 按日期降序排列所有数据
+  const sortedData = useMemo(() => {
+    if (!coreDataList || coreDataList.length === 0) return []
+    return [...coreDataList].sort((a, b) => {
       const dateA = new Date(a.date || 0)
       const dateB = new Date(b.date || 0)
       return dateB.getTime() - dateA.getTime() // 降序
     })
+  }, [coreDataList])
+
+  // 默认选中当前季度
+  useEffect(() => {
+    if (sortedData.length === 0) {
+      setSelectedDataIndex(null)
+      return
+    }
 
     const now = new Date()
     const currentYear = now.getFullYear()
     const currentQtr = Math.floor(now.getMonth() / 3)
-    const quarterEndDates = [
-      new Date(currentYear, 2, 31), // Q1: 3月31日
-      new Date(currentYear, 5, 30), // Q2: 6月30日
-      new Date(currentYear, 8, 30), // Q3: 9月30日
-      new Date(currentYear, 11, 31), // Q4: 12月31日
-    ]
-    const currentQuarterEnd = quarterEndDates[currentQtr]
 
-    let current: info__core_data | null = null
-    const past: info__core_data[] = []
-    const future: info__core_data[] = []
-
-    for (const item of sortedData) {
+    // 查找当前季度的数据
+    const currentQuarterIndex = sortedData.findIndex(item => {
       const itemDate = new Date(item.date || 0)
       const itemYear = itemDate.getFullYear()
-      const itemMonth = itemDate.getMonth()
-      const itemQtr = Math.floor(itemMonth / 3)
+      const itemQtr = Math.floor(itemDate.getMonth() / 3)
+      return itemYear === currentYear && itemQtr === currentQtr
+    })
 
-      // 判断是否属于当季度
-      if (itemYear === currentYear && itemQtr === currentQtr) {
-        if (!current) {
-          current = item
-        } else {
-          past.push(item)
-        }
-      } else if (itemDate < currentQuarterEnd) {
-        past.push(item)
-      } else {
-        future.push(item)
-      }
+    if (currentQuarterIndex !== -1) {
+      setSelectedDataIndex(currentQuarterIndex)
+    } else {
+      // 如果没有当前季度的数据，选中第一个
+      setSelectedDataIndex(0)
     }
-
-    return { currentQuarterData: current, pastData: past, futureData: future }
-  }, [coreDataList])
+  }, [sortedData])
 
   // 解析公式
   const parsedFormula = useMemo(() => {
     return parseFormula(template.core_formula)
   }, [template.core_formula])
 
-  // 计算结果（基于当季数据）
+  // 选中的数据
+  const selectedData = useMemo(() => {
+    if (selectedDataIndex === null || !sortedData[selectedDataIndex]) {
+      return null
+    }
+    return sortedData[selectedDataIndex]
+  }, [selectedDataIndex, sortedData])
+
+  // 计算结果（基于选中的数据）
   const evaluationResult = useMemo(() => {
-    if (!currentQuarterData) {
+    if (!selectedData) {
       return null
     }
 
-    const data = currentQuarterData.data as Record<string, any>
+    const data = selectedData.data as Record<string, any>
 
     // 将数据转换为数字类型
     const numericData: Record<string, number> = {}
@@ -105,18 +92,18 @@ export default function IndustryAnalysisCoreStatsCard({
     }
 
     return evaluateFormula(template.core_formula, numericData)
-  }, [template.core_formula, currentQuarterData])
+  }, [template.core_formula, selectedData])
 
   // 获取公式的有序 tokens
   const formulaTokens = useMemo(() => {
     return tokenizeExpression(parsedFormula.expression)
   }, [parsedFormula.expression])
 
-  // 生成可显示的方格序列数据
+  // 生成可显示的方格序列数据（基于选中的数据）
   const gridSequence = useMemo(() => {
-    if (!currentQuarterData) return []
+    if (!selectedData) return []
 
-    const data = currentQuarterData.data as Record<string, any>
+    const data = selectedData.data as Record<string, any>
     const numericData: Record<string, number> = {}
     for (const [key, value] of Object.entries(data)) {
       const num = Number(value)
@@ -139,7 +126,7 @@ export default function IndustryAnalysisCoreStatsCard({
         sequence.push({
           type: 'variable',
           label: token.value,
-          value: value !== undefined ? formatNumber(value, 4) : '?',
+          value: value !== undefined ? formatNumber(value, 2) : '?',
         })
       } else if (token.type === 'operator') {
         sequence.push({
@@ -175,15 +162,15 @@ export default function IndustryAnalysisCoreStatsCard({
       sequence.unshift({
         type: 'variable',
         label: parsedFormula.resultName || '结果',
-        value: formatNumber(evaluationResult.result, 4),
+        value: formatNumber(evaluationResult.result, 2),
       })
     }
 
     return sequence
-  }, [formulaTokens, currentQuarterData, evaluationResult, parsedFormula.resultName])
+  }, [formulaTokens, selectedData, evaluationResult, parsedFormula.resultName])
 
   // 显示状态
-  const hasData = !!currentQuarterData
+  const hasData = sortedData.length > 0
   const hasResult = evaluationResult?.success && evaluationResult.result !== undefined
 
   return (
@@ -200,112 +187,84 @@ export default function IndustryAnalysisCoreStatsCard({
         )}
       </div>
 
-      {/* 结果显示 */}
-      {hasResult ? (
-        <div className="mb-3">
-          {/* 未来数据表格 */}
-          {futureData.length > 0 && (
-            <div className="mb-4">
-              <div className="text-xs font-medium text-gray-600 mb-2">未来数据</div>
-              <Table
-                columns={[
-                  { title: '日期', dataIndex: 'date', key: 'date', width: '100px', render: (value: any) => new Date(value).toLocaleDateString('zh-CN') },
-                  {
-                    title: '结果', dataIndex: 'data', key: 'result', width: '80px', render: (value: any, row: info__core_data) => {
-                      const data = row.data as Record<string, any>
-                      const numericData: Record<string, number> = {}
-                      for (const [k, v] of Object.entries(data)) {
-                        const num = Number(v)
-                        if (!isNaN(num)) numericData[k] = num
-                      }
-                      const result = evaluateFormula(template.core_formula, numericData)
-                      return result.success ? formatNumber(result.result!, 4) : '-'
-                    }
-                  },
-                  ...parsedFormula.variables.map(variable => ({
-                    title: variable,
-                    dataIndex: `var_${variable}`,
+      {/* 数据列表 */}
+      {hasData ? (
+        <div className="mb-3 space-y-2">
+          {sortedData.map((dataItem, index) => {
+            const isSelected = index === selectedDataIndex
+            const data = dataItem.data as Record<string, any>
+            const numericData: Record<string, number> = {}
+            for (const [k, v] of Object.entries(data)) {
+              const num = Number(v)
+              if (!isNaN(num)) numericData[k] = num
+            }
+            const result = evaluateFormula(template.core_formula, numericData)
 
-                    width: '80px',
-                    render: (value: any, row: any) => {
-                      const data = row.data as Record<string, any>
-                      const val = data[variable]
-                      return val !== undefined ? formatNumber(Number(val), 4) : '-'
-                    },
-                  })),
-
-                ]}
-                dataSource={futureData}
-              />
-            </div>
-          )}
-
-          {/* 方格序列 */}
-          {gridSequence.length > 0 && (
-            <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
-              <div className="flex flex-wrap items-end">
-                <div className="flex items-center justify-center h-10 text-gray-500 w-20">
-                  <span>{currentQuarterData?.date ? new Date(currentQuarterData.date).toLocaleDateString('zh-CN') : '-'}</span>
+            if (isSelected) {
+              // 方格序列渲染（选中项）
+              return (
+                <div key={index} className="py-3 bg-blue-50 rounded-lg border-2 border-blue-300 cursor-pointer">
+                  <div className="flex flex-wrap items-end">
+                    <div className="flex items-center justify-center h-10 text-gray-500 w-[100px]">
+                      <span>{dataItem.date ? toLuxon(dataItem.date).toFormat('yyyy-Qq') : '-'}</span>
+                    </div>
+                    {gridSequence.map((item, idx) => (
+                      item.isOperator ? (
+                        // 运算符和等号
+                        <div key={idx} className="flex items-center justify-center w-10 h-10 border-2 border-gray-400 rounded text-sm font-medium text-gray-700">
+                          {item.value}
+                        </div>
+                      ) : (
+                        // 变量或数字
+                        <div key={idx} className="flex flex-col items-center w-[80px]">
+                          <div className="text-xs text-gray-600 font-medium text-center max-w-[80px] line-clamp-2">
+                            {item.label}
+                          </div>
+                          <div className="flex items-center justify-center w-[80px] h-10 border-2 border-blue-400 rounded bg-white text-sm font-semibold text-blue-600">
+                            {item.value}
+                          </div>
+                        </div>
+                      )
+                    ))}
+                  </div>
                 </div>
-                {gridSequence.map((item, idx) => (
-                  item.isOperator ? (
-                    // 运算符和等号
-                    <div key={idx} className="flex items-center justify-center w-10 h-10 border-2 border-gray-400 rounded text-sm font-medium text-gray-700">
-                      {item.value}
-                    </div>
-                  ) : (
-                    // 变量或数字
-                    <div key={idx} className="flex-1 flex flex-col items-center">
-                      <div className="text-xs text-gray-600 font-medium text-center max-w-[80px] line-clamp-2">
-                        {item.label}
-                      </div>
-                      <div className="flex items-center justify-center w-[80px] h-10 border-2 border-blue-400 rounded bg-white text-sm font-semibold text-blue-600">
-                        {item.value}
-                      </div>
-                    </div>
-                  )
-                ))}
-              </div>
-            </div>
-          )}
-          {/* 过去数据表格 */}
-          {pastData.length > 0 && (
-            <Table
-              columns={[
-                { title: '日期', dataIndex: 'date', key: 'date', render: (value: any) => new Date(value).toLocaleDateString('zh-CN') },
-                {
-                  title: '结果', dataIndex: 'data', key: 'result', render: (value: any, row: info__core_data) => {
-                    const data = row.data as Record<string, any>
-                    const numericData: Record<string, number> = {}
-                    for (const [k, v] of Object.entries(data)) {
-                      const num = Number(v)
-                      if (!isNaN(num)) numericData[k] = num
-                    }
-                    const result = evaluateFormula(template.core_formula, numericData)
-                    return result.success ? formatNumber(result.result!, 4) : '-'
-                  }
-                },
-                ...parsedFormula.variables.map(variable => ({
-                  title: variable,
-                  dataIndex: `var_${variable}`,
-                  render: (value: any, row: any) => {
-                    const data = row.data as Record<string, any>
-                    const val = data[variable]
-                    return val !== undefined ? formatNumber(Number(val), 4) : '-'
-                  },
-                })),
+              )
+            } else {
+              // 平铺渲染（非选中项）
+              return (
+                <div
+                  key={index}
+                  className="flex flex-wrap items-center py-1 cursor-pointer hover:bg-gray-50 rounded px-1 transition-colors"
+                  onClick={() => setSelectedDataIndex(index)}
+                >
+                  {/* 日期 */}
+                  <div className="flex items-center justify-center h-8 w-[100px] text-xs text-gray-700">
+                    <span>{dataItem.date ? toLuxon(dataItem.date).toFormat('yyyy-Qq') : '-'}</span>
+                  </div>
 
-              ]}
-              dataSource={pastData}
-            />
-          )}
+                  {/* 结果 */}
+                  <div className="flex items-center justify-center h-8 w-[80px] text-xs text-gray-700 font-medium">
+                    {result.success ? formatNumber(result.result!) : '-'}
+                  </div>
+
+                  {/* 变量值 */}
+                  {parsedFormula.variables.map((variable, varIdx) => {
+                    const val = data[variable]
+                    return (
+                      <div key={varIdx} className="ml-10 flex items-center justify-center h-8 w-[80px] text-xs text-gray-600">
+                        {val !== undefined ? formatNumber(Number(val)) : '-'}
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            }
+          })}
         </div>
       ) : (
         <div className="mb-3">
           <div className="text-2xl font-bold text-gray-400">-</div>
-          <div className="text-xs text-gray-500 mt-1">
-            {coreDataList.length > 0 ? '计算失败' : '暂无数据'}
-          </div>
+          <div className="text-xs text-gray-500 mt-1">暂无数据</div>
         </div>
       )}
 

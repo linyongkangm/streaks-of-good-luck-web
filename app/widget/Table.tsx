@@ -16,7 +16,7 @@ export interface Column<T> {
   render?: (value: any, record: T, index: number) => React.ReactNode
   format?: ((value: any) => any) | ColumnFormatType
   className?: string;
-
+  style?: React.CSSProperties;
 }
 
 interface TableProps<T> {
@@ -29,6 +29,7 @@ interface TableProps<T> {
     onClick?: (e: React.MouseEvent) => void
     [key: string]: any
   }
+  hideThead?: boolean;
 }
 
 export default function Table<T>({
@@ -37,7 +38,8 @@ export default function Table<T>({
   loading = false,
   emptyText = '暂无数据',
   rowClassName,
-  onRow
+  onRow,
+  hideThead = false
 }: TableProps<T>) {
   if (loading) {
     return (
@@ -56,21 +58,24 @@ export default function Table<T>({
   return (
     <div className="overflow-x-auto">
       <table className="w-full">
-        <thead>
-          <tr className="bg-slate-50 border-b-2 border-slate-200">
-            {columns.map((column) => (
-              <th
-                key={String(column.dataIndex) || column.key}
-                className={`px-4 py-3 text-${column.align || 'center'} text-sm font-semibold text-slate-700 ${column.sticky ? 'sticky left-0 bg-slate-50 z-10' : ''
-                  } ${column.className || ''}`}
-                style={{ width: column.width }}
-                data-column-key={String(column.dataIndex) || column.key}
-              >
-                {column.title}
-              </th>
-            ))}
-          </tr>
-        </thead>
+        {
+          !hideThead && (
+            <thead>
+              <tr className="bg-slate-50 border-b-2 border-slate-200">
+                {columns.map((column) => (
+                  <th
+                    key={String(column.dataIndex) || column.key}
+                    className={`px-4 py-3 text-${column.align || 'center'} text-sm font-semibold text-slate-700 ${column.sticky ? 'sticky left-0 bg-slate-50 z-10' : ''
+                      } ${column.className || ''}`}
+                    style={{ width: column.width, ...column.style }}
+                    data-column-key={String(column.dataIndex) || column.key}
+                  >
+                    {column.title}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+          )}
         <tbody>
           {dataSource.map((record, index) => {
             const rowProps = onRow?.(record, index) || {}
@@ -103,6 +108,7 @@ export default function Table<T>({
                       data-column-key={String(column.dataIndex) || column.key}
                       className={`px-4 py-3 text-sm text-slate-900 text-${column.align || 'center'} ${column.sticky ? 'sticky left-0 bg-white hover:bg-slate-50' : ''
                         } ${column.className || ''}`}
+                      style={{ width: column.width, ...column.style }}
                     >
                       {column.render ? column.render(formattedValue, record, index) : String(formattedValue ?? '')}
                     </td>
