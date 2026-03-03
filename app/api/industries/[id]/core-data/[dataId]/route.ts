@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 // PUT /api/industries/[id]/core-data/[dataId] - 更新核心数据
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; dataId: string } }
+  { params }: { params: Promise<{ id: string; dataId: string }> }
 ) {
   try {
     const industryId = parseInt((await params).id)
@@ -72,7 +72,7 @@ export async function PUT(
 // DELETE /api/industries/[id]/core-data/[dataId] - 删除核心数据
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; dataId: string } }
+  { params }: { params: Promise<{ id: string; dataId: string }> }
 ) {
   try {
     const industryId = parseInt((await params).id)

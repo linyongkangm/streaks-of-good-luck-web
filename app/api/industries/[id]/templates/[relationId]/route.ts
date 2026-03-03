@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 // PUT /api/industries/[id]/templates/[relationId] - 更新模板关联的自定义名称和公式
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; relationId: string } }
+  { params }: { params: Promise<{ id: string; relationId: string }> }
 ) {
   try {
     const industryId = parseInt((await params).id)
