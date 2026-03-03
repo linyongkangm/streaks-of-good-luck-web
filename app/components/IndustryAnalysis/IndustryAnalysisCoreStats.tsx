@@ -35,6 +35,7 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
   const [showCoreDataModal, setShowCoreDataModal] = useState(false)
   const [coreDataTemplate, setCoreDataTemplate] = useState<IndustryTemplateRelation | null>(null)
   const [coreDataIndustryId, setCoreDataIndustryId] = useState<number>(industryId)
+  const [editingCoreData, setEditingCoreData] = useState<info__core_data | null>(null)
   const [subIndustriesData, setSubIndustriesData] = useState<
     Record<number, { templates: IndustryTemplateRelation[]; coreDataList: info__core_data[] }>
   >({})
@@ -122,9 +123,10 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
     loadSubIndustriesData()
   }, [selectedCalibrationId, subIndustries.length])
 
-  const openCoreDataModal = (template: IndustryTemplateRelation, targetIndustryId: number) => {
+  const openCoreDataModal = (template: IndustryTemplateRelation, targetIndustryId: number, dataItem?: info__core_data) => {
     setCoreDataTemplate(template)
     setCoreDataIndustryId(targetIndustryId)
+    setEditingCoreData(dataItem || null)
     setShowCoreDataModal(true)
   }
 
@@ -163,7 +165,7 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
                     customName={template.rename}
                     coreDataList={relatedDataList}
                     industryId={industryId}
-                    onAddData={() => openCoreDataModal(template, industryId)}
+                    onAddData={(dataItem) => openCoreDataModal(template, industryId, dataItem)}
                     onUnlink={loadIndustryData}
                   />
                 )
@@ -226,7 +228,7 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
                                 customName={template.rename}
                                 coreDataList={relatedDataList}
                                 industryId={subIndustry.id}
-                                onAddData={() => openCoreDataModal(template, subIndustry.id)}
+                                onAddData={(dataItem) => openCoreDataModal(template, subIndustry.id, dataItem)}
                                 onUnlink={loadIndustryData}
                               />
                             )
@@ -268,9 +270,11 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
         onClose={() => {
           setShowCoreDataModal(false)
           setCoreDataTemplate(null)
+          setEditingCoreData(null)
         }}
         industryId={coreDataIndustryId}
         templateRelation={coreDataTemplate}
+        editingCoreData={editingCoreData}
         onAfterSave={loadIndustryData}
       />
     </>

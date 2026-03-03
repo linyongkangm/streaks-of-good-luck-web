@@ -11,7 +11,7 @@ interface Props {
   customName?: string | null
   coreDataList?: info__core_data[]
   industryId: number
-  onAddData?: () => void
+  onAddData?: (dataItem?: info__core_data) => void
   onUnlink?: () => void
 }
 
@@ -28,6 +28,7 @@ export default function IndustryAnalysisCoreStatsCard({
   // 选中的数据索引
   const [selectedDataIndex, setSelectedDataIndex] = useState<number | null>(null)
   const [unlinking, setUnlinking] = useState(false)
+  const [hoveredDataIndex, setHoveredDataIndex] = useState<number | null>(null)
 
 
 
@@ -205,7 +206,7 @@ export default function IndustryAnalysisCoreStatsCard({
         <h4 className="text-base font-medium text-gray-900">{displayName}</h4>
         {onAddData && (
           <div className="flex items-center gap-2 ml-3 border-t border-gray-100 ">
-            <Button look="secondary" size="tiny" onClick={onAddData}>
+            <Button look="secondary" size="tiny" onClick={() => onAddData()}>
               + 增加数据
             </Button>
           </div>
@@ -228,7 +229,12 @@ export default function IndustryAnalysisCoreStatsCard({
             if (isSelected) {
               // 方格序列渲染（选中项）
               return (
-                <div key={index} className="py-3 bg-blue-50 rounded-lg border-2 border-blue-300 cursor-pointer">
+                <div
+                  key={index}
+                  className="flex flex-wrap items-center justify-between py-3 px-4 bg-blue-50 rounded-lg border-2 border-blue-300"
+                  onMouseEnter={() => setHoveredDataIndex(index)}
+                  onMouseLeave={() => setHoveredDataIndex(null)}
+                >
                   <div className="flex flex-wrap items-end gap-1">
                     <div className="flex items-center justify-center h-10 text-gray-500 w-[100px]">
                       <span>{dataItem.date ? toLuxon(dataItem.date).toFormat('yyyy-Qq') : '-'}</span>
@@ -252,6 +258,19 @@ export default function IndustryAnalysisCoreStatsCard({
                       )
                     ))}
                   </div>
+                  {hoveredDataIndex === index && onAddData && (
+                    <Button
+                      look="secondary"
+                      size="tiny"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onAddData(dataItem)
+                      }}
+                      className="ml-2 flex-shrink-0"
+                    >
+                      修改
+                    </Button>
+                  )}
                 </div>
               )
             } else {
@@ -259,28 +278,47 @@ export default function IndustryAnalysisCoreStatsCard({
               return (
                 <div
                   key={index}
-                  className="flex flex-wrap items-center px-1 py-1 cursor-pointer hover:bg-gray-50 rounded  transition-colors"
+                  className="flex flex-wrap items-center justify-between px-1 py-1 cursor-pointer hover:bg-gray-50 rounded transition-colors"
                   onClick={() => setSelectedDataIndex(index)}
+                  onMouseEnter={() => setHoveredDataIndex(index)}
+                  onMouseLeave={() => setHoveredDataIndex(null)}
                 >
-                  {/* 日期 */}
-                  <div className="flex items-center justify-center h-8 w-[100px] text-xs text-gray-700">
-                    <span>{dataItem.date ? toLuxon(dataItem.date).toFormat('yyyy-Qq') : '-'}</span>
+                  <div className="flex flex-wrap items-center flex-1">
+                    {/* 日期 */}
+                    <div className="flex items-center justify-center h-8 w-[100px] text-xs text-gray-700">
+                      <span>{dataItem.date ? toLuxon(dataItem.date).toFormat('yyyy-Qq') : '-'}</span>
+                    </div>
+
+                    {/* 结果 */}
+                    <div className="flex items-center justify-center h-8 w-[80px] text-xs text-gray-700 font-medium">
+                      {result.success ? formatNumber(result.result!) : '-'}
+                    </div>
+
+                    {/* 变量值 */}
+                    {parsedFormula.variables.map((variable, varIdx) => {
+                      const val = data[variable]
+                      return (
+                        <div key={varIdx} className="ml-12 flex items-center justify-center h-8 w-[80px] text-xs text-gray-600">
+                          {val !== undefined ? formatNumber(Number(val)) : '-'}
+                        </div>
+                      )
+                    })}
                   </div>
 
-                  {/* 结果 */}
-                  <div className="flex items-center justify-center h-8 w-[80px] text-xs text-gray-700 font-medium">
-                    {result.success ? formatNumber(result.result!) : '-'}
-                  </div>
-
-                  {/* 变量值 */}
-                  {parsedFormula.variables.map((variable, varIdx) => {
-                    const val = data[variable]
-                    return (
-                      <div key={varIdx} className="ml-12 flex items-center justify-center h-8 w-[80px] text-xs text-gray-600">
-                        {val !== undefined ? formatNumber(Number(val)) : '-'}
-                      </div>
-                    )
-                  })}
+                  {/* 修改按钮（hover时显示）*/}
+                  {hoveredDataIndex === index && onAddData && (
+                    <Button
+                      look="secondary"
+                      size="tiny"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onAddData(dataItem)
+                      }}
+                      className="ml-2 flex-shrink-0"
+                    >
+                      修改
+                    </Button>
+                  )}
                 </div>
               )
             }
