@@ -10,19 +10,51 @@ interface Props {
   template: info__core_statistic_template
   customName?: string | null
   coreDataList?: info__core_data[]
+  industryId: number
   onAddData?: () => void
+  onUnlink?: () => void
 }
 
 export default function IndustryAnalysisCoreStatsCard({
   template,
   customName,
   coreDataList = [],
+  industryId,
   onAddData,
+  onUnlink,
 }: Props) {
   const displayName = customName || template.name
 
   // 选中的数据索引
   const [selectedDataIndex, setSelectedDataIndex] = useState<number | null>(null)
+  const [unlinking, setUnlinking] = useState(false)
+
+  // 取消关联处理
+  const handleUnlink = async () => {
+    if (!window.confirm('确定要取消关联此模板吗？')) {
+      return
+    }
+
+    setUnlinking(true)
+    try {
+      const response = await fetch(`/api/industries/${industryId}/templates?template_id=${template.id}`, {
+        method: 'DELETE',
+      })
+
+      const result = await response.json()
+      if (result.error) {
+        alert(result.error)
+        return
+      }
+
+      onUnlink?.()
+    } catch (error) {
+      console.error('Failed to unlink template:', error)
+      alert('取消关联失败')
+    } finally {
+      setUnlinking(false)
+    }
+  }
 
   // 按日期降序排列所有数据
   const sortedData = useMemo(() => {
@@ -179,9 +211,12 @@ export default function IndustryAnalysisCoreStatsCard({
       <div className="flex items-center mb-4">
         <h4 className="text-base font-medium text-gray-900">{displayName}</h4>
         {onAddData && (
-          <div className="ml-3 border-t border-gray-100 ">
+          <div className="flex items-center gap-2 ml-3 border-t border-gray-100 ">
             <Button look="secondary" size="tiny" onClick={onAddData}>
               + 增加数据
+            </Button>
+            <Button look="secondary" size="tiny" onClick={handleUnlink} disabled={unlinking}>
+              取消关联
             </Button>
           </div>
         )}

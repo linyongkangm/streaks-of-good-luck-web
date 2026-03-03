@@ -128,7 +128,7 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
           <div className="space-y-6">
             <div>
               <h3 className="text-sm font-medium text-gray-700 mb-3">当前行业</h3>
-              <div className="gap-4">
+              <div className="space-y-2">
                 {templates.map(template => {
                   const relatedDataList = coreDataList.filter(
                     cd => cd.table === template.info__core_statistic_template.relate_table &&
@@ -140,7 +140,9 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
                       template={template.info__core_statistic_template}
                       customName={template.rename}
                       coreDataList={relatedDataList}
+                      industryId={industryId}
                       onAddData={() => openCoreDataModal(template, industryId)}
+                      onUnlink={loadIndustryData}
                     />
                   )
                 })}
@@ -155,7 +157,7 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
                     <h3 className="text-sm font-medium text-gray-700 mb-3">
                       {subIndustry.name}
                     </h3>
-                    <div className="gap-4">
+                    <div className="space-y-2">
                       {templates.map(template => {
                         const relatedDataList = coreDataList.filter(
                           cd => cd.table === template.info__core_statistic_template.relate_table &&
@@ -167,7 +169,9 @@ export default function IndustryAnalysisCoreStats({ industryId }: Props) {
                             template={template.info__core_statistic_template}
                             customName={template.rename}
                             coreDataList={relatedDataList}
+                            industryId={subIndustry.id}
                             onAddData={() => openCoreDataModal(template, subIndustry.id)}
+                            onUnlink={loadIndustryData}
                           />
                         )
                       })}
