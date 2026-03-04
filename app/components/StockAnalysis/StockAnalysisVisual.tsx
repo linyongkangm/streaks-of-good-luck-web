@@ -444,8 +444,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
             encode: {
               y: `predict_quantile_price_p${q}`,
               shape: (d: any) => d.is_milestone ? 'diamond' : 'circle',
-              size: (d: any) => d.is_milestone ? 10 : 1,
-
+              size: 5
             },
             style: {
               fill: YellowGradient[index],
@@ -460,7 +459,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
           encode: {
             y: 'closePrice',
             shape: (d: any) => d.is_milestone ? 'diamond' : 'circle',
-            size: (d: any) => d.is_milestone ? 10 : 0,
+            size: 5,
             color: (d: any) => d.is_milestone ? '#ff6b6b' : '#ffffff00',
           },
           style: {
