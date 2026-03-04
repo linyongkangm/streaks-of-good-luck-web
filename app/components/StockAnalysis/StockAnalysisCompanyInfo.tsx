@@ -206,7 +206,7 @@ export default function StockAnalysisCompanyInfo({ selectedCompany, sinkCompanyI
         value: Number.isFinite(Number(cashflowRatioTtm)) ? Number(cashflowRatioTtm).toFixed(2) : '--',
       },
       {
-        oel: '最新毛利率',
+        label: '最新毛利率',
         value: formatPercent(grossProfitMarginTtm),
       },
       {
