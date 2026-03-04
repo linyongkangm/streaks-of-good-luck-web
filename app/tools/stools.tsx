@@ -82,10 +82,10 @@ method=stock_zh_a_hist params={"symbol":"600519","period":"daily","start_date":"
 return=[{'日期': '2022-01-03', '开盘': 1796.0, '收盘': 1783.0, '最高': 1798.0, '最低': 1770.0, '成交量': 123456, '成交额': 12345, '振幅': 1.5, '涨跌幅': 2, '涨跌额': 13, '换手率': 1.2}, {...}, ...]
 
 -- 资产负债表
-REPORT_DATE: 报告期,TOTAL_PARENT_EQUITY: 归属母公司股东权益
+REPORT_DATE: 报告期,TOTAL_PARENT_EQUITY: 归属母公司股东权益,TOTAL_ASSETS: 资产总计,TOTAL_CURRENT_ASSETS: 流动资产合计,TOTAL_NONCURRENT_ASSETS: 非流动资产合计,TOTAL_CURRENT_LIAB:流动负债合计,TOTAL_NONCURRENT_LIAB: 非流动负债合计,TOTAL_LIABILITIES: 负债合计
 -- 资产负债表-按报告期
 method=stock_balance_sheet_by_report_em params={"symbol":"sh600519"}
-return=[{'REPORT_DATE': '2000-06-30 00:00:00', 'TOTAL_PARENT_EQUITY': 1234567890.0, '流动资产': 123456789.0, ...}, {...}, ...]
+return=[{'REPORT_DATE': '2000-06-30 00:00:00', 'TOTAL_PARENT_EQUITY': 1234567890.0, 'TOTAL_ASSETS': 1234567890.0, 'TOTAL_CURRENT_ASSETS': 123456789.0, 'TOTAL_NONCURRENT_ASSETS': 123456789.0, 'TOTAL_CURRENT_LIAB': 123456789.0, 'TOTAL_NONCURRENT_LIAB': 123456789.0, 'TOTAL_LIABILITIES': 123456789.0, ...}, {...}, ...]
 
 -- 利润表
 REPORT_DATE: 报告期,TOTAL_OPERATE_INCOME: 营业总收入,OPERATE_INCOME:营业收入,TOTAL_OPERATE_COST: 营业总成本,OPERATE_COST: 营业成本,NETPROFIT: 净利润,PARENT_NETPROFIT: 归属母公司净利润,
