@@ -49,24 +49,60 @@ export default function IndustryAnalysisCoreStatsCard({
       return
     }
 
-    const now = new Date()
-    const currentYear = now.getFullYear()
-    const currentQtr = Math.floor(now.getMonth() / 3)
+    const now = toLuxon(new Date())
+    const currentQuarterKey = now.year * 4 + now.quarter
 
-    // 查找当前季度的数据
-    const currentQuarterIndex = sortedData.findIndex(item => {
-      const itemDate = new Date(item.date || 0)
-      const itemYear = itemDate.getFullYear()
-      const itemQtr = Math.floor(itemDate.getMonth() / 3)
-      return itemYear === currentYear && itemQtr === currentQtr
-    })
+    let exactIndex = -1
+    let nearestPastIndex = -1
+    let nearestPastDiff = Number.POSITIVE_INFINITY
+    let nearestFutureIndex = -1
+    let nearestFutureDiff = Number.POSITIVE_INFINITY
 
-    if (currentQuarterIndex !== -1) {
-      setSelectedDataIndex(currentQuarterIndex)
-    } else {
-      // 如果没有当前季度的数据，选中第一个
-      setSelectedDataIndex(0)
+    for (let index = 0; index < sortedData.length; index++) {
+      const item = sortedData[index]
+      if (!item.date) continue
+
+      const itemDate = toLuxon(item.date)
+      if (!itemDate.isValid) continue
+
+      const itemQuarterKey = itemDate.year * 4 + itemDate.quarter
+      const diff = itemQuarterKey - currentQuarterKey
+
+      if (diff === 0) {
+        exactIndex = index
+        break
+      }
+
+      if (diff < 0) {
+        const pastDiff = Math.abs(diff)
+        if (pastDiff < nearestPastDiff) {
+          nearestPastDiff = pastDiff
+          nearestPastIndex = index
+        }
+      } else {
+        if (diff < nearestFutureDiff) {
+          nearestFutureDiff = diff
+          nearestFutureIndex = index
+        }
+      }
     }
+
+    if (exactIndex !== -1) {
+      setSelectedDataIndex(exactIndex)
+      return
+    }
+
+    if (nearestPastIndex !== -1) {
+      setSelectedDataIndex(nearestPastIndex)
+      return
+    }
+
+    if (nearestFutureIndex !== -1) {
+      setSelectedDataIndex(nearestFutureIndex)
+      return
+    }
+
+    setSelectedDataIndex(0)
   }, [sortedData])
 
   // 解析公式
