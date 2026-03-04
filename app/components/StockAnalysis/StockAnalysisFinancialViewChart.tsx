@@ -351,6 +351,7 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
             {
               name: '环比',
               field: 'sequential_ratio',
+              color: '#ff7f0e',
               valueFormatter: (value) => {
                 const v = Number(value)
                 return Number.isFinite(v) ? `${(v * 100).toFixed(2)}%` : '-'
