@@ -20,19 +20,8 @@ model info__industry_analysis {
   update_time                       DateTime?                           @default(now()) @updatedAt @db.DateTime(0)
   original_url                      String?                             @db.VarChar(512)
   report_time                       DateTime?                           @db.DateTime(0)
-  relation__board_industry_analysis relation__board_industry_analysis[]
 
   @@index([create_time], map: "idx_create_time")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model info__stock_board {
-  id                                Int                                 @id @default(autoincrement()) @db.UnsignedInt
-  board_name                        String                              @unique(map: "idx_board_name") @db.VarChar(50)
-  create_time                       DateTime                            @default(now()) @db.DateTime(0)
-  update_time                       DateTime                            @default(now()) @updatedAt @db.DateTime(0)
-  relation__board_industry_analysis relation__board_industry_analysis[]
-  relation__stock_board_company     relation__stock_board_company[]
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -51,7 +40,7 @@ model info__stock_company {
   quote__cash_flow_sheet                                quote__cash_flow_sheet[]
   quote__profit_sheet                                   quote__profit_sheet[]
   quote__stock_constituent_daily                        quote__stock_constituent_daily[]
-  relation__stock_board_company                         relation__stock_board_company[]
+  relation__industry_company                            relation__industry_company[]
   relation__industry_or_company_milestone               relation__industry_or_company_milestone[]
   info__core_data                                       info__core_data[]
   relation__industry_or_company_core_statistic_template relation__industry_or_company_core_statistic_template[]
@@ -115,33 +104,18 @@ model quote__stock_constituent_daily {
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model relation__board_industry_analysis {
-  id                      Int                     @id @default(autoincrement()) @db.UnsignedInt
-  board_id                Int                     @db.UnsignedInt
-  industry_analysis_id    Int                     @db.UnsignedInt
-  update_time             DateTime                @default(now()) @updatedAt @db.DateTime(0)
-  create_time             DateTime                @default(now()) @db.DateTime(0)
-  info__stock_board       info__stock_board       @relation(fields: [board_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "relation__stock_board_industry_analysis_ibfk_1")
-  info__industry_analysis info__industry_analysis @relation(fields: [industry_analysis_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "relation__stock_board_industry_analysis_ibfk_2")
-
-  @@unique([board_id, industry_analysis_id], map: "board_id_industry_analysis_id")
-  @@index([board_id], map: "board_id")
-  @@index([industry_analysis_id], map: "industry_analysis_id")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model relation__stock_board_company {
+model relation__industry_company {
   id                  Int                 @id @default(autoincrement()) @db.UnsignedInt
   company_id          Int                 @db.UnsignedInt
   update_time         DateTime            @default(now()) @updatedAt @db.DateTime(0)
-  board_id            Int                 @db.UnsignedInt
+  industry_id         Int                 @db.UnsignedInt
   create_time         DateTime            @default(now()) @db.DateTime(0)
   weight              Int                 @default(0) @db.UnsignedInt
-  info__stock_board   info__stock_board   @relation(fields: [board_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "relation__stock_board_company_ibfk_1")
-  info__stock_company info__stock_company @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "relation__stock_board_company_ibfk_2")
+  info__industry      info__industry      @relation(fields: [industry_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "relation__industry_company_ibfk_1")
+  info__stock_company info__stock_company @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "relation__industry_company_ibfk_2")
 
-  @@unique([company_id, board_id], map: "company_id")
-  @@index([board_id], map: "board_id")
+  @@unique([company_id, industry_id], map: "company_id")
+  @@index([industry_id], map: "industry_id")
   @@index([company_id], map: "company_id_2")
 }
 
@@ -173,6 +147,7 @@ model info__industry {
   description                                            String?                                                  @db.Text
   create_time                                            DateTime                                                 @default(now()) @db.DateTime(0)
   update_time                                            DateTime                                                 @default(now()) @updatedAt @db.DateTime(0)
+  relation__industry_company                             relation__industry_company[]
   relation__industry_articles                            relation__industry_article[]
   relation__industry_or_company_milestone                relation__industry_or_company_milestone[]
   info__core_data                                        info__core_data[]
