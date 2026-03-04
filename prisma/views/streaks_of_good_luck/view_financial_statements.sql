@@ -237,6 +237,7 @@ SELECT
   `pr`.`report_date` AS `report_date`,
   `pr`.`total_shares` AS `total_shares`,
   `bs`.`total_parent_equity` AS `total_parent_equity`,
+  `bs`.`total_assets` AS `total_assets`,
   `pr`.`total_operate_income_ttm` AS `total_operate_income_ttm`,
   `pr`.`total_operate_income_last_year` AS `total_operate_income_last_year`,
   `pr`.`operate_income_ttm` AS `operate_income_ttm`,

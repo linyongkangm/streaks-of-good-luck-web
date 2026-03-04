@@ -73,11 +73,13 @@ export async function POST(req: NextRequest) {
           },
           update: {
             total_parent_equity: item.TOTAL_PARENT_EQUITY || 0,
+            total_assets: item.TOTAL_ASSETS || 0,
           },
           create: {
             company_id: company.id,
             report_date: new Date(item.REPORT_DATE),
             total_parent_equity: item.TOTAL_PARENT_EQUITY || 0,
+            total_assets: item.TOTAL_ASSETS || 0,
           }
         })
         balanceSheetCount++

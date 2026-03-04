@@ -172,6 +172,7 @@ SELECT
     pr.report_date,
     pr.total_shares,
     bs.total_parent_equity,
+    bs.total_assets AS total_assets,
     pr.total_operate_income_ttm,
     pr.total_operate_income_last_year,
     pr.operate_income_ttm,

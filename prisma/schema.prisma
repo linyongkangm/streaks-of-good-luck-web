@@ -256,6 +256,7 @@ model quote__balance_sheet {
   company_id          Int                 @db.UnsignedInt
   report_date         DateTime            @db.Date
   total_parent_equity Decimal             @db.Decimal(20, 2)
+  total_assets        Decimal?             @db.Decimal(20, 2)
   create_time         DateTime            @default(now()) @db.DateTime(0)
   update_time         DateTime            @default(now()) @updatedAt @db.DateTime(0)
   info__stock_company info__stock_company @relation(fields: [company_id], references: [id], map: "fk_balance_sheet_company_id")
@@ -325,6 +326,7 @@ view view_financial_statements {
   report_date                    DateTime? @db.Date
   total_shares                   Decimal?  @db.Decimal(20, 2)
   total_parent_equity            Decimal?  @db.Decimal(20, 2)
+  total_assets                   Decimal?  @db.Decimal(20, 2)
   total_operate_income_ttm       Decimal?  @db.Decimal(42, 2)
   total_operate_income_last_year Decimal?  @db.Decimal(42, 2)
   operate_income_ttm             Decimal?  @db.Decimal(42, 2)

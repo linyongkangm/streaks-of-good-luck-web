@@ -46,6 +46,10 @@ export default function SecuritiesMetadataBalanceSheet({ selectedCompany }: Prop
       title: '归属母公司股东权益',
       dataIndex: 'total_parent_equity',
       format: ColumnFormatType.NUMBER,
+    },{
+      title: '总资产',
+      dataIndex: 'total_assets',
+      format: ColumnFormatType.NUMBER,
     }
   ]
 

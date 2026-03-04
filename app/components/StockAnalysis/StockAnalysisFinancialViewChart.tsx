@@ -19,7 +19,7 @@ type DataType = 'ttm' | 'annual'
 
 type FinancialViewField =
   Exclude<keyof view_financial_statements, 'total_shares' | 'company_id' | 'report_date' | 'total_operate_income_last_year' | 'operate_income_last_year' | 'total_operate_cost_last_year' | 'operate_cost_last_year' | 'netprofit_last_year' | 'parent_netprofit_last_year' | 'netcash_operate_last_year' | 'netcash_invest_last_year' | 'netcash_finance_last_year' | 'rate_change_effect_last_year' | 'free_cash_flow_last_year'>
-  | 'cashflow_ratio_ttm' | 'gross_profit_margin_ttm' | 'net_profit_margin_ttm' | 'roe_ttm'
+  | 'cashflow_ratio_ttm' | 'gross_profit_margin_ttm' | 'net_profit_margin_ttm' | 'sales_net_margin_ttm' | 'total_asset_turnover_ttm' | 'equity_multiplier_ttm' | 'roe_ttm'
 
 const fieldLabels: Record<FinancialViewField, string> = {
   // 净利润现金含量 = 经营现金流(TTM) / 归母净利润(TTM)
@@ -28,9 +28,15 @@ const fieldLabels: Record<FinancialViewField, string> = {
   gross_profit_margin_ttm: '毛利率',
   // 净利率 = 净利润(TTM) / 营业收入(TTM)
   net_profit_margin_ttm: '净利率',
-  // ROE = 归母净利润(TTM) / 期末归母权益
+  // 销售净利率 = 归母净利润(TTM) / 营业收入(TTM)
+  sales_net_margin_ttm: '销售净利率',
+  // 总资产周转率 = 营业收入(TTM) / 期末总资产
+  total_asset_turnover_ttm: '总资产周转率',
+  // 权益乘数 = 期末总资产 / 期末归母权益
+  equity_multiplier_ttm: '权益乘数',
+  // ROE = 销售净利率 × 总资产周转率 × 权益乘数
   roe_ttm: 'ROE',
-  // ROE = 归母净利润 / 平均归母权益((期初归母权益 + 期末归母权益) ÷ 2)
+  total_assets: '资产总计',
   total_parent_equity: '归母权益',
   total_operate_income_ttm: '营业总收入',
   operate_income_ttm: '营业收入',
@@ -46,10 +52,13 @@ const fieldLabels: Record<FinancialViewField, string> = {
 }
 
 const fieldOrder: FinancialViewField[] = [
+  'roe_ttm',
+  'sales_net_margin_ttm',
+  'total_asset_turnover_ttm',
+  'equity_multiplier_ttm',
   'cashflow_ratio_ttm',
   'gross_profit_margin_ttm',
   'net_profit_margin_ttm',
-  'roe_ttm',
   'free_cash_flow_ttm',
   'total_parent_equity',
   'total_operate_income_ttm',
@@ -65,11 +74,12 @@ const fieldOrder: FinancialViewField[] = [
 ]
 
 const quickSelectFields: FinancialViewField[] = [
+  'roe_ttm',
+  'sales_net_margin_ttm',
+  'total_asset_turnover_ttm',
+  'equity_multiplier_ttm',
   'cashflow_ratio_ttm',
   'gross_profit_margin_ttm',
-  'net_profit_margin_ttm',
-  'roe_ttm',
-  'free_cash_flow_ttm',
 ]
 
 const otherFields: FinancialViewField[] = fieldOrder.filter((field) => !quickSelectFields.includes(field))
@@ -81,7 +91,7 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
   const [records, setRecords] = useState<view_financial_statements[]>([])
   const [field, setField] = useState<FinancialViewField>('parent_netprofit_ttm')
   const [dataType, setDataType] = useState<DataType>('ttm')
-  const isPercentField = field === 'gross_profit_margin_ttm' || field === 'net_profit_margin_ttm' || field === 'cashflow_ratio_ttm' || field === 'roe_ttm'
+  const isPercentField = field === 'gross_profit_margin_ttm' || field === 'net_profit_margin_ttm' || field === 'cashflow_ratio_ttm' || field === 'sales_net_margin_ttm' || field === 'roe_ttm'
 
   // 根据数据类型获取实际字段名
   const getFieldForDataType = (baseField: FinancialViewField, type: DataType): string => {
@@ -165,96 +175,81 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
         })
     })()
 
+    const calculateMetricValue = (record: view_financial_statements) => {
+      const metricField = getFieldForDataType(field, dataType)
+
+      const operateIncomeTtm = Number((record as any)[getFieldForDataType('operate_income_ttm', dataType)] || 0)
+      const operateCostTtm = Number((record as any)[getFieldForDataType('operate_cost_ttm', dataType)] || 0)
+      const netprofitTtm = Number((record as any)[getFieldForDataType('netprofit_ttm', dataType)] || 0)
+      const parentNetprofitTtm = Number((record as any)[getFieldForDataType('parent_netprofit_ttm', dataType)] || 0)
+      const netcashOperateTtm = Number((record as any)[getFieldForDataType('netcash_operate_ttm', dataType)] || 0)
+      const totalParentEquity = Number((record as any).total_parent_equity || 0)
+      const totalAssets = Number((record as any).total_assets || 0)
+
+      if (field === 'cashflow_ratio_ttm') {
+        if (!Number.isFinite(netcashOperateTtm) || !Number.isFinite(parentNetprofitTtm) || parentNetprofitTtm === 0) {
+          return Number.NaN
+        }
+        return netcashOperateTtm / parentNetprofitTtm
+      }
+
+      if (field === 'gross_profit_margin_ttm') {
+        if (!Number.isFinite(operateIncomeTtm) || !Number.isFinite(operateCostTtm) || operateIncomeTtm === 0) {
+          return Number.NaN
+        }
+        return (operateIncomeTtm - operateCostTtm) / operateIncomeTtm
+      }
+
+      if (field === 'net_profit_margin_ttm') {
+        if (!Number.isFinite(operateIncomeTtm) || !Number.isFinite(netprofitTtm) || operateIncomeTtm === 0) {
+          return Number.NaN
+        }
+        return netprofitTtm / operateIncomeTtm
+      }
+
+      if (field === 'sales_net_margin_ttm') {
+        if (!Number.isFinite(operateIncomeTtm) || !Number.isFinite(parentNetprofitTtm) || operateIncomeTtm === 0) {
+          return Number.NaN
+        }
+        return parentNetprofitTtm / operateIncomeTtm
+      }
+
+      if (field === 'total_asset_turnover_ttm') {
+        if (!Number.isFinite(operateIncomeTtm) || !Number.isFinite(totalAssets) || totalAssets === 0) {
+          return Number.NaN
+        }
+        return operateIncomeTtm / totalAssets
+      }
+
+      if (field === 'equity_multiplier_ttm') {
+        if (!Number.isFinite(totalAssets) || !Number.isFinite(totalParentEquity) || totalParentEquity === 0) {
+          return Number.NaN
+        }
+        return totalAssets / totalParentEquity
+      }
+
+      if (field === 'roe_ttm') {
+        if (!Number.isFinite(operateIncomeTtm) || !Number.isFinite(parentNetprofitTtm) || !Number.isFinite(totalAssets) || !Number.isFinite(totalParentEquity) || operateIncomeTtm === 0 || totalAssets === 0 || totalParentEquity === 0) {
+          return Number.NaN
+        }
+        const salesNetMargin = parentNetprofitTtm / operateIncomeTtm
+        const totalAssetTurnover = operateIncomeTtm / totalAssets
+        const equityMultiplier = totalAssets / totalParentEquity
+        return salesNetMargin * totalAssetTurnover * equityMultiplier
+      }
+
+      return Number((record as any)[metricField])
+    }
+
     const chartData = recordsForChart
       .map((item, index) => {
-        const metricField = getFieldForDataType(field, dataType)
-
-        const metricValue = (() => {
-          if (field === 'cashflow_ratio_ttm') {
-            const netcashOperateField = getFieldForDataType('netcash_operate_ttm', dataType)
-            const parentNetprofitField = getFieldForDataType('parent_netprofit_ttm', dataType)
-            const netcashOperate = Number((item as any)[netcashOperateField] || 0)
-            const parentNetprofit = Number((item as any)[parentNetprofitField] || 0)
-            if (!Number.isFinite(netcashOperate) || !Number.isFinite(parentNetprofit) || parentNetprofit === 0) {
-              return Number.NaN
-            }
-            return netcashOperate / parentNetprofit
-          }
-
-          if (field === 'gross_profit_margin_ttm') {
-            const operateIncomeTtm = Number((item as any)[getFieldForDataType('operate_income_ttm', dataType)] || 0)
-            const operateCostTtm = Number((item as any)[getFieldForDataType('operate_cost_ttm', dataType)] || 0)
-            if (!Number.isFinite(operateIncomeTtm) || !Number.isFinite(operateCostTtm) || operateIncomeTtm === 0) {
-              return Number.NaN
-            }
-            return (operateIncomeTtm - operateCostTtm) / operateIncomeTtm
-          }
-
-          if (field === 'net_profit_margin_ttm') {
-            const operateIncomeTtm = Number((item as any)[getFieldForDataType('operate_income_ttm', dataType)] || 0)
-            const netprofitTtm = Number((item as any)[getFieldForDataType('netprofit_ttm', dataType)] || 0)
-            if (!Number.isFinite(operateIncomeTtm) || !Number.isFinite(netprofitTtm) || operateIncomeTtm === 0) {
-              return Number.NaN
-            }
-            return netprofitTtm / operateIncomeTtm
-          }
-
-          if (field === 'roe_ttm') {
-            const parentNetprofitField = getFieldForDataType('parent_netprofit_ttm', dataType)
-            const parentNetprofit = Number((item as any)[parentNetprofitField] || 0)
-            const totalParentEquity = Number((item as any).total_parent_equity || 0)
-            if (!Number.isFinite(parentNetprofit) || !Number.isFinite(totalParentEquity) || totalParentEquity === 0) {
-              return Number.NaN
-            }
-            return parentNetprofit / totalParentEquity
-          }
-
-          return Number((item as any)[metricField])
-        })()
+        const metricValue = calculateMetricValue(item)
 
         // 计算环比
         let sequentialRatio = Number.NaN
         if (index > 0) {
           const prevData = recordsForChart[index - 1]
-
-          const prevValue = (() => {
-            if (field === 'cashflow_ratio_ttm') {
-              const netcashOperateField = getFieldForDataType('netcash_operate_ttm', dataType)
-              const parentNetprofitField = getFieldForDataType('parent_netprofit_ttm', dataType)
-              const prevNetcashOperate = Number((prevData as any)[netcashOperateField] || 0)
-              const prevParentNetprofit = Number((prevData as any)[parentNetprofitField] || 0)
-              if (!Number.isFinite(prevNetcashOperate) || !Number.isFinite(prevParentNetprofit) || prevParentNetprofit === 0) {
-                return Number.NaN
-              }
-              return prevNetcashOperate / prevParentNetprofit
-            }
-
-            if (field === 'gross_profit_margin_ttm') {
-              const prevOpIncome = Number((prevData as any)[getFieldForDataType('operate_income_ttm', dataType)] || 0)
-              const prevOpCost = Number((prevData as any)[getFieldForDataType('operate_cost_ttm', dataType)] || 0)
-              if (prevOpIncome === 0) return Number.NaN
-              return (prevOpIncome - prevOpCost) / prevOpIncome
-            }
-
-            if (field === 'net_profit_margin_ttm') {
-              const prevOpIncome = Number((prevData as any)[getFieldForDataType('operate_income_ttm', dataType)] || 0)
-              const prevNetprofit = Number((prevData as any)[getFieldForDataType('netprofit_ttm', dataType)] || 0)
-              if (prevOpIncome === 0) return Number.NaN
-              return prevNetprofit / prevOpIncome
-            }
-
-            if (field === 'roe_ttm') {
-              const parentNetprofitField = getFieldForDataType('parent_netprofit_ttm', dataType)
-              const prevParentNetprofit = Number((prevData as any)[parentNetprofitField] || 0)
-              const prevTotalParentEquity = Number((prevData as any).total_parent_equity || 0)
-              if (!Number.isFinite(prevParentNetprofit) || !Number.isFinite(prevTotalParentEquity) || prevTotalParentEquity === 0) {
-                return Number.NaN
-              }
-              return prevParentNetprofit / prevTotalParentEquity
-            }
-
-            return Number((prevData as any)[metricField])
-          })()
+          const prevValue = calculateMetricValue(prevData)
 
           if (Number.isFinite(metricValue) && Number.isFinite(prevValue) && prevValue !== 0) {
             sequentialRatio = (metricValue - prevValue) / Math.abs(prevValue)

@@ -446,6 +446,7 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
           >
             {syncingAllQuotes ? '同步中...' : '同步全部行情'}
           </Button>
+          <Button>同步全部财报</Button>
         </div>
 
         <Table
