@@ -136,14 +136,9 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
         return
       }
 
-      // 获取所有关联行业的里程碑
-      const params = new URLSearchParams()
-      params.append('startDate', dateRange.start_date.toISODate() || '')
-      params.append('endDate', dateRange.end_date.toISODate() || '')
-
       // 获取每个行业的里程碑
       const milestonePromises = industries.map((industryRelation: any) =>
-        fetch(`/api/milestones?industryId=${industryRelation.industry_id}&startDate=${dateRange.start_date.toISODate()}&endDate=${dateRange.end_date.toISODate()}`)
+        fetch(`/api/milestones?industryId=${industryRelation.industry_id}&startDate=${dateRange.start_date.toISODate()}`)
           .then(res => res.ok ? res.json() : { data: [] })
           .then(result => result.data || [])
       )
@@ -276,21 +271,54 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
     });
 
     // 将里程碑数据合并到chartDatasource中
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
     milestones.forEach((milestone) => {
       const milestoneDate = new Date(milestone.milestone_date as any)
-      const closestDataPoint = chartDatasource
-        .filter(d => d.closePrice !== undefined)
-        .reduce((prev, curr) => {
-          if (!prev) return curr
-          const prevDiff = Math.abs(new Date(prev.trade_date).getTime() - milestoneDate.getTime())
-          const currDiff = Math.abs(new Date(curr.trade_date).getTime() - milestoneDate.getTime())
-          return currDiff < prevDiff ? curr : prev
-        }, null as any)
+      milestoneDate.setHours(0, 0, 0, 0)
 
-      if (closestDataPoint) {
-        closestDataPoint.is_milestone = true
-        closestDataPoint.milestone_title = milestone.title
-        closestDataPoint.milestone_keyword = milestone.keyword || undefined
+      const isFuture = milestoneDate > today
+
+      if (isFuture) {
+        // 未来事件：在预测分位区域的P50处显示
+        const closestPredictPoint = chartDatasource
+          .filter(d => d.predict_quantile_price_p50 !== undefined)
+          .reduce((prev, curr) => {
+            if (!prev) return curr
+            const prevDiff = Math.abs(new Date(prev.trade_date).getTime() - milestoneDate.getTime())
+            const currDiff = Math.abs(new Date(curr.trade_date).getTime() - milestoneDate.getTime())
+            return currDiff < prevDiff ? curr : prev
+          }, null as any)
+
+        if (closestPredictPoint) {
+          if (chartDatasource[chartDatasource.length - 1].trade_date.getTime() > milestoneDate.getTime()) {
+            // 在P50分位线上创建里程碑点
+            chartDatasource.splice(chartDatasource.indexOf(closestPredictPoint) + 1, 0, {
+              ...closestPredictPoint,
+              trade_date: milestoneDate,
+              is_milestone: true,
+              milestone_title: milestone.title,
+              milestone_keyword: milestone.keyword || undefined,
+            })
+          }
+        }
+      } else {
+        // 历史事件：在实际价格线上显示
+        const closestDataPoint = chartDatasource
+          .filter(d => d.closePrice !== undefined && !d.predict_quantile_price_p50)
+          .reduce((prev, curr) => {
+            if (!prev) return curr
+            const prevDiff = Math.abs(new Date(prev.trade_date).getTime() - milestoneDate.getTime())
+            const currDiff = Math.abs(new Date(curr.trade_date).getTime() - milestoneDate.getTime())
+            return currDiff < prevDiff ? curr : prev
+          }, null as any)
+
+        if (closestDataPoint) {
+          closestDataPoint.is_milestone = true
+          closestDataPoint.milestone_title = milestone.title
+          closestDataPoint.milestone_keyword = milestone.keyword || undefined
+        }
       }
     })
 
@@ -415,6 +443,9 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
             type: 'point',
             encode: {
               y: `predict_quantile_price_p${q}`,
+              shape: (d: any) => d.is_milestone ? 'diamond' : 'circle',
+              size: (d: any) => d.is_milestone ? 10 : 1,
+
             },
             style: {
               fill: YellowGradient[index],
