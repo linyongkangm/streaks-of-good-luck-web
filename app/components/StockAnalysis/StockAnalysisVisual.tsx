@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Chart } from '@antv/g2'
-import type { info__stock_company } from '@/types'
+import type { info__stock_company, info__milestone } from '@/types'
 import * as tools from '@/app/tools'
 import Select from '@/app/widget/Select'
 import { DateTime } from 'luxon'
@@ -69,6 +69,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
     end_date: DateTime.now(),
   })
   const [predictData, setPredictData] = useState<any[]>([])
+  const [milestones, setMilestones] = useState<info__milestone[]>([])
 
   useEffect(() => {
     const years = parseInt(timeRange)
@@ -119,10 +120,53 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
     }
   }
 
+  const fetchMilestones = async () => {
+    if (!selectedCompany?.id) return
+
+    try {
+      // 获取公司关联的行业列表
+      const industriesRes = await fetch(`/api/company-industries?company_id=${selectedCompany.id}`)
+      if (!industriesRes.ok) return
+
+      const industriesResult = await industriesRes.json()
+      const industries = industriesResult?.data || []
+
+      if (industries.length === 0) {
+        setMilestones([])
+        return
+      }
+
+      // 获取所有关联行业的里程碑
+      const params = new URLSearchParams()
+      params.append('startDate', dateRange.start_date.toISODate() || '')
+      params.append('endDate', dateRange.end_date.toISODate() || '')
+
+      // 获取每个行业的里程碑
+      const milestonePromises = industries.map((industryRelation: any) =>
+        fetch(`/api/milestones?industryId=${industryRelation.industry_id}&startDate=${dateRange.start_date.toISODate()}&endDate=${dateRange.end_date.toISODate()}`)
+          .then(res => res.ok ? res.json() : { data: [] })
+          .then(result => result.data || [])
+      )
+
+      const milestonesArrays = await Promise.all(milestonePromises)
+      const allMilestones = milestonesArrays.flat()
+
+      // 去重（基于 id）
+      const uniqueMilestones = Array.from(
+        new Map(allMilestones.map((item: info__milestone) => [item.id, item])).values()
+      )
+
+      setMilestones(uniqueMilestones as info__milestone[])
+    } catch (error) {
+      console.error('获取里程碑数据失败:', error)
+    }
+  }
+
   useEffect(() => {
     if (selectedCompany) {
       fetchData()
       fetchPredictData()
+      fetchMilestones()
     }
   }, [selectedCompany, dateRange])
 
@@ -169,7 +213,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
         dataPoint.company_id = item.company_id
       }
       dataPoint.closePrice = parseFloat(closePrice.toFixed(2))
-      
+
       // 只有当 valuation 存在且为正数时，才添加 valuation 和 quantile_price 数据
       if (valuation && valuation > 0) {
         dataPoint.valuation = parseFloat(valuation.toFixed(2))
@@ -180,7 +224,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
           }
         })
       }
-      
+
       chartDatasource.push(dataPoint)
     })
 
@@ -231,6 +275,25 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
       })
     });
 
+    // 将里程碑数据合并到chartDatasource中
+    milestones.forEach((milestone) => {
+      const milestoneDate = new Date(milestone.milestone_date as any)
+      const closestDataPoint = chartDatasource
+        .filter(d => d.closePrice !== undefined)
+        .reduce((prev, curr) => {
+          if (!prev) return curr
+          const prevDiff = Math.abs(new Date(prev.trade_date).getTime() - milestoneDate.getTime())
+          const currDiff = Math.abs(new Date(curr.trade_date).getTime() - milestoneDate.getTime())
+          return currDiff < prevDiff ? curr : prev
+        }, null as any)
+
+      if (closestDataPoint) {
+        closestDataPoint.is_milestone = true
+        closestDataPoint.milestone_title = milestone.title
+        closestDataPoint.milestone_keyword = milestone.keyword || undefined
+      }
+    })
+
     if (chartInstance.current) {
       chartInstance.current.destroy()
     }
@@ -245,6 +308,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
       encode: {
         x: 'trade_date',
       },
+      legend: false,
       axis: {
         x: {
           title: selectedCompany.company_name + ' - 交易日期',
@@ -300,8 +364,26 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
                 name: `${year}股息率`,
                 field: `predictDividendYieldText${year}Q4`,
               }
-            }) : []
-
+            }) : [],
+            ...Quantiles.map((q, index) => {
+              return {
+                name: `${q}分位(${quantileData[adjustType]?.[metric]?.[index] ? `${quantileData[adjustType][metric][index].toFixed(2)}` : ''})`,
+                field: `quantile_price_p${q}`,
+                color: GrayGradient[index],
+              }
+            }).reverse(),
+            ...(chartDatasource[chartDatasource.length - 1]?.predict_quantile_price_p10 ? Quantiles.map((q, index) => {
+              return {
+                name: `预测${q}分位(${quantileData[adjustType]?.[metric]?.[index] ? `${quantileData[adjustType][metric][index].toFixed(2)}` : ''})`,
+                field: `predict_quantile_price_p${q}`,
+                color: YellowGradient[index],
+              }
+            }) : []).reverse(),
+            {
+              name: '事件',
+              field: 'milestone_title',
+              color: '#ff6b6b',
+            },
           ],
         },
         ...Quantiles.map((q, index) => {
@@ -314,10 +396,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
               lineWidth: 1,
               stroke: GrayGradient[index],
             },
-            tooltip: {
-              name: `${q}分位(${quantileData[adjustType]?.[metric]?.[index] ? `${quantileData[adjustType][metric][index].toFixed(2)}` : ''})`,
-              channel: 'y',
-            }
+            tooltip: false,
           }
         }),
         ...(chartDatasource[chartDatasource.length - 1]?.predict_quantile_price_p10 ? Quantiles.map((q, index) => {
@@ -330,22 +409,35 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
               lineWidth: 1,
               stroke: YellowGradient[index],
             },
-            tooltip: {
-              name: `${q}分位(${quantileData[adjustType]?.[metric]?.[index] ? `${quantileData[adjustType][metric][index].toFixed(2)}` : ''})`,
-              channel: 'y',
-            },
-          }, {
+            tooltip: false,
+          },
+          {
             type: 'point',
             encode: {
               y: `predict_quantile_price_p${q}`,
             },
-            tooltip: false,
             style: {
               fill: YellowGradient[index],
               stroke: YellowGradient[index],
             },
+            tooltip: false,
           }]
         }).flat() : []),
+        // 显示所有数据点，里程碑用特殊样式标记
+        {
+          type: 'point',
+          encode: {
+            y: 'closePrice',
+            shape: (d: any) => d.is_milestone ? 'diamond' : 'circle',
+            size: (d: any) => d.is_milestone ? 10 : 0,
+            color: (d: any) => d.is_milestone ? '#ff6b6b' : '#ffffff00',
+          },
+          style: {
+            stroke: (d: any) => d.is_milestone ? '#ff6b6b' : '#ffffff00',
+            fill: (d: any) => d.is_milestone ? '#ff6b6b' : '#ffffff00',
+          },
+          tooltip: false
+        },
       ],
     })
     chart.render()

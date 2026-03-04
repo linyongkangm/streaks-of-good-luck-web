@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Chart } from '@antv/g2'
 import { DateTime } from 'luxon'
-import type { info__stock_company, view_financial_statements } from '@/types'
+import type { info__stock_company, view_financial_statements, info__milestone } from '@/types'
 import Panel from '@/app/widget/Panel'
 import Select from '@/app/widget/Select'
 import Radio from '@/app/widget/Radio'
@@ -114,6 +114,7 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
   const chartInstance = useRef<Chart | null>(null)
   const [loading, setLoading] = useState(false)
   const [records, setRecords] = useState<view_financial_statements[]>([])
+  const [milestones, setMilestones] = useState<info__milestone[]>([])
   const [field, setField] = useState<FinancialViewField>('parent_netprofit_ttm')
   const [dataType, setDataType] = useState<DataType>('ttm')
   const isPercentField = field === 'gross_profit_margin_ttm' || field === 'net_profit_margin_ttm' || field === 'cashflow_ratio_ttm' || field === 'sales_net_margin_ttm' || field === 'roe_ttm'
@@ -157,8 +158,100 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
       }
     }
 
-    fetchData()
+    const fetchMilestones = async () => {
+      if (!selectedCompany?.id || records.length === 0) return
+
+      try {
+        // 获取公司关联的行业列表
+        const industriesRes = await fetch(`/api/company-industries?company_id=${selectedCompany.id}`)
+        if (!industriesRes.ok) return
+
+        const industriesResult = await industriesRes.json()
+        const industries = industriesResult?.data || []
+
+        if (industries.length === 0) {
+          setMilestones([])
+          return
+        }
+
+        // 获取数据范围
+        const sortedRecords = [...records].sort((a, b) =>
+          new Date(a.report_date as any).getTime() - new Date(b.report_date as any).getTime()
+        )
+        const startDate = DateTime.fromJSDate(new Date(sortedRecords[0].report_date as any)).toISODate()
+        const endDate = DateTime.fromJSDate(new Date(sortedRecords[sortedRecords.length - 1].report_date as any)).toISODate()
+
+        // 获取每个行业的里程碑
+        const milestonePromises = industries.map((industryRelation: any) =>
+          fetch(`/api/milestones?industryId=${industryRelation.industry_id}&startDate=${startDate}&endDate=${endDate}`)
+            .then(res => res.ok ? res.json() : { data: [] })
+            .then(result => result.data || [])
+        )
+
+        const milestonesArrays = await Promise.all(milestonePromises)
+        const allMilestones = milestonesArrays.flat()
+
+        // 去重（基于 id）
+        const uniqueMilestones = Array.from(
+          new Map(allMilestones.map((item: info__milestone) => [item.id, item])).values()
+        )
+
+        setMilestones(uniqueMilestones as info__milestone[])
+      } catch (error) {
+        console.error('获取里程碑数据失败:', error)
+      }
+    }
+
+    fetchData().then(() => {
+      if (records.length > 0) {
+        fetchMilestones()
+      }
+    })
   }, [selectedCompany])
+
+  useEffect(() => {
+    if (records.length > 0) {
+      const fetchMilestones = async () => {
+        try {
+          const industriesRes = await fetch(`/api/company-industries?company_id=${selectedCompany.id}`)
+          if (!industriesRes.ok) return
+
+          const industriesResult = await industriesRes.json()
+          const industries = industriesResult?.data || []
+
+          if (industries.length === 0) {
+            setMilestones([])
+            return
+          }
+
+          const sortedRecords = [...records].sort((a, b) =>
+            new Date(a.report_date as any).getTime() - new Date(b.report_date as any).getTime()
+          )
+          const startDate = DateTime.fromJSDate(new Date(sortedRecords[0].report_date as any)).toISODate()
+          const endDate = DateTime.fromJSDate(new Date(sortedRecords[sortedRecords.length - 1].report_date as any)).toISODate()
+
+          const milestonePromises = industries.map((industryRelation: any) =>
+            fetch(`/api/milestones?industryId=${industryRelation.industry_id}&startDate=${startDate}&endDate=${endDate}`)
+              .then(res => res.ok ? res.json() : { data: [] })
+              .then(result => result.data || [])
+          )
+
+          const milestonesArrays = await Promise.all(milestonePromises)
+          const allMilestones = milestonesArrays.flat()
+
+          const uniqueMilestones = Array.from(
+            new Map(allMilestones.map((item: info__milestone) => [item.id, item])).values()
+          )
+
+          setMilestones(uniqueMilestones as info__milestone[])
+        } catch (error) {
+          console.error('获取里程碑数据失败:', error)
+        }
+      }
+
+      fetchMilestones()
+    }
+  }, [records, selectedCompany])
 
   useEffect(() => {
     if (chartInstance.current) {
@@ -287,9 +380,27 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
           report_date: new Date(item.report_date as any),
           value: metricValue,
           sequential_ratio: sequentialRatio,
+          is_milestone: false,
         }
       })
-      .filter(Boolean) as Array<{ report_date: Date; value: number; sequential_ratio: number }>
+      .filter(Boolean) as Array<{ report_date: Date; value: number; sequential_ratio: number; is_milestone: boolean; milestone_title?: string; milestone_keyword?: string }>
+
+    // 将里程碑数据合并到chartData中
+    milestones.forEach((milestone) => {
+      const milestoneDate = new Date(milestone.milestone_date as any)
+      const closestDataPoint = chartData.reduce((prev, curr) => {
+        const prevDiff = Math.abs(new Date(prev.report_date).getTime() - milestoneDate.getTime())
+        const currDiff = Math.abs(new Date(curr.report_date).getTime() - milestoneDate.getTime())
+        return currDiff < prevDiff ? curr : prev
+      }, chartData[0])
+
+      if (closestDataPoint) {
+        // 在同一天添加里程碑标记点
+        closestDataPoint.is_milestone = true
+        closestDataPoint.milestone_title = milestone.title
+        closestDataPoint.milestone_keyword = milestone.keyword || undefined
+      }
+    })
 
     if (chartData.length === 0) return
 
@@ -302,31 +413,31 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
         const offset = Math.abs(val) * 0.1 || 0.1
         return { min: val - offset, max: val + offset }
       }
-      
+
       // 使用百分位数方法：保留 1%-99% 的数据范围（数据少时使用 5%-95%）
       const sorted = [...validValues].sort((a, b) => a - b)
       const useWideRange = sorted.length < 20
       const lowPercentile = useWideRange ? 0.05 : 0.01
       const highPercentile = useWideRange ? 0.95 : 0.99
-      
+
       const lowIndex = Math.max(0, Math.floor(sorted.length * lowPercentile))
       const highIndex = Math.min(sorted.length - 1, Math.floor(sorted.length * highPercentile))
-      
+
       const min = sorted[lowIndex]
       const max = sorted[highIndex]
-      
+
       // 计算范围
       let range = max - min
-      
+
       // 如果范围太小（方差很小），使用均值的10%作为最小范围
       if (Math.abs(range) < 1e-10) {
         const mean = validValues.reduce((a, b) => a + b, 0) / validValues.length
         range = Math.abs(mean) * 0.1 || 0.1 // 至少10%或0.1
       }
-      
+
       // 添加缓冲空间（10%）
       const buffer = Math.abs(range) * 0.1
-      
+
       return {
         min: min - buffer,
         max: max + buffer,
@@ -354,6 +465,13 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
           title: `${selectedCompany.company_name} - ${dataType === 'ttm' ? 'TTM' : '年度'}报告期`,
         },
       },
+      interaction: {
+        tooltip: {
+          filter: (d) => {
+            return d.value !== 'undefined'
+          },
+        }
+      },
       children: [
         {
           type: 'line',
@@ -364,12 +482,12 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
             lineWidth: 2,
             stroke: '#1f77b4',
           },
-          scale: { 
-            y: { 
+          scale: {
+            y: {
               nice: true,
               domainMin: valueRange.min,
               domainMax: valueRange.max,
-            } 
+            }
           },
           axis: {
             y: {
@@ -406,6 +524,11 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
                 return Number.isFinite(v) ? `${(v * 100).toFixed(2)}%` : '-'
               },
             },
+            {
+              name: '事件',
+              field: 'milestone_title',
+              color: '#ff6b6b',
+            },
           ],
         },
         {
@@ -419,13 +542,13 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
             stroke: '#ff7f0e',
             strokeDasharray: [5, 5], // 虚线表示环比
           },
-          scale: { 
-            y: { 
-              independent: true, 
+          scale: {
+            y: {
+              independent: true,
               nice: true,
               domainMin: ratioRange.min,
               domainMax: ratioRange.max,
-            } 
+            }
           },
           axis: {
             y: {
@@ -440,11 +563,15 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
           type: 'point',
           encode: {
             y: 'value',
+            shape: (d: any) => d.is_milestone ? 'diamond' : 'circle',
+            size: (d: any) => d.is_milestone ? 10 : 0,
+            color: (d: any) => d.is_milestone ? '#ff6b6b' : '#ffffff00',
           },
-          tooltip: false,
           style: {
-            fill: '#1f77b4',
+            stroke: (d: any) => d.is_milestone ? '#ff6b6b' : '#ffffff00',
+            fill: (d: any) => d.is_milestone ? '#ff6b6b' : '#ffffff00',
           },
+          tooltip: false
         },
       ],
     })
