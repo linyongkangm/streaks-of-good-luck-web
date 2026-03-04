@@ -51,6 +51,29 @@ const fieldLabels: Record<FinancialViewField, string> = {
   free_cash_flow_ttm: '自由现金流',
 }
 
+const fieldDescriptions: Record<FinancialViewField, string> = {
+  cashflow_ratio_ttm: '衡量净利润的现金含量，即公司每赚取1元净利润产生的现金流。数值越高越好，说明企业盈利质量好。计算公式：经营活动现金流(TTM) ÷ 归母净利润(TTM)',
+  gross_profit_margin_ttm: '衡量公司的生产经营效率，反映产品的获利能力。数值越高越好。计算公式：(营业收入 - 营业成本) ÷ 营业收入(TTM)',
+  net_profit_margin_ttm: '衡量公司的盈利能力，反映每元营业收入能产生多少利润。数值越高越好。计算公式：净利润 ÷ 营业收入(TTM)',
+  sales_net_margin_ttm: '衡量公司的真实盈利能力，反映归属母公司的净利润率。数值越高越好。计算公式：归母净利润 ÷ 营业收入(TTM)',
+  total_asset_turnover_ttm: '衡量公司资产的利用效率，反映每单位资产产生的营业收入。数值越高越好，表示资产利用效率越高。计算公式：营业收入(TTM) ÷ 期末总资产',
+  equity_multiplier_ttm: '衡量公司的财务杠杆程度，反映每单位股东权益产生的资产。数值高表示财务杠杆大，风险相对较高。计算公式：期末总资产 ÷ 期末归母权益',
+  roe_ttm: '衡量公司净资产收益率，反映股东权益的盈利能力。是评估公司盈利能力的最重要指标之一。计算公式：销售净利率 × 总资产周转率 × 权益乘数',
+  total_assets: '反映公司在报告期末的资产规模，包括流动资产和非流动资产。',
+  total_parent_equity: '反映归属于母公司的股东权益总额，代表母公司所有者的权益。',
+  total_operate_income_ttm: '最近12个月的营业总收入，包括营业收入和其他业务收入。',
+  operate_income_ttm: '最近12个月的主营业务收入，是公司核心业务的收入部分。',
+  total_operate_cost_ttm: '最近12个月的营业总成本，包括营业成本、税金及附加、期间费用等。',
+  operate_cost_ttm: '最近12个月的主营业务成本，对应主营业务收入的成本。',
+  netprofit_ttm: '最近12个月的净利润，是公司实现的最终利润。',
+  parent_netprofit_ttm: '最近12个月归属于母公司的净利润，代表母公司实现的利润。',
+  netcash_operate_ttm: '最近12个月经营活动产生的净现金流，反映公司核心业务的现金生成能力。',
+  netcash_invest_ttm: '最近12个月投资活动产生的净现金流，通常为负数，反映公司的投资支出。',
+  netcash_finance_ttm: '最近12个月筹资活动产生的净现金流，反映公司的融资和分配活动。',
+  rate_change_effect_ttm: '最近12个月汇率变动对现金及现金等价物的影响，反映汇兑损益。',
+  free_cash_flow_ttm: '最近12个月的自由现金流，衡量公司的真实现金生成能力和可支配能力。',
+}
+
 const fieldOrder: FinancialViewField[] = [
   'roe_ttm',
   'sales_net_margin_ttm',
@@ -421,7 +444,10 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
           />
         </FormLabel>
       </div>
-
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4 text-sm text-blue-900">
+        <h3 className="font-semibold mb-2">{fieldLabels[field]}</h3>
+        <p className="leading-relaxed">{fieldDescriptions[field]}</p>
+      </div>
       {loading ? (
         <Loading />
       ) : records.length === 0 ? (
