@@ -3,19 +3,40 @@ import { prisma } from '@/lib/db'
 import { extractMilestoneKeyword } from '@/app/tools/extractMilestoneKeyword'
 import { extractMilestoneImpact } from '@/app/tools/extractMilestoneImpact'
 
-// GET /api/milestones - 获取里程碑列表（支持按行业ID、公司ID和日期范围筛选）
+// GET /api/milestones - 获取里程碑列表（支持按行业ID、公司ID、文章ID和日期范围筛选）
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const industryId = searchParams.get('industryId')
     const companyId = searchParams.get('companyId')
+    const articleId = searchParams.get('articleId')
     const startDate = searchParams.get('startDate')
     const endDate = searchParams.get('endDate')
 
     const where: any = {}
 
+    // 按文章 ID 筛选
+    if (articleId) {
+      where.article_id = BigInt(articleId)
+      // 如果同时指定了 industryId，则需要关联到该行业
+      if (industryId) {
+        where.AND = [
+          {
+            article_id: BigInt(articleId)
+          },
+          {
+            relation__industry_or_company_milestone: {
+              some: {
+                industry_id: parseInt(industryId)
+              }
+            }
+          }
+        ]
+        delete where.article_id
+      }
+    }
     // 按关联的行业或公司筛选
-    if (industryId || companyId) {
+    else if (industryId || companyId) {
       where.relation__industry_or_company_milestone = {
         some: {
           ...(industryId && { industry_id: parseInt(industryId) }),

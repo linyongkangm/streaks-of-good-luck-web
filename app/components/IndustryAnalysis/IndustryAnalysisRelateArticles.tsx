@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import type { summary__article, IndustryWithArticles } from '@/types'
 import * as tools from '@/app/tools'
 import Button from '@/app/widget/Button'
 import Panel from '@/app/widget/Panel'
+import IndustryAnalysisMilestoneModal from './IndustryAnalysisMilestoneModal'
 
 interface Props {
   industryDetail: IndustryWithArticles;
@@ -20,6 +21,10 @@ export default function IndustryAnalysisRelateArticles({
 }: Props) {
   // 年份折叠
   const [expandedYears, setExpandedYears] = useState<Set<number>>(new Set([new Date().getFullYear()]))
+  // 里程碑创建弹窗相关状态
+  const [milestoneModalOpen, setMilestoneModalOpen] = useState(false)
+  const [selectedArticle, setSelectedArticle] = useState<summary__article | null>(null)
+  const [articleMilestones, setArticleMilestones] = useState<Map<string, number>>(new Map())
 
   const toggleYear = (year: number) => {
     setExpandedYears(prev => {
@@ -28,6 +33,48 @@ export default function IndustryAnalysisRelateArticles({
       else next.add(year)
       return next
     })
+  }
+
+  // 获取文章关联的里程碑（在当前行业内）
+  const checkArticleMilestones = async () => {
+    const articles = industryDetail.relation__industry_articles.map(r => r.summary__article)
+    const milestonesMap = new Map<string, number>()
+    
+    for (const article of articles) {
+      try {
+        const response = await fetch(`/api/milestones?articleId=${article.id.toString()}&industryId=${industryDetail.id}`)
+        const data = await response.json()
+        if (data.data && data.data.length > 0) {
+          milestonesMap.set(article.id.toString(), data.data.length)
+        }
+      } catch (error) {
+        console.error(`Failed to check milestones for article ${article.id}:`, error)
+      }
+    }
+    
+    setArticleMilestones(milestonesMap)
+  }
+
+  // 初始化时检查所有文章的里程碑
+  useEffect(() => {
+    checkArticleMilestones()
+  }, [industryDetail.id, industryDetail.relation__industry_articles.length])
+
+  // 打开创建里程碑弹窗
+  const handleOpenMilestoneModal = (article: summary__article) => {
+    setSelectedArticle(article)
+    setMilestoneModalOpen(true)
+  }
+
+  // 关闭里程碑弹窗
+  const handleCloseMilestoneModal = () => {
+    setMilestoneModalOpen(false)
+    setSelectedArticle(null)
+  }
+
+  // 里程碑创建成功后的回调
+  const handleMilestoneSuccess = async () => {
+    await checkArticleMilestones()
   }
 
   // 关联文章按年份分组
@@ -75,97 +122,125 @@ export default function IndustryAnalysisRelateArticles({
     )
   }
 
-  return articlesByYear.map(([year, yearArticles]) => {
-    const isExpanded = expandedYears.has(year)
-    const yearLabel = year === 0 ? '未知年份' : `${year} 年`
+  return (
+    <>
+      {articlesByYear.map(([year, yearArticles]) => {
+        const isExpanded = expandedYears.has(year)
+        const yearLabel = year === 0 ? '未知年份' : `${year} 年`
 
-    return (
-      <Panel
-        key={year}
-        title={(
-          <button onClick={() => toggleYear(year)}>
-            <div className="flex items-center gap-3">
-              <span className={`text-lg transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>
-                ▶
-              </span>
-              <h3 className="text-xl font-bold text-slate-900">{yearLabel}</h3>
-              <span className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm font-medium">
-                {yearArticles.length} 篇
-              </span>
-            </div>
-          </button>)}
-      >
-        {isExpanded && (
-          <div className="border-t border-slate-100">
-            <div className="divide-y divide-slate-100">
-              {yearArticles.map((article) => (
-                <div
-                  key={String(article.id)}
-                  className="group px-6 py-4 hover:bg-slate-50 transition-colors"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h4 className="text-base font-semibold text-slate-900 hover:text-teal-600 transition-colors">
-                          <a
-                            href={article.source_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:underline"
-                          >
-                            {article.title}
-                          </a>
-                        </h4>
-                        <button
-                          onClick={() => handleUnlinkArticle(article.id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-red-400 hover:text-red-600 flex-shrink-0"
-                          title="移除关联"
-                        >
-                          ✕
-                        </button>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {article.issue_date && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                            📅 {tools.toUTC(article.issue_date).toFormat(tools.DATE_FORMAT)}
-                          </span>
-                        )}
-                        {article.publication && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                            📰 {article.publication}
-                          </span>
-                        )}
-                        {article.contributor && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                            👤 {article.contributor}
-                          </span>
-                        )}
-                        {article.tags && article.tags.split(',').map((tag, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium"
-                          >
-                            #{tag.trim()}
-                          </span>
-                        ))}
-                      </div>
-
-                      {article.summary && (
-                        <p className="text-sm text-slate-600 leading-relaxed line-clamp-3">
-                          {article.summary.length > 200
-                            ? article.summary.substring(0, 200) + '...'
-                            : article.summary}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+        return (
+          <Panel
+            key={year}
+            title={(
+              <button onClick={() => toggleYear(year)}>
+                <div className="flex items-center gap-3">
+                  <span className={`text-lg transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>
+                    ▶
+                  </span>
+                  <h3 className="text-xl font-bold text-slate-900">{yearLabel}</h3>
+                  <span className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm font-medium">
+                    {yearArticles.length} 篇
+                  </span>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </Panel>
-    )
-  })
-}
+              </button>)}
+          >
+            {isExpanded && (
+              <div className="border-t border-slate-100">
+                <div className="divide-y divide-slate-100">
+                  {yearArticles.map((article) => (
+                    <div
+                      key={String(article.id)}
+                      className="group px-6 py-4 hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h4 className="text-base font-semibold text-slate-900 hover:text-teal-600 transition-colors">
+                              <a
+                                href={article.source_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:underline"
+                              >
+                                {article.title}
+                              </a>
+                            </h4>
+                            {!articleMilestones.has(article.id.toString()) && (
+                              <button
+                                onClick={() => handleOpenMilestoneModal(article)}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 px-2.5 py-0.5 bg-teal-100 text-teal-700 hover:bg-teal-200 rounded-full text-xs font-medium flex-shrink-0"
+                                title="为该文章生成行业事件"
+                              >
+                                ✨ 生成事件
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleUnlinkArticle(article.id)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-red-400 hover:text-red-600 flex-shrink-0"
+                              title="移除关联"
+                            >
+                              ✕
+                            </button>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {article.issue_date && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                                📅 {tools.toUTC(article.issue_date).toFormat(tools.DATE_FORMAT)}
+                              </span>
+                            )}
+                            {article.publication && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                                📰 {article.publication}
+                              </span>
+                            )}
+                            {article.contributor && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                                👤 {article.contributor}
+                              </span>
+                            )}
+                            {article.tags && article.tags.split(',').map((tag, idx) => (
+                              <span
+                                key={idx}
+                                className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium"
+                              >
+                                #{tag.trim()}
+                              </span>
+                            ))}
+                          </div>
+
+                          {article.summary && (
+                            <p className="text-sm text-slate-600 leading-relaxed line-clamp-3">
+                              {article.summary.length > 200
+                                ? article.summary.substring(0, 200) + '...'
+                                : article.summary}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </Panel>
+        )
+      })}
+      
+      {selectedArticle && (
+        <IndustryAnalysisMilestoneModal
+          open={milestoneModalOpen}
+          onClose={handleCloseMilestoneModal}
+          onSuccess={handleMilestoneSuccess}
+          industryId={industryDetail.id}
+          articleId={selectedArticle.id}
+          initialValues={{
+            title: selectedArticle.title || '',
+            description: selectedArticle.summary || '',
+            milestone_date: selectedArticle.issue_date || new Date(),
+            keyword: '',
+          }}
+        />
+      )}
+    </>
+  )}
