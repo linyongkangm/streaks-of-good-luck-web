@@ -108,21 +108,21 @@ export default function SecuritiesMetadataQuotes({ selectedCompany }: Props) {
       dataIndex: 'volume',
       format: ColumnFormatType.NUMBER,
     },
-    {
-      title: '成交额',
-      dataIndex: `${adjustType}_turnover`,
-      format: ColumnFormatType.NUMBER,
-    },
-    {
-      title: '涨跌额',
-      dataIndex: `${adjustType}_change_amt`,
-      render: (data: any, record: any) => {
-        const isPositive = Number(record.change_percent) > 0
-        const isNegative = Number(record.change_percent) < 0
-        const colorClass = isPositive ? 'text-red-600' : isNegative ? 'text-green-600' : 'text-slate-900'
-        return <span className={colorClass}>{formatNumber(data)}</span>
-      },
-    },
+    // {
+    //   title: '成交额',
+    //   dataIndex: `${adjustType}_turnover`,
+    //   format: ColumnFormatType.NUMBER,
+    // },
+    // {
+    //   title: '涨跌额',
+    //   dataIndex: `${adjustType}_change_amt`,
+    //   render: (data: any, record: any) => {
+    //     const isPositive = Number(record.change_percent) > 0
+    //     const isNegative = Number(record.change_percent) < 0
+    //     const colorClass = isPositive ? 'text-red-600' : isNegative ? 'text-green-600' : 'text-slate-900'
+    //     return <span className={colorClass}>{formatNumber(data)}</span>
+    //   },
+    // },
     {
       title: '涨跌幅',
       dataIndex: 'change_percent',
@@ -138,11 +138,11 @@ export default function SecuritiesMetadataQuotes({ selectedCompany }: Props) {
       dataIndex: 'price_range',
       render: (value: any) => `${value}%`,
     },
-    {
-      title: '换手率',
-      dataIndex: 'turnover_rate',
-      render: (value: any) => `${formatNumber(value, 3)}%`,
-    },
+    // {
+    //   title: '换手率',
+    //   dataIndex: 'turnover_rate',
+    //   render: (value: any) => `${formatNumber(value, 3)}%`,
+    // },
   ]
 
   return (
