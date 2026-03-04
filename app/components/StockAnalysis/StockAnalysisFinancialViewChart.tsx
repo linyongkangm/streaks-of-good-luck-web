@@ -19,7 +19,7 @@ type DataType = 'ttm' | 'annual'
 
 type FinancialViewField =
   Exclude<keyof view_financial_statements, 'total_shares' | 'company_id' | 'report_date' | 'total_operate_income_last_year' | 'operate_income_last_year' | 'total_operate_cost_last_year' | 'operate_cost_last_year' | 'netprofit_last_year' | 'parent_netprofit_last_year' | 'netcash_operate_last_year' | 'netcash_invest_last_year' | 'netcash_finance_last_year' | 'rate_change_effect_last_year' | 'free_cash_flow_last_year'>
-  | 'cashflow_ratio_ttm' | 'gross_profit_margin_ttm' | 'net_profit_margin_ttm'
+  | 'cashflow_ratio_ttm' | 'gross_profit_margin_ttm' | 'net_profit_margin_ttm' | 'roe_ttm'
 
 const fieldLabels: Record<FinancialViewField, string> = {
   // 净利润现金含量 = 经营现金流(TTM) / 归母净利润(TTM)
@@ -28,7 +28,9 @@ const fieldLabels: Record<FinancialViewField, string> = {
   gross_profit_margin_ttm: '毛利率',
   // 净利率 = 净利润(TTM) / 营业收入(TTM)
   net_profit_margin_ttm: '净利率',
-
+  // ROE = 归母净利润(TTM) / 期末归母权益
+  roe_ttm: 'ROE',
+  // ROE = 归母净利润 / 平均归母权益((期初归母权益 + 期末归母权益) ÷ 2)
   total_parent_equity: '归母权益',
   total_operate_income_ttm: '营业总收入',
   operate_income_ttm: '营业收入',
@@ -47,6 +49,7 @@ const fieldOrder: FinancialViewField[] = [
   'cashflow_ratio_ttm',
   'gross_profit_margin_ttm',
   'net_profit_margin_ttm',
+  'roe_ttm',
   'free_cash_flow_ttm',
   'total_parent_equity',
   'total_operate_income_ttm',
@@ -65,6 +68,7 @@ const quickSelectFields: FinancialViewField[] = [
   'cashflow_ratio_ttm',
   'gross_profit_margin_ttm',
   'net_profit_margin_ttm',
+  'roe_ttm',
   'free_cash_flow_ttm',
 ]
 
@@ -77,7 +81,7 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
   const [records, setRecords] = useState<view_financial_statements[]>([])
   const [field, setField] = useState<FinancialViewField>('parent_netprofit_ttm')
   const [dataType, setDataType] = useState<DataType>('ttm')
-  const isPercentField = field === 'gross_profit_margin_ttm' || field === 'net_profit_margin_ttm' || field === 'cashflow_ratio_ttm'
+  const isPercentField = field === 'gross_profit_margin_ttm' || field === 'net_profit_margin_ttm' || field === 'cashflow_ratio_ttm' || field === 'roe_ttm'
 
   // 根据数据类型获取实际字段名
   const getFieldForDataType = (baseField: FinancialViewField, type: DataType): string => {
@@ -195,6 +199,16 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
             return netprofitTtm / operateIncomeTtm
           }
 
+          if (field === 'roe_ttm') {
+            const parentNetprofitField = getFieldForDataType('parent_netprofit_ttm', dataType)
+            const parentNetprofit = Number((item as any)[parentNetprofitField] || 0)
+            const totalParentEquity = Number((item as any).total_parent_equity || 0)
+            if (!Number.isFinite(parentNetprofit) || !Number.isFinite(totalParentEquity) || totalParentEquity === 0) {
+              return Number.NaN
+            }
+            return parentNetprofit / totalParentEquity
+          }
+
           return Number((item as any)[metricField])
         })()
 
@@ -227,6 +241,16 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
               const prevNetprofit = Number((prevData as any)[getFieldForDataType('netprofit_ttm', dataType)] || 0)
               if (prevOpIncome === 0) return Number.NaN
               return prevNetprofit / prevOpIncome
+            }
+
+            if (field === 'roe_ttm') {
+              const parentNetprofitField = getFieldForDataType('parent_netprofit_ttm', dataType)
+              const prevParentNetprofit = Number((prevData as any)[parentNetprofitField] || 0)
+              const prevTotalParentEquity = Number((prevData as any).total_parent_equity || 0)
+              if (!Number.isFinite(prevParentNetprofit) || !Number.isFinite(prevTotalParentEquity) || prevTotalParentEquity === 0) {
+                return Number.NaN
+              }
+              return prevParentNetprofit / prevTotalParentEquity
             }
 
             return Number((prevData as any)[metricField])
