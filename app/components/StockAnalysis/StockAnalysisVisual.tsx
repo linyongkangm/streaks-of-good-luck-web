@@ -143,7 +143,6 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
     const chartDatasource: any[] = []
     chartData.forEach((item) => {
       const valuation = item[`${adjustType}_valuation`]?.[metric]
-      if (!valuation) return
       const closePrice = item[`${adjustType}_close_price`]
       const totalShares = Number(item.total_shares)
       const marketValue = Number(closePrice) * totalShares
@@ -161,7 +160,6 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
       })
       const dataPoint: any = {
         trade_date: new Date(item.trade_date),
-        valuation: parseFloat(valuation.toFixed(2)),
         total_market_value: Number.isFinite(marketValue) ? marketValue : undefined,
         ...Object.fromEntries(predictDividendYieldTexts),
       }
@@ -171,12 +169,18 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
         dataPoint.company_id = item.company_id
       }
       dataPoint.closePrice = parseFloat(closePrice.toFixed(2))
-      const quantile_price = item.quantile_prices?.[adjustType]?.[metric] || {}
-      Object.keys(quantile_price).forEach((key) => {
-        if (quantile_price[key] !== null) {
-          dataPoint[`quantile_price_${key}`] = parseFloat(quantile_price[key].toFixed(2))
-        }
-      })
+      
+      // 只有当 valuation 存在且为正数时，才添加 valuation 和 quantile_price 数据
+      if (valuation && valuation > 0) {
+        dataPoint.valuation = parseFloat(valuation.toFixed(2))
+        const quantile_price = item.quantile_prices?.[adjustType]?.[metric] || {}
+        Object.keys(quantile_price).forEach((key) => {
+          if (quantile_price[key] !== null) {
+            dataPoint[`quantile_price_${key}`] = parseFloat(quantile_price[key].toFixed(2))
+          }
+        })
+      }
+      
       chartDatasource.push(dataPoint)
     })
 

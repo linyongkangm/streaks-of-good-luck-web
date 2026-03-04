@@ -98,7 +98,8 @@ export async function GET(
 
     const processResultWithQuantiles = (dataList: any[]) => {
       const calculateQuantiles = (values: number[], quantiles: number[]) => {
-        const sorted = values.filter(v => v !== null && !isNaN(v)).sort((a, b) => a - b)
+        // 只保留正数进行分位数计算
+        const sorted = values.filter(v => v !== null && !isNaN(v) && v > 0).sort((a, b) => a - b)
         if (sorted.length === 0) return quantiles.map(() => null)
 
         return quantiles.map(q => {
@@ -156,12 +157,13 @@ export async function GET(
               }
             }
 
+            // baseValue 为负数或零时，不计算分位价格
             quantilePrices[adjustType][metric] = {
-              p10: quantiles[0] !== null && baseValue !== 0 ? quantiles[0] * baseValue : null,
-              p30: quantiles[1] !== null && baseValue !== 0 ? quantiles[1] * baseValue : null,
-              p50: quantiles[2] !== null && baseValue !== 0 ? quantiles[2] * baseValue : null,
-              p70: quantiles[3] !== null && baseValue !== 0 ? quantiles[3] * baseValue : null,
-              p90: quantiles[4] !== null && baseValue !== 0 ? quantiles[4] * baseValue : null,
+              p10: quantiles[0] !== null && baseValue > 0 ? quantiles[0] * baseValue : null,
+              p30: quantiles[1] !== null && baseValue > 0 ? quantiles[1] * baseValue : null,
+              p50: quantiles[2] !== null && baseValue > 0 ? quantiles[2] * baseValue : null,
+              p70: quantiles[3] !== null && baseValue > 0 ? quantiles[3] * baseValue : null,
+              p90: quantiles[4] !== null && baseValue > 0 ? quantiles[4] * baseValue : null,
             }
           })
         })
