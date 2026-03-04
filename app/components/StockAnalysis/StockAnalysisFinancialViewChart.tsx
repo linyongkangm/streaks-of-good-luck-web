@@ -80,6 +80,8 @@ const quickSelectFields: FinancialViewField[] = [
   'equity_multiplier_ttm',
   'cashflow_ratio_ttm',
   'gross_profit_margin_ttm',
+  'net_profit_margin_ttm',
+  'free_cash_flow_ttm',
 ]
 
 const otherFields: FinancialViewField[] = fieldOrder.filter((field) => !quickSelectFields.includes(field))
