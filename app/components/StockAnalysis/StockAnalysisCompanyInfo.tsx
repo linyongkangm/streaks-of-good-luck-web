@@ -233,7 +233,7 @@ export default function StockAnalysisCompanyInfo({ selectedCompany, sinkCompanyI
         </Button>
       }
     >
-      <div className="mb-1">
+      <div className="mb-2">
         <div className="flex flex-wrap gap-2">
           {companyIndustries.map((ci) => (
             <div
