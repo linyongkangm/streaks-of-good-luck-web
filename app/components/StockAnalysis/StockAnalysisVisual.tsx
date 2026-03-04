@@ -250,7 +250,6 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
         y: {
           nice: true,
         },
-
       },
       interaction: {
         tooltip: {

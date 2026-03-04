@@ -337,16 +337,24 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
           tooltip: [
             {
               name: '报告期',
-              field: 'report_date',
-              valueFormatter: (value) => DateTime.fromJSDate(new Date(value)).toFormat('yyyy-LL-dd'),
+              channel: 'x',
+              valueFormatter: (value) => DateTime.fromJSDate(new Date(value)).toFormat('yyyy-Qq'),
             },
             {
               name: fieldLabels[field],
-              channel: 'y',
+              field: 'value',
               valueFormatter: (value) =>
                 isPercentField
                   ? `${(Number(value) * 100).toFixed(2)}%`
                   : formatNumber(Number(value)),
+            },
+            {
+              name: '环比',
+              field: 'sequential_ratio',
+              valueFormatter: (value) => {
+                const v = Number(value)
+                return Number.isFinite(v) ? `${(v * 100).toFixed(2)}%` : '-'
+              },
             },
           ],
         },
@@ -369,22 +377,7 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
               position: 'right' as const,
             },
           },
-          tooltip: [
-            {
-              name: '报告期',
-              field: 'report_date',
-              valueFormatter: (value) => DateTime.fromJSDate(new Date(value)).toFormat('yyyy-LL-dd'),
-            },
-            {
-              name: '环比',
-              channel: 'y',
-              valueFormatter: (value) => {
-                const v = Number(value)
-                return Number.isFinite(v) ? `${(v * 100).toFixed(2)}%` : '-'
-              },
-            },
-          ],
-
+          tooltip: false
         },
         {
           type: 'point',
