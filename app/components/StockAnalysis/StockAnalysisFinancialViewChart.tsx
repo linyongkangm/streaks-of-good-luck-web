@@ -293,6 +293,49 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
 
     if (chartData.length === 0) return
 
+    // 计算合理的坐标轴范围（排除极值）
+    const calculateReasonableRange = (values: number[]) => {
+      const validValues = values.filter(v => Number.isFinite(v))
+      if (validValues.length === 0) return { min: undefined, max: undefined }
+      if (validValues.length === 1) {
+        const val = validValues[0]
+        const offset = Math.abs(val) * 0.1 || 0.1
+        return { min: val - offset, max: val + offset }
+      }
+      
+      // 使用百分位数方法：保留 1%-99% 的数据范围（数据少时使用 5%-95%）
+      const sorted = [...validValues].sort((a, b) => a - b)
+      const useWideRange = sorted.length < 20
+      const lowPercentile = useWideRange ? 0.05 : 0.01
+      const highPercentile = useWideRange ? 0.95 : 0.99
+      
+      const lowIndex = Math.max(0, Math.floor(sorted.length * lowPercentile))
+      const highIndex = Math.min(sorted.length - 1, Math.floor(sorted.length * highPercentile))
+      
+      const min = sorted[lowIndex]
+      const max = sorted[highIndex]
+      
+      // 计算范围
+      let range = max - min
+      
+      // 如果范围太小（方差很小），使用均值的10%作为最小范围
+      if (Math.abs(range) < 1e-10) {
+        const mean = validValues.reduce((a, b) => a + b, 0) / validValues.length
+        range = Math.abs(mean) * 0.1 || 0.1 // 至少10%或0.1
+      }
+      
+      // 添加缓冲空间（10%）
+      const buffer = Math.abs(range) * 0.1
+      
+      return {
+        min: min - buffer,
+        max: max + buffer,
+      }
+    }
+
+    const valueRange = calculateReasonableRange(chartData.map(d => d.value))
+    const ratioRange = calculateReasonableRange(chartData.map(d => d.sequential_ratio))
+
     const chart = new Chart({
       container: chartRef.current,
       autoFit: true,
@@ -321,7 +364,13 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
             lineWidth: 2,
             stroke: '#1f77b4',
           },
-          scale: { y: { nice: true } },
+          scale: { 
+            y: { 
+              nice: true,
+              domainMin: valueRange.min,
+              domainMax: valueRange.max,
+            } 
+          },
           axis: {
             y: {
               title: fieldLabels[field],
@@ -370,7 +419,14 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
             stroke: '#ff7f0e',
             strokeDasharray: [5, 5], // 虚线表示环比
           },
-          scale: { y: { independent: true, nice: true } },
+          scale: { 
+            y: { 
+              independent: true, 
+              nice: true,
+              domainMin: ratioRange.min,
+              domainMax: ratioRange.max,
+            } 
+          },
           axis: {
             y: {
               title: `环比%`,
