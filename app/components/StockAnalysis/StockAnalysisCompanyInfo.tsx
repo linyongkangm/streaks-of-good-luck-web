@@ -233,38 +233,32 @@ export default function StockAnalysisCompanyInfo({ selectedCompany, sinkCompanyI
         </Button>
       }
     >
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="text-sm font-medium text-slate-700">行业列表</div>
-          <Button 
-            size="small" 
+      <div className="mb-1">
+        <div className="flex flex-wrap gap-2">
+          {companyIndustries.map((ci) => (
+            <div
+              key={ci.id}
+              className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm border border-blue-200"
+            >
+              <span>{ci.info__industry.name}</span>
+              <button
+                onClick={() => handleRemoveIndustry(ci.id)}
+                className="text-blue-500 hover:text-blue-700 font-bold"
+                title="删除"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          <Button
+            size="tiny"
             onClick={() => setShowAddIndustryModal(true)}
             disabled={availableIndustries.length === 0}
           >
             添加行业
           </Button>
         </div>
-        {companyIndustries.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {companyIndustries.map((ci) => (
-              <div
-                key={ci.id}
-                className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm border border-blue-200"
-              >
-                <span>{ci.info__industry.name}</span>
-                <button
-                  onClick={() => handleRemoveIndustry(ci.id)}
-                  className="text-blue-500 hover:text-blue-700 font-bold"
-                  title="删除"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-sm text-slate-400">暂无关联行业</div>
-        )}
+
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {summaryItems.map((item) => (
