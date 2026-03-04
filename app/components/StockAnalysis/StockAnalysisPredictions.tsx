@@ -366,7 +366,25 @@ export default function StockAnalysisPredictions({ selectedCompany }: Props) {
     ...(Object.keys(metricLabels) as MetricKey[]).map((key) => ({
       title: metricLabels[key],
       dataIndex: key,
-      render: (value: number | undefined) => formatNumber(value),
+      render: (value: number | undefined, record: PredictRecord) => {
+        if (!value || !latestFinancial) return formatNumber(value)
+        
+        const baseValueMap: Record<MetricKey, number | null> = {
+          parent_netprofit: latestFinancial.parent_netprofit_ttm,
+          total_parent_equity: latestFinancial.total_parent_equity,
+          operate_income: latestFinancial.operate_income_ttm,
+          netcash_operate: latestFinancial.netcash_operate_ttm,
+        }
+        
+        const baseValue = baseValueMap[key]
+        if (!baseValue || baseValue <= 0) return formatNumber(value)
+        
+        const years = calculateYears(latestFinancial.report_date, DateTime.fromISO(record.report_date))
+        if (years <= 0) return formatNumber(value)
+        
+        const growthRate = calculateGrowthRate(baseValue, value, years)
+        return `${formatNumber(value)} / ${growthRate.toFixed(2)}%`
+      },
     })),
     {
       title: '股利支付率',
