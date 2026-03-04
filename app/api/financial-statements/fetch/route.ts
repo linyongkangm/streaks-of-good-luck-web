@@ -64,6 +64,15 @@ export async function POST(req: NextRequest) {
     let balanceSheetCount = 0
     if (Array.isArray(balanceSheetData) && balanceSheetData.length > 0) {
       for (const item of balanceSheetData) {
+        const balanceData = {
+          total_parent_equity: item.TOTAL_PARENT_EQUITY || 0,
+          total_assets: item.TOTAL_ASSETS || 0,
+          total_current_assets: item.TOTAL_CURRENT_ASSETS || 0,
+          total_noncurrent_assets: item.TOTAL_NONCURRENT_ASSETS || 0,
+          total_current_liab: item.TOTAL_CURRENT_LIAB || 0,
+          total_noncurrent_liab: item.TOTAL_NONCURRENT_LIAB || 0,
+          total_liabilities: item.TOTAL_LIABILITIES || 0,
+        }
         await prisma.quote__balance_sheet.upsert({
           where: {
             company_id_report_date: {
@@ -71,15 +80,11 @@ export async function POST(req: NextRequest) {
               report_date: new Date(item.REPORT_DATE)
             }
           },
-          update: {
-            total_parent_equity: item.TOTAL_PARENT_EQUITY || 0,
-            total_assets: item.TOTAL_ASSETS || 0,
-          },
+          update: balanceData,
           create: {
             company_id: company.id,
             report_date: new Date(item.REPORT_DATE),
-            total_parent_equity: item.TOTAL_PARENT_EQUITY || 0,
-            total_assets: item.TOTAL_ASSETS || 0,
+            ...balanceData,
           }
         })
         balanceSheetCount++

@@ -46,9 +46,35 @@ export default function SecuritiesMetadataBalanceSheet({ selectedCompany }: Prop
       title: '归属母公司股东权益',
       dataIndex: 'total_parent_equity',
       format: ColumnFormatType.NUMBER,
-    },{
+    },
+    {
       title: '总资产',
       dataIndex: 'total_assets',
+      format: ColumnFormatType.NUMBER,
+    },
+    {
+      title: '流动资产合计',
+      dataIndex: 'total_current_assets',
+      format: ColumnFormatType.NUMBER,
+    },
+    {
+      title: '非流动资产合计',
+      dataIndex: 'total_noncurrent_assets',
+      format: ColumnFormatType.NUMBER,
+    },
+    {
+      title: '流动负债合计',
+      dataIndex: 'total_current_liab',
+      format: ColumnFormatType.NUMBER,
+    },
+    {
+      title: '非流动负债合计',
+      dataIndex: 'total_noncurrent_liab',
+      format: ColumnFormatType.NUMBER,
+    },
+    {
+      title: '负债合计',
+      dataIndex: 'total_liabilities',
       format: ColumnFormatType.NUMBER,
     }
   ]
