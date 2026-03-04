@@ -1,13 +1,12 @@
 import { 
   info__stock_company, 
   info__tweet,
-  info__stock_board,
+
   info__industry_analysis,
   info__industry,
   info__predict,
   indicator__predict_observation,
-  relation__stock_board_company,
-  relation__board_industry_analysis,
+
   relation__industry_article,
   summary__tweet,
   summary__article,
@@ -29,14 +28,14 @@ import {
 export {
   type info__stock_company,
   type quote__stock_constituent_daily,
-  type relation__stock_board_company,
+
   type info__tweet,
-  type info__stock_board,
+
   type info__industry_analysis,
   type info__industry,
   type info__predict,
   type indicator__predict_observation,
-  type relation__board_industry_analysis,
+
   type relation__industry_article,
   type summary__tweet,
   type summary__article,
@@ -120,19 +119,8 @@ export interface TweetQueryParams {
   limit?: number
 }
 
-// 行业板块相关类型
-export type StockBoardListResponse = ApiResponse<info__stock_board[]>
 
-export interface StockBoardWithRelations extends info__stock_board {
-  relation__stock_board_company: (relation__stock_board_company & {
-    info__stock_company: info__stock_company
-  })[]
-  relation__board_industry_analysis: (relation__board_industry_analysis & {
-    info__industry_analysis: info__industry_analysis
-  })[]
-}
 
-export type StockBoardDetailResponse = ApiResponse<StockBoardWithRelations>
 
 // 推文摘要相关类型
 export type TweetSummaryListResponse = ApiResponse<summary__tweet[]>
