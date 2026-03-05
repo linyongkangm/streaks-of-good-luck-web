@@ -57,6 +57,9 @@ export async function GET(request: NextRequest) {
 
 // POST /api/industry-analysis - 上传PDF并进行分析
 export async function POST(request: NextRequest) {
+  let filePath: string | null = null
+  let fileName: string | null = null
+
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File | null
@@ -81,9 +84,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-
-    let filePath: string | null = null
-    let fileName: string | null = null
 
     // 如果提供了文件，保存至本地
     if (file) {
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
     // 保存分析结果到数据库
     const record = await prisma.info__industry_analysis.create({
       data: {
-        title: title || file?.name || `${industryName || '行业'}景气度分析`,
+        title: title || (file ? file.name.replace(/\.[^.]+$/, '') : undefined) || `${industryName || '行业'}景气度分析`,
         summary,
         publisher: publisher || null,
         author: author || null,
@@ -179,7 +179,14 @@ export async function POST(request: NextRequest) {
     console.error('Failed to create industry analysis:', error)
 
     // 清理已上传的文件（如果分析失败）
-    // 这里可以添加文件清理逻辑
+    if (filePath) {
+      try {
+        await fs.unlink(filePath)
+        console.log(`Cleaned up failed upload: ${filePath}`)
+      } catch (cleanupError) {
+        console.error('Failed to cleanup file:', cleanupError)
+      }
+    }
 
     return NextResponse.json(
       { error: `创建分析失败: ${error instanceof Error ? error.message : '未知错误'}` },
