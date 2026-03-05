@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import type { IndustryAnalysisWithIndustry } from '@/types'
+import type { IndustryAnalysisWithIndustry, IndustryWithArticles } from '@/types'
 import Panel from '@/app/widget/Panel'
 import Table from '@/app/widget/Table'
 import Button from '@/app/widget/Button'
@@ -10,10 +10,11 @@ import IndustryAnalysisEditModal from './IndustryAnalysisEditModal'
 import { DateTime } from 'luxon'
 
 interface IndustryAnalysisProsperityProps {
-  industryId: number | null
+  industryDetail: IndustryWithArticles | null
 }
 
-export default function IndustryAnalysisProsperity({ industryId }: IndustryAnalysisProsperityProps) {
+export default function IndustryAnalysisProsperity({ industryDetail }: IndustryAnalysisProsperityProps) {
+  const industryId = industryDetail?.id
   const [analyses, setAnalyses] = useState<IndustryAnalysisWithIndustry[]>([])
   const [loading, setLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
@@ -245,6 +246,7 @@ export default function IndustryAnalysisProsperity({ industryId }: IndustryAnaly
           </Button>
         }
       >
+        
         {!industryId ? (
           <div className="text-center py-8 text-slate-500">
             请先选择一个行业
@@ -262,6 +264,7 @@ export default function IndustryAnalysisProsperity({ industryId }: IndustryAnaly
             <Table columns={columns} dataSource={analyses} />
           </div>
         )}
+        <p className="text-slate-500">从需求、价格、供给、盈利、政策5个方面分析{industryDetail?.name}行业的行业景气度</p>
       </Panel>
 
       <IndustryAnalysisProsperityModal

@@ -77,7 +77,7 @@ export default function IndustryAnalysis() {
                 />
 
                 {/* 行业景气度分析 */}
-                <IndustryAnalysisProsperity industryId={selectedIndustryId} />
+                <IndustryAnalysisProsperity industryDetail={industryDetail} />
 
                 {/* 行业里程碑时间轴 */}
                 <IndustryAnalysisTimeLine industryId={selectedIndustryId} />
