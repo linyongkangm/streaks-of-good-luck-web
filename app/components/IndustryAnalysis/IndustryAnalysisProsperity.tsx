@@ -16,19 +16,46 @@ export default function IndustryAnalysisProsperity({ industryId }: IndustryAnaly
   const [analyses, setAnalyses] = useState<IndustryAnalysisWithIndustry[]>([])
   const [loading, setLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
-  const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set())
+
+  // 文本折叠渲染函数
+  const renderCollapsibleText = (text: string | null | undefined, isExpanded: boolean) => {
+    if (!text) return '暂无数据'
+
+    const lines = text.split('\n')
+    const isLongText = lines.length > 2 || text.length > 100
+
+    if (!isExpanded && isLongText) {
+      // 收起状态：显示前两行或前100个字符
+      const collapsedText = lines.slice(0, 2).join('\n').slice(0, 100)
+      return (
+        <div className="text-sm text-slate-700 line-clamp-2">{collapsedText}</div>
+      )
+    }
+
+    // 展开状态：显示全部
+    return (
+      <div className="text-sm text-slate-700 whitespace-pre-wrap">{text}</div>
+    )
+  }
 
   const fetchAnalyses = useCallback(async () => {
     if (!industryId) return
-    
+
     setLoading(true)
     try {
       const params = new URLSearchParams()
       params.append('industryId', industryId.toString())
-      
+
       const response = await fetch(`/api/industry-analysis?${params}`)
       const data = await response.json()
       setAnalyses(data.data || [])
+
+      // 默认展开最新的一条报告
+      if (data.data && data.data.length > 0) {
+        const latestId = data.data[0].id
+        setExpandedIds(new Set([latestId]))
+      }
     } catch (error) {
       console.error('Failed to fetch analyses:', error)
     } finally {
@@ -68,43 +95,67 @@ export default function IndustryAnalysisProsperity({ industryId }: IndustryAnaly
     {
       title: '报告日期',
       dataIndex: 'report_time',
-      key: 'report_time',
-      render: (value: any) => 
+      render: (value: any) =>
         value ? DateTime.fromJSDate(new Date(value)).toFormat('yyyy-MM-dd') : '-',
-      width: '15%',
     },
     {
       title: '标题',
       dataIndex: 'title',
-      key: 'title',
-      width: '25%',
+      render: (value: any, row: IndustryAnalysisWithIndustry) => <>{row.publisher}<br />{value}</>
     },
     {
-      title: '发布方',
-      dataIndex: 'publisher',
-      key: 'publisher',
-      render: (value: any) => value || '-',
+      title: '需求信号',
+      dataIndex: 'signal_demand',
+      render: (value: any, row: IndustryAnalysisWithIndustry) =>
+        renderCollapsibleText(value, expandedIds.has(row.id)),
       width: '15%',
     },
     {
-      title: '创建时间',
-      dataIndex: 'create_time',
-      key: 'create_time',
-      render: (value: any) =>
-        DateTime.fromJSDate(new Date(value)).toFormat('yyyy-MM-dd HH:mm'),
+      title: '价格信号',
+      dataIndex: 'signal_price',
+      render: (value: any, row: IndustryAnalysisWithIndustry) =>
+        renderCollapsibleText(value, expandedIds.has(row.id)),
+      width: '15%',
+    },
+    {
+      title: '供给信号',
+      dataIndex: 'signal_supply',
+      render: (value: any, row: IndustryAnalysisWithIndustry) =>
+        renderCollapsibleText(value, expandedIds.has(row.id)),
+      width: '15%',
+    },
+    {
+      title: '盈利信号',
+      dataIndex: 'signal_profitability',
+      render: (value: any, row: IndustryAnalysisWithIndustry) =>
+        renderCollapsibleText(value, expandedIds.has(row.id)),
+      width: '15%',
+    },
+    {
+      title: '综合总结',
+      dataIndex: 'summary',
+      render: (value: any, row: IndustryAnalysisWithIndustry) =>
+        renderCollapsibleText(value, expandedIds.has(row.id)),
       width: '15%',
     },
     {
       title: '操作',
       dataIndex: 'action',
-      key: 'action',
       render: (_: any, row: IndustryAnalysisWithIndustry) => (
         <div className="flex gap-2">
           <button
-            onClick={() => setExpandedId(expandedId === row.id ? null : row.id)}
+            onClick={() => {
+              if (expandedIds.has(row.id)) {
+                const newSet = new Set(expandedIds)
+                newSet.delete(row.id)
+                setExpandedIds(newSet)
+              } else {
+                setExpandedIds(new Set([...expandedIds, row.id]))
+              }
+            }}
             className="text-blue-600 hover:text-blue-800 text-sm"
           >
-            {expandedId === row.id ? '收起' : '展开'}
+            {expandedIds.has(row.id) ? '收起' : '展开'}
           </button>
           <button
             onClick={() => handleDelete(row.id)}
@@ -114,7 +165,7 @@ export default function IndustryAnalysisProsperity({ industryId }: IndustryAnaly
           </button>
         </div>
       ),
-      width: '15%',
+      width: 100,
     },
   ]
 
@@ -123,7 +174,7 @@ export default function IndustryAnalysisProsperity({ industryId }: IndustryAnaly
       <Panel
         title="行业景气度分析"
         headerAction={
-          <Button onClick={() => setShowModal(true)} disabled={!industryId}>
+          <Button size='small' onClick={() => setShowModal(true)} disabled={!industryId}>
             上传新报告
           </Button>
         }
@@ -143,62 +194,6 @@ export default function IndustryAnalysisProsperity({ industryId }: IndustryAnaly
         ) : (
           <div className="space-y-0">
             <Table columns={columns} dataSource={analyses} />
-            
-            {/* 展开详情行 */}
-            {expandedId && (
-              <div className="border-t">
-                {analyses
-                  .filter(a => a.id === expandedId)
-                  .map(analysis => (
-                    <div key={analysis.id} className="p-4 bg-slate-50">
-                      <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <h4 className="font-semibold text-sm mb-2">需求信号</h4>
-                          <p className="text-sm text-slate-700 whitespace-pre-wrap">
-                            {analysis.signal_demand || '暂无数据'}
-                          </p>
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-sm mb-2">价格信号</h4>
-                          <p className="text-sm text-slate-700 whitespace-pre-wrap">
-                            {analysis.signal_price || '暂无数据'}
-                          </p>
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-sm mb-2">供给信号</h4>
-                          <p className="text-sm text-slate-700 whitespace-pre-wrap">
-                            {analysis.signal_supply || '暂无数据'}
-                          </p>
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-sm mb-2">盈利信号</h4>
-                          <p className="text-sm text-slate-700 whitespace-pre-wrap">
-                            {analysis.signal_profitability || '暂无数据'}
-                          </p>
-                        </div>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-sm mb-2">综合总结</h4>
-                        <p className="text-sm text-slate-700 whitespace-pre-wrap">
-                          {analysis.summary || '暂无数据'}
-                        </p>
-                      </div>
-                      {analysis.original_url && (
-                        <div className="mt-3 pt-3 border-t text-xs">
-                          <a 
-                            href={analysis.original_url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800"
-                          >
-                            查看源文件 →
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-              </div>
-            )}
           </div>
         )}
       </Panel>

@@ -49,3 +49,4 @@ prisma/migrations
 *__pycache__/
 temp/
 .date.config.json
+public/uploads/industry-reports

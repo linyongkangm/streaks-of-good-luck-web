@@ -11,7 +11,7 @@ export interface Column<T> {
   dataIndex: keyof T | string
   key?: string
   align?: 'left' | 'right' | 'center'
-  width?: string
+  width?: string | number
   sticky?: boolean
   render?: (value: any, record: T, index: number) => React.ReactNode
   format?: ((value: any) => any) | ColumnFormatType

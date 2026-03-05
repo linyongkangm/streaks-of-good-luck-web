@@ -53,17 +53,20 @@ export default function IndustryAnalysis() {
   }, [selectedIndustryId, fetchIndustryDetail, refreshIndustryList])
 
   return (
-    <div className="p-6 max-w-[1600px] mx-auto">
-      <div className="flex gap-6" style={{ minHeight: 'calc(100vh - 120px)' }}>
+    <div className="p-6 max-w-[2000px] mx-auto">
+      <div className="grid grid-cols-12 gap-4" style={{ minHeight: 'calc(100vh - 120px)' }}>
         {/* 左侧 - 行业列表 */}
-        <IndustryAnalysisIndustryList
-          refreshKey={industryListRefreshKey}
-          selectedIndustryId={selectedIndustryId}
-          onSelectIndustry={setSelectedIndustryId}
-        />
+        <div className="col-span-2">
+          <IndustryAnalysisIndustryList
+
+            refreshKey={industryListRefreshKey}
+            selectedIndustryId={selectedIndustryId}
+            onSelectIndustry={setSelectedIndustryId}
+          />
+        </div>
 
         {/* 右侧 - 行业资讯 */}
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 col-span-10">
           <Placeholder selected={!!selectedIndustryId} loading={loadingDetail} icon="👈" message="请从左侧选择一个行业">
             {industryDetail && selectedIndustryId && (
               <div className="space-y-4">
@@ -72,13 +75,13 @@ export default function IndustryAnalysis() {
                   industryDetail={industryDetail}
                   onOpenLinkArticle={() => setShowLinkArticle(true)}
                 />
-                
+
                 {/* 行业景气度分析 */}
                 <IndustryAnalysisProsperity industryId={selectedIndustryId} />
-                
+
                 {/* 行业里程碑时间轴 */}
                 <IndustryAnalysisTimeLine industryId={selectedIndustryId} />
-                
+
                 {/* 文章按年份分组 */}
                 <IndustryAnalysisRelateArticles
                   industryDetail={industryDetail}
