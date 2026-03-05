@@ -18,9 +18,40 @@ export default function IndustryAnalysisProsperity({ industryId }: IndustryAnaly
   const [showModal, setShowModal] = useState(false)
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set())
 
+  // 景气度徽章渲染函数
+  const renderTrendBadge = (trend: string | null | undefined) => {
+    const trendValue = trend || '未获取'
+    
+    let badgeClass = ''
+    switch (trendValue) {
+      case '景气上行':
+        badgeClass = 'bg-green-100 text-green-800 border-green-200'
+        break
+      case '景气企稳':
+        badgeClass = 'bg-yellow-100 text-yellow-800 border-yellow-200'
+        break
+      case '景气下行':
+        badgeClass = 'bg-red-100 text-red-800 border-red-200'
+        break
+      default:
+        badgeClass = 'bg-gray-100 text-gray-600 border-gray-200'
+    }
+
+    return (
+      <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded border ${badgeClass} mb-2`}>
+        {trendValue}
+      </span>
+    )
+  }
+
   // 文本折叠渲染函数
-  const renderCollapsibleText = (text: string | null | undefined, isExpanded: boolean) => {
-    if (!text) return '暂无数据'
+  const renderCollapsibleText = (text: string | null | undefined, isExpanded: boolean, trend?: string | null) => {
+    if (!text) return (
+      <div>
+        {trend && renderTrendBadge(trend)}
+        <div className="text-sm text-slate-500">暂无数据</div>
+      </div>
+    )
 
     const lines = text.split('\n')
     const isLongText = lines.length > 2 || text.length > 100
@@ -29,13 +60,19 @@ export default function IndustryAnalysisProsperity({ industryId }: IndustryAnaly
       // 收起状态：显示前两行或前100个字符
       const collapsedText = lines.slice(0, 2).join('\n').slice(0, 100)
       return (
-        <div className="text-sm text-slate-700 line-clamp-2">{collapsedText}</div>
+        <div>
+          {trend && renderTrendBadge(trend)}
+          <div className="text-sm text-slate-700 line-clamp-2">{collapsedText}</div>
+        </div>
       )
     }
 
     // 展开状态：显示全部
     return (
-      <div className="text-sm text-slate-700 whitespace-pre-wrap">{text}</div>
+      <div>
+        {trend && renderTrendBadge(trend)}
+        <div className="text-sm text-slate-700 whitespace-pre-wrap">{text}</div>
+      </div>
     )
   }
 
@@ -107,35 +144,35 @@ export default function IndustryAnalysisProsperity({ industryId }: IndustryAnaly
       title: '需求信号',
       dataIndex: 'signal_demand',
       render: (value: any, row: IndustryAnalysisWithIndustry) =>
-        renderCollapsibleText(value, expandedIds.has(row.id)),
+        renderCollapsibleText(value, expandedIds.has(row.id), row.trend_demand),
       width: '15%',
     },
     {
       title: '价格信号',
       dataIndex: 'signal_price',
       render: (value: any, row: IndustryAnalysisWithIndustry) =>
-        renderCollapsibleText(value, expandedIds.has(row.id)),
+        renderCollapsibleText(value, expandedIds.has(row.id), row.trend_price),
       width: '15%',
     },
     {
       title: '供给信号',
       dataIndex: 'signal_supply',
       render: (value: any, row: IndustryAnalysisWithIndustry) =>
-        renderCollapsibleText(value, expandedIds.has(row.id)),
+        renderCollapsibleText(value, expandedIds.has(row.id), row.trend_supply),
       width: '15%',
     },
     {
       title: '盈利信号',
       dataIndex: 'signal_profitability',
       render: (value: any, row: IndustryAnalysisWithIndustry) =>
-        renderCollapsibleText(value, expandedIds.has(row.id)),
+        renderCollapsibleText(value, expandedIds.has(row.id), row.trend_profitability),
       width: '15%',
     },
     {
       title: '综合总结',
       dataIndex: 'summary',
       render: (value: any, row: IndustryAnalysisWithIndustry) =>
-        renderCollapsibleText(value, expandedIds.has(row.id)),
+        renderCollapsibleText(value, expandedIds.has(row.id), row.trend_summary),
       width: '15%',
     },
     {

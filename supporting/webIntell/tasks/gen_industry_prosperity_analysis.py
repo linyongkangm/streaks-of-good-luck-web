@@ -114,3 +114,77 @@ async def gen_industry_prosperity_analysis(file_path: str, industry_name: str = 
     except Exception as e:
         logger.error(f"行业景气度分析失败: {e}")
         raise
+
+
+# 景气度趋势分析提示词模板
+PROSPERITY_TREND_ANALYSIS_PROMPT_TEMPLATE = """
+你是资深的行业分析师。请根据以下{signal_type}的内容，判断该信号反映的景气度状态。
+
+{signal_type}内容：
+{signal_content}
+
+请仅从以下三个选项中选择一个返回，不要有任何其他说明或解释：
+1. 景气上行
+2. 景气企稳
+3. 景气下行
+
+请返回你的判断：
+"""
+
+
+async def analyze_prosperity_trend(signal_content: str, signal_type: str):
+    """
+    分析单个信号的景气度趋势。
+    Args:
+        signal_content (str): 信号内容文本
+        signal_type (str): 信号类型（如"需求信号"、"价格信号"等）
+    Returns:
+        str: "景气上行"、"景气企稳"、"景气下行" 或 "未获取"（出错时）
+    """
+    logger = utils.locator.get_project_logger()
+
+    try:
+        if not signal_content or not signal_content.strip():
+            logger.warning(f"{signal_type}内容为空，返回默认值")
+            return "未获取"
+
+        # 调用LLM进行分析
+        llmClient = utils.locator.get_agents()
+        messages = [
+            {
+                "role": "user",
+                "content": PROSPERITY_TREND_ANALYSIS_PROMPT_TEMPLATE.format(
+                    signal_type=signal_type,
+                    signal_content=signal_content
+                ),
+            }
+        ]
+
+        logger.info(f"正在分析{signal_type}的景气度趋势...")
+        responseText = await asyncio.to_thread(llmClient.think, cast(List, messages))
+
+        if responseText:
+            # 清理响应文本
+            trend = responseText.strip()
+            
+            # 验证响应是否在有效值范围内
+            valid_trends = ["景气上行", "景气企稳", "景气下行"]
+            if trend in valid_trends:
+                logger.info(f"{signal_type}趋势分析结果: {trend}")
+                return trend
+            else:
+                # 尝试从响应中提取关键词
+                for valid_trend in valid_trends:
+                    if valid_trend in trend:
+                        logger.info(f"{signal_type}趋势分析结果（从响应中提取）: {valid_trend}")
+                        return valid_trend
+                
+                logger.warning(f"{signal_type}趋势分析返回了无效值: {trend}，使用默认值")
+                return "未获取"
+        else:
+            logger.warning(f"{signal_type}趋势分析未返回结果")
+            return "未获取"
+
+    except Exception as e:
+        logger.error(f"{signal_type}趋势分析失败: {e}")
+        return "未获取"

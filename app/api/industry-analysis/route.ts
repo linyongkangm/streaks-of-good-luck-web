@@ -6,6 +6,35 @@ import path from 'path'
 const PYTHON_API_URL = process.env.PYTHON_API_URL || 'http://127.0.0.1:8001'
 const UPLOAD_DIR = path.join(process.cwd(), 'public/uploads/industry-reports')
 
+// 辅助函数：调用Python API分析景气度趋势
+async function analyzeProsperityTrend(signalContent: string, signalType: string): Promise<string> {
+  try {
+    if (!signalContent || !signalContent.trim()) {
+      return '未获取'
+    }
+
+    const response = await fetch(`${PYTHON_API_URL}/analyze-prosperity-trend`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        signal_content: signalContent,
+        signal_type: signalType,
+      }),
+    })
+
+    if (!response.ok) {
+      console.error(`景气度趋势分析失败 (${signalType}): ${response.status}`)
+      return '未获取'
+    }
+
+    const result = await response.json()
+    return result.trend || '未获取'
+  } catch (error) {
+    console.error(`景气度趋势分析异常 (${signalType}):`, error)
+    return '未获取'
+  }
+}
+
 // GET /api/industry-analysis - 获取行业景气度分析列表
 export async function GET(request: NextRequest) {
   try {
@@ -152,6 +181,21 @@ export async function POST(request: NextRequest) {
     const analysis = analysisResult.analysis
     const summary = analysis.summary || ''
 
+    // 分析景气度趋势（并行调用以提高效率）
+    console.log('开始分析景气度趋势...')
+    const trendAnalysisPromises = [
+      analyzeProsperityTrend(analysis.demand || '', '需求信号'),
+      analyzeProsperityTrend(analysis.price || '', '价格信号'),
+      analyzeProsperityTrend(analysis.supply || '', '供给信号'),
+      analyzeProsperityTrend(analysis.profitability || '', '盈利信号'),
+      analyzeProsperityTrend(summary, '综合总结'),
+    ]
+
+    const [trendDemand, trendPrice, trendSupply, trendProfitability, trendSummary] = 
+      await Promise.all(trendAnalysisPromises)
+
+    console.log(`景气度趋势分析完成: 需求=${trendDemand}, 价格=${trendPrice}, 供给=${trendSupply}, 盈利=${trendProfitability}, 综合=${trendSummary}`)
+
     // 保存分析结果到数据库
     const record = await prisma.info__industry_analysis.create({
       data: {
@@ -167,6 +211,11 @@ export async function POST(request: NextRequest) {
         signal_price: analysis.price || null,
         signal_supply: analysis.supply || null,
         signal_profitability: analysis.profitability || null,
+        trend_demand: trendDemand,
+        trend_price: trendPrice,
+        trend_supply: trendSupply,
+        trend_profitability: trendProfitability,
+        trend_summary: trendSummary,
         ai_model_version: 'gpt-4',
       },
       include: {

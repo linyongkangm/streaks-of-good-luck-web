@@ -68,6 +68,13 @@ class IndustryProsperityAnalysisRequest(BaseModel):
     industry_name: str | None = None  # 行业名称（可选）
 
 
+class ProsperityTrendAnalysisRequest(BaseModel):
+    """景气度趋势分析请求模型"""
+
+    signal_content: str  # 信号内容
+    signal_type: str  # 信号类型（如"需求信号"、"价格信号"等）
+
+
 # ==================== 数据库操作 ====================
 
 # 数据库操作由 Next.js 负责，Python API 不进行数据库操作
@@ -211,6 +218,44 @@ async def api_analyze_industry_prosperity(request: IndustryProsperityAnalysisReq
         logger.error(f"✗ 行业景气度分析失败: {e}")
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# /analyze-prosperity-trend 路由
+@app.post("/analyze-prosperity-trend")
+async def api_analyze_prosperity_trend(request: ProsperityTrendAnalysisRequest):
+    """API 接口：分析景气度趋势
+    
+    请求体:
+    {
+        "signal_content": "信号内容文本",
+        "signal_type": "信号类型（如需求信号、价格信号等）"
+    }
+    返回:
+    {
+        "success": true/false,
+        "trend": "景气上行" | "景气企稳" | "景气下行" | "未获取"
+    }
+    """
+    logger = utils.locator.get_project_logger()
+    try:
+        if not request.signal_content:
+            logger.warning("信号内容为空")
+            return {"success": True, "trend": "未获取"}
+        
+        logger.info(f"开始分析{request.signal_type}的景气度趋势")
+        trend = await tasks.analyze_prosperity_trend(
+            request.signal_content,
+            request.signal_type
+        )
+        logger.info(f"✓ {request.signal_type}景气度趋势分析完成: {trend}")
+        return {"success": True, "trend": trend}
+    except Exception as e:
+        import traceback
+
+        logger.error(f"✗ 景气度趋势分析失败: {e}")
+        logger.error(traceback.format_exc())
+        # 不抛出异常，返回默认值
+        return {"success": True, "trend": "未获取"}
 
 
 # /analyze-tweet 路由

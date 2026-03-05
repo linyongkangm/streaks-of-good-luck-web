@@ -25,6 +25,11 @@ model info__industry_analysis {
   signal_price                      String?                             @db.Text
   signal_supply                     String?                             @db.Text
   signal_profitability              String?                             @db.Text
+  trend_demand                      String?                             @default("未获取") @db.VarChar(20)
+  trend_price                       String?                             @default("未获取") @db.VarChar(20)
+  trend_supply                      String?                             @default("未获取") @db.VarChar(20)
+  trend_profitability               String?                             @default("未获取") @db.VarChar(20)
+  trend_summary                     String?                             @default("未获取") @db.VarChar(20)
   info__industry                    info__industry?                     @relation(fields: [industry_id], references: [id], onDelete: Cascade, map: "fk_industry_analysis_industry_id")
 
   @@index([create_time], map: "idx_create_time")
