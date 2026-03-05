@@ -35,6 +35,61 @@ export async function GET(
   }
 }
 
+// PATCH /api/industry-analysis/[id] - 更新行业景气度分析
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const id = parseInt((await params).id)
+    const body = await request.json()
+
+    // 验证记录是否存在
+    const existing = await prisma.info__industry_analysis.findUnique({
+      where: { id },
+    })
+
+    if (!existing) {
+      return NextResponse.json(
+        { error: '记录不存在' },
+        { status: 404 }
+      )
+    }
+
+    // 更新记录
+    const updated = await prisma.info__industry_analysis.update({
+      where: { id },
+      data: {
+        title: body.title,
+        publisher: body.publisher,
+        author: body.author,
+        report_time: body.report_time ? new Date(body.report_time) : undefined,
+        signal_demand: body.signal_demand,
+        signal_price: body.signal_price,
+        signal_supply: body.signal_supply,
+        signal_profitability: body.signal_profitability,
+        summary: body.summary,
+        trend_demand: body.trend_demand,
+        trend_price: body.trend_price,
+        trend_supply: body.trend_supply,
+        trend_profitability: body.trend_profitability,
+        trend_summary: body.trend_summary,
+      },
+      include: {
+        info__industry: true,
+      },
+    })
+
+    return NextResponse.json({ data: updated })
+  } catch (error) {
+    console.error('Failed to update industry analysis:', error)
+    return NextResponse.json(
+      { error: `更新失败: ${error instanceof Error ? error.message : '未知错误'}` },
+      { status: 500 }
+    )
+  }
+}
+
 // DELETE /api/industry-analysis/[id] - 删除分析记录及其关联文件
 export async function DELETE(
   request: NextRequest,

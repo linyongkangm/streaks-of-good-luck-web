@@ -6,6 +6,7 @@ import Panel from '@/app/widget/Panel'
 import Table from '@/app/widget/Table'
 import Button from '@/app/widget/Button'
 import IndustryAnalysisProsperityModal from './IndustryAnalysisProsperityModal'
+import IndustryAnalysisEditModal from './IndustryAnalysisEditModal'
 import { DateTime } from 'luxon'
 
 interface IndustryAnalysisProsperityProps {
@@ -16,6 +17,8 @@ export default function IndustryAnalysisProsperity({ industryId }: IndustryAnaly
   const [analyses, setAnalyses] = useState<IndustryAnalysisWithIndustry[]>([])
   const [loading, setLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingAnalysis, setEditingAnalysis] = useState<IndustryAnalysisWithIndustry | null>(null)
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set())
 
   // 景气度徽章渲染函数
@@ -128,6 +131,20 @@ export default function IndustryAnalysisProsperity({ industryId }: IndustryAnaly
     }
   }
 
+  const handleEdit = (analysis: IndustryAnalysisWithIndustry) => {
+    setEditingAnalysis(analysis)
+    setShowEditModal(true)
+  }
+
+  const handleView = (analysis: IndustryAnalysisWithIndustry) => {
+    const fileUrl = analysis.original_file || analysis.original_url
+    if (fileUrl) {
+      window.open(fileUrl, '_blank')
+    } else {
+      alert('没有可查看的原文件')
+    }
+  }
+
   const columns = [
     {
       title: '报告日期',
@@ -179,7 +196,19 @@ export default function IndustryAnalysisProsperity({ industryId }: IndustryAnaly
       title: '操作',
       dataIndex: 'action',
       render: (_: any, row: IndustryAnalysisWithIndustry) => (
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-1">
+          <button
+            onClick={() => handleEdit(row)}
+            className="text-blue-600 hover:text-blue-800 text-sm"
+          >
+            编辑
+          </button>
+          <button
+            onClick={() => handleView(row)}
+            className="text-green-600 hover:text-green-800 text-sm"
+          >
+            查看
+          </button>
           <button
             onClick={() => {
               if (expandedIds.has(row.id)) {
@@ -202,7 +231,7 @@ export default function IndustryAnalysisProsperity({ industryId }: IndustryAnaly
           </button>
         </div>
       ),
-      width: 100,
+      width: 120,
     },
   ]
 
@@ -240,6 +269,16 @@ export default function IndustryAnalysisProsperity({ industryId }: IndustryAnaly
         onClose={() => setShowModal(false)}
         onSuccess={fetchAnalyses}
         industryId={industryId || undefined}
+      />
+
+      <IndustryAnalysisEditModal
+        open={showEditModal}
+        onClose={() => {
+          setShowEditModal(false)
+          setEditingAnalysis(null)
+        }}
+        onSuccess={fetchAnalyses}
+        analysis={editingAnalysis}
       />
     </>
   )
