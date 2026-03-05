@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
     // 保存分析结果到数据库
     const record = await prisma.info__industry_analysis.create({
       data: {
-        title: title || `${industryName || '行业'}景气度分析`,
+        title: title || file?.name || `${industryName || '行业'}景气度分析`,
         summary,
         publisher: publisher || null,
         author: author || null,
