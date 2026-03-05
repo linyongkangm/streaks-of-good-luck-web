@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import type {
+  info__industry,
   info__stock_company,
 } from '@/types'
+import Select from '@/app/widget/Select';
 
 interface StockValuationSummary {
   company_id: number;
@@ -13,6 +15,11 @@ interface StockValuationSummary {
   pe_percentile_3y: number | null;
   pb: number | null;
   pb_percentile_3y: number | null;
+}
+
+interface IndustryInfo {
+  id: number;
+  name: string;
 }
 
 interface Props {
@@ -25,6 +32,9 @@ interface Props {
 /* 个股列表 */
 export default function StockAnalysisStockList({ companies, selectedCompany, sinkCompanyIds, onSelectCompany }: Props) {
   const [valuationMap, setValuationMap] = useState<Record<number, StockValuationSummary>>({})
+  const [selectedIndustry, setSelectedIndustry] = useState<number | 'all'>('all')
+  const [industryOptions, setIndustryOptions] = useState<{ value: number | 'all'; label: string }[]>([])
+  const [companyIndustries, setCompanyIndustries] = useState<Record<number, number[]>>({})
 
   useEffect(() => {
     if (companies.length === 0) {
@@ -71,6 +81,67 @@ export default function StockAnalysisStockList({ companies, selectedCompany, sin
     }
   }, [companies])
 
+  // 获取公司关联的行业和行业信息
+  useEffect(() => {
+    if (companies.length === 0) {
+      setIndustryOptions([])
+      setCompanyIndustries({})
+      return
+    }
+
+    let isMounted = true
+
+    const fetchIndustries = async () => {
+      try {
+        // 获取所有行业信息
+        const industriesRes = await fetch('/api/industries')
+        if (!industriesRes.ok) return
+
+        const industriesResult = await industriesRes.json()
+        const allIndustries: info__industry[] = industriesResult?.data || []
+
+        // 获取每个公司的关联行业
+        const companyIndustriesMap: Record<number, number[]> = {}
+        for (const company of companies) {
+          const res = await fetch(`/api/company-industries?company_id=${company.id}`)
+          if (res.ok) {
+            const result = await res.json()
+            const industries = result?.data || []
+            companyIndustriesMap[company.id] = industries.map((ind: any) => ind.industry_id)
+          }
+        }
+
+        if (!isMounted) return
+
+        // 过滤出没有作为子行业的行业（参考IndustryAnalysisIndustryList的逻辑）
+        // 即：sub_industry_calibrations === 0 的行业
+        const topLevelIndustries = allIndustries.filter((ind: any) => 
+          !ind._count || ind._count.sub_industry_calibrations === 0
+        )
+
+        // 构建行业选项列表
+        const options: { value: number | 'all'; label: string }[] = [
+          { value: 'all', label: '全部' },
+          ...topLevelIndustries.map((ind: info__industry) => ({
+            value: ind.id,
+            label: ind.name,
+          })),
+        ]
+
+        setIndustryOptions(options)
+        setCompanyIndustries(companyIndustriesMap)
+      } catch (error) {
+        console.error('Failed to fetch industries:', error)
+      }
+    }
+
+    fetchIndustries()
+
+    return () => {
+      isMounted = false
+    }
+  }, [companies])
+
   const formatter = useMemo(() => {
     return {
       price: (value: number | null | undefined) => {
@@ -95,7 +166,18 @@ export default function StockAnalysisStockList({ companies, selectedCompany, sin
   }, [])
 
   const sortedCompanies = useMemo(() => {
-    return [...companies].sort((a, b) => {
+    let filtered = [...companies]
+
+    // 根据选中的行业筛选
+    if (selectedIndustry !== 'all') {
+      filtered = filtered.filter((company) => {
+        const industries = companyIndustries[company.id] || []
+        return industries.includes(Number(selectedIndustry))
+      })
+    }
+
+    // 排序
+    return filtered.sort((a, b) => {
       const aSink = sinkCompanyIds.includes(a.id)
       const bSink = sinkCompanyIds.includes(b.id)
 
@@ -114,7 +196,7 @@ export default function StockAnalysisStockList({ companies, selectedCompany, sin
 
       return aValue - bValue
     })
-  }, [companies, sinkCompanyIds, valuationMap])
+  }, [companies, sinkCompanyIds, valuationMap, selectedIndustry, companyIndustries])
 
   return <div className="bg-white rounded-xl shadow-lg p-4 sticky">
     <div className="flex items-center justify-between mb-3">
@@ -122,7 +204,17 @@ export default function StockAnalysisStockList({ companies, selectedCompany, sin
         个股列表
       </h2>
     </div>
-    <div className="space-y-1.5 max-h-[calc(100vh-230px)] overflow-y-auto scrollbar-thin pr-1">
+    {
+      industryOptions && <div className="mb-3">
+        <Select
+          options={industryOptions}
+          value={selectedIndustry}
+          onChange={setSelectedIndustry}
+        />
+      </div>
+    }
+
+    <div className="space-y-1.5 max-h-[calc(100vh-280px)] overflow-y-auto scrollbar-thin pr-1">
       {sortedCompanies.map((company) => {
         const summary = valuationMap[company.id]
         const isSelected = selectedCompany?.id === company.id
