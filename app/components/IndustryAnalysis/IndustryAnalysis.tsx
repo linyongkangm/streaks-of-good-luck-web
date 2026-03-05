@@ -72,9 +72,13 @@ export default function IndustryAnalysis() {
                   onOpenLinkArticle={() => setShowLinkArticle(true)}
                 />
                 
-                {/* 核心统计和统计口径 */}
-                <IndustryAnalysisCoreStats industryId={selectedIndustryId} />
-                
+                {/**
+                 * 行业景气度分析 
+                 * - 需求 订单增长率、营收增速、销量同比、渗透率
+                 * - 价格 毛利率、净利率、成本结构
+                 * - 供给 产能利用率、库存周转率
+                 * - 盈利 净利润、毛利润、ROE
+                 */}
                 {/* 行业里程碑时间轴 */}
                 <IndustryAnalysisTimeLine industryId={selectedIndustryId} />
                 

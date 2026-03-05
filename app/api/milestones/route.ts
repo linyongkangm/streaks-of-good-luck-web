@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { title, description, milestone_date, industry_ids = [], company_ids = [], keyword: clientKeyword, article_id } = body
+    const { title, description, milestone_date, industry_ids = [], company_ids = [], keyword: clientKeyword, article_id, impact: clientImpact } = body
 
     if (!title || !milestone_date) {
       return NextResponse.json(
@@ -118,8 +118,14 @@ export async function POST(request: NextRequest) {
         where: { id: industryId },
       })
       if (industry) {
-        const impactContext = `行业: ${industry.name}`
-        const impact = await extractMilestoneImpact(title, description, impactContext)
+        // 如果客户端提供了 impact，就用客户端的；否则调用 LLM 生成
+        let impact: string
+        if (clientImpact) {
+          impact = clientImpact
+        } else {
+          const impactContext = `行业: ${industry.name}`
+          impact = await extractMilestoneImpact(title, description, impactContext)
+        }
         relationDataPromises.push(
           prisma.relation__industry_or_company_milestone.create({
             data: {
@@ -138,8 +144,14 @@ export async function POST(request: NextRequest) {
         where: { id: companyId },
       })
       if (company) {
-        const impactContext = `公司: ${company.company_name}`
-        const impact = await extractMilestoneImpact(title, description, impactContext)
+        // 如果客户端提供了 impact，就用客户端的；否则调用 LLM 生成
+        let impact: string
+        if (clientImpact) {
+          impact = clientImpact
+        } else {
+          const impactContext = `公司: ${company.company_name}`
+          impact = await extractMilestoneImpact(title, description, impactContext)
+        }
         relationDataPromises.push(
           prisma.relation__industry_or_company_milestone.create({
             data: {
