@@ -29,7 +29,7 @@ interface Props {
 
 type AdjustType = 'none' | 'qfq' | 'hfq'
 type ValuationMetric = 'pe' | 'pb' | 'ps' | 'pc'
-type TimeRange = '1' | '3' | '5' | '10'
+type TimeRange = '1' | '3' | '5' | '10' | 'all'
 
 const adjustTypeLabels = {
   none: '不复权',
@@ -49,6 +49,7 @@ const timeRangeLabels = {
   '3': '三年',
   '5': '五年',
   '10': '十年',
+  'all': '全部',
 }
 
 const Quantiles = [10, 30, 50, 70, 90];
@@ -72,12 +73,23 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
   const [milestones, setMilestones] = useState<info__milestone[]>([])
 
   useEffect(() => {
-    const years = parseInt(timeRange)
-    setDateRange({
-      start_date: DateTime.now().minus({ years }),
-      end_date: DateTime.now(),
-    })
-  }, [timeRange])
+    if (timeRange === 'all') {
+      // 使用企业上市日期作为起始日期
+      const listDate = selectedCompany?.ipo_date 
+        ? tools.toLuxon(selectedCompany.ipo_date)
+        : DateTime.now().minus({ years: 10 })
+      setDateRange({
+        start_date: listDate,
+        end_date: DateTime.now(),
+      })
+    } else {
+      const years = parseInt(timeRange)
+      setDateRange({
+        start_date: DateTime.now().minus({ years }),
+        end_date: DateTime.now(),
+      })
+    }
+  }, [timeRange, selectedCompany])
 
   const fetchData = async () => {
     if (!selectedCompany?.id) return
