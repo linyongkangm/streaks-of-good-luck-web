@@ -53,7 +53,7 @@ export default function IndustryAnalysisEditModal({
 
   const handleSubmit = async (e: React.FormEvent, values: EditFormData) => {
     e.preventDefault()
-    
+
     if (!analysis) return
 
     setSubmitting(true)
@@ -221,10 +221,9 @@ export default function IndustryAnalysisEditModal({
 
       {/* 需求信号 */}
       <div className="border-t pt-4 mt-4">
-        <h3 className="font-medium text-slate-700 mb-3">需求信号</h3>
         <FormLabel label="需求信号内容">
           <FormItem field="signal_demand">
-            <TextArea rows={3} placeholder="需求信号分析内容" />
+            <TextArea rows={10} placeholder="需求信号分析内容" />
           </FormItem>
         </FormLabel>
         <FormLabel label="需求信号景气度">
@@ -236,10 +235,9 @@ export default function IndustryAnalysisEditModal({
 
       {/* 价格信号 */}
       <div className="border-t pt-4 mt-4">
-        <h3 className="font-medium text-slate-700 mb-3">价格信号</h3>
         <FormLabel label="价格信号内容">
           <FormItem field="signal_price">
-            <TextArea rows={3} placeholder="价格信号分析内容" />
+            <TextArea rows={10} placeholder="价格信号分析内容" />
           </FormItem>
         </FormLabel>
         <FormLabel label="价格信号景气度">
@@ -251,10 +249,9 @@ export default function IndustryAnalysisEditModal({
 
       {/* 供给信号 */}
       <div className="border-t pt-4 mt-4">
-        <h3 className="font-medium text-slate-700 mb-3">供给信号</h3>
         <FormLabel label="供给信号内容">
           <FormItem field="signal_supply">
-            <TextArea rows={3} placeholder="供给信号分析内容" />
+            <TextArea rows={10} placeholder="供给信号分析内容" />
           </FormItem>
         </FormLabel>
         <FormLabel label="供给信号景气度">
@@ -266,10 +263,9 @@ export default function IndustryAnalysisEditModal({
 
       {/* 盈利信号 */}
       <div className="border-t pt-4 mt-4">
-        <h3 className="font-medium text-slate-700 mb-3">盈利信号</h3>
         <FormLabel label="盈利信号内容">
           <FormItem field="signal_profitability">
-            <TextArea rows={3} placeholder="盈利信号分析内容" />
+            <TextArea rows={10} placeholder="盈利信号分析内容" />
           </FormItem>
         </FormLabel>
         <FormLabel label="盈利信号景气度">
@@ -281,10 +277,9 @@ export default function IndustryAnalysisEditModal({
 
       {/* 综合总结 */}
       <div className="border-t pt-4 mt-4">
-        <h3 className="font-medium text-slate-700 mb-3">综合总结</h3>
         <FormLabel label="总结内容">
           <FormItem field="summary">
-            <TextArea rows={3} placeholder="综合总结内容" />
+            <TextArea rows={10} placeholder="综合总结内容" />
           </FormItem>
         </FormLabel>
         <FormLabel label="总结景气度">
