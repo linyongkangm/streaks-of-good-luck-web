@@ -20,8 +20,15 @@ model info__industry_analysis {
   update_time                       DateTime?                           @default(now()) @updatedAt @db.DateTime(0)
   original_url                      String?                             @db.VarChar(512)
   report_time                       DateTime?                           @db.DateTime(0)
+  industry_id                       Int?                                @db.UnsignedInt
+  signal_demand                     String?                             @db.Text
+  signal_price                      String?                             @db.Text
+  signal_supply                     String?                             @db.Text
+  signal_profitability              String?                             @db.Text
+  info__industry                    info__industry?                     @relation(fields: [industry_id], references: [id], onDelete: Cascade, map: "fk_industry_analysis_industry_id")
 
   @@index([create_time], map: "idx_create_time")
+  @@index([industry_id], map: "idx_industry_id")
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -154,6 +161,7 @@ model info__industry {
   relation__industry_or_company_core_statistic_template  relation__industry_or_company_core_statistic_template[]
   relation__industry_or_company_calibration_industry     relation__industry_or_company_calibration_industry[]
   sub_industry_calibrations                              relation__industry_or_company_calibration_industry[]    @relation("sub_industry_calibration")
+  info__industry_analysis                                info__industry_analysis[]
 }
 
 /// 行业-文章关联表

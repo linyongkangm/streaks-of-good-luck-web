@@ -275,3 +275,30 @@ export interface FormulaEvaluationResult {
   error?: string
   missingVariables?: string[]
 }
+
+// 行业景气度分析相关类型
+export interface IndustryAnalysisWithIndustry extends info__industry_analysis {
+  info__industry?: info__industry | null
+}
+
+export interface IndustryProsperityAnalysisRequest {
+  file?: File // 前端上传时使用
+  fileUrl?: string // URL方式
+  industryId?: number | string
+  title?: string
+  publisher?: string
+  author?: string
+  reportDate?: string
+}
+
+export interface IndustryProsperityAnalysisResponse extends ApiResponse<IndustryAnalysisWithIndustry> {}
+
+export interface IndustryAnalysisListResponse extends ApiResponse<{
+  data: IndustryAnalysisWithIndustry[]
+  pagination: {
+    page: number
+    pageSize: number
+    total: number
+    pages: number
+  }
+}> {}

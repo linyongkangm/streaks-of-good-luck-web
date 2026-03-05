@@ -61,6 +61,13 @@ class MilestoneImpactRequest(BaseModel):
     context: str | None = None
 
 
+class IndustryProsperityAnalysisRequest(BaseModel):
+    """行业景气度分析请求模型"""
+
+    file_path: str  # 本地文件路径或URL
+    industry_name: str | None = None  # 行业名称（可选）
+
+
 # ==================== 数据库操作 ====================
 
 # 数据库操作由 Next.js 负责，Python API 不进行数据库操作
@@ -157,6 +164,51 @@ async def api_extract_milestone_impact(request: MilestoneImpactRequest):
         import traceback
 
         logger.error(f"✗ 里程碑影响判断失败: {e}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# /analyze-industry-prosperity 路由
+@app.post("/analyze-industry-prosperity")
+async def api_analyze_industry_prosperity(request: IndustryProsperityAnalysisRequest):
+    """API 接口：分析行业景气度，提取需求、价格、供给、盈利四维度信号
+    
+    请求体:
+    {
+        "file_path": "文件路径或URL",
+        "industry_name": "行业名称（可选）"
+    }
+    返回:
+    {
+        "success": true/false,
+        "analysis": {
+            "demand": "需求信号",
+            "price": "价格信号",
+            "supply": "供给信号",
+            "profitability": "盈利信号",
+            "summary": "综合总结"
+        }
+    }
+    """
+    logger = utils.locator.get_project_logger()
+    try:
+        if not request.file_path:
+            return {"success": False, "message": "file_path is required"}
+        
+        logger.info(f"开始分析行业景气度: {request.file_path}")
+        result = await tasks.gen_industry_prosperity_analysis(
+            request.file_path,
+            request.industry_name
+        )
+        if not result:
+            logger.warning("分析未返回结果")
+            return {"success": False, "message": "Analysis returned no result"}
+        logger.info("✓ 行业景气度分析完成")
+        return {"success": True, "analysis": result}
+    except Exception as e:
+        import traceback
+
+        logger.error(f"✗ 行业景气度分析失败: {e}")
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
