@@ -14,71 +14,79 @@ interface IndustryAnalysisProsperityModalProps {
   industryId?: number
 }
 
+export interface ProsperityFormData {
+  fileUrl: string
+  title: string
+  publisher: string
+  author: string
+  reportDate: DateTime | string
+}
+
 export default function IndustryAnalysisProsperityModal({
   open,
   onClose,
   onSuccess,
   industryId,
 }: IndustryAnalysisProsperityModalProps) {
-  const [loading, setLoading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file')
-  const [formData, setFormData] = useState({
-    file: null as File | null,
-    fileUrl: '',
-    title: '',
-    publisher: '',
-    author: '',
-    reportDate: DateTime.now(),
-  })
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      setFormData(prev => ({ ...prev, file }))
+      setSelectedFile(file)
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, values: ProsperityFormData) => {
     e.preventDefault()
     
-    if (uploadMode === 'file' && !formData.file) {
+    // 验证：文件模式需要选择文件，URL模式需要输入URL
+    if (uploadMode === 'file' && !selectedFile) {
       alert('请选择PDF文件')
       return
     }
     
-    if (uploadMode === 'url' && !formData.fileUrl) {
+    if (uploadMode === 'url' && !values.fileUrl) {
       alert('请输入PDF链接')
       return
     }
 
-    setLoading(true)
+    setSubmitting(true)
     try {
       const submitFormData = new FormData()
       
-      if (uploadMode === 'file' && formData.file) {
-        submitFormData.append('file', formData.file)
+      if (uploadMode === 'file' && selectedFile) {
+        submitFormData.append('file', selectedFile)
       } else if (uploadMode === 'url') {
-        submitFormData.append('fileUrl', formData.fileUrl)
+        submitFormData.append('fileUrl', values.fileUrl)
       }
       
       if (industryId) {
         submitFormData.append('industryId', industryId.toString())
       }
       
-      if (formData.title) {
-        submitFormData.append('title', formData.title)
+      if (values.title) {
+        submitFormData.append('title', values.title)
       }
       
-      if (formData.publisher) {
-        submitFormData.append('publisher', formData.publisher)
+      if (values.publisher) {
+        submitFormData.append('publisher', values.publisher)
       }
       
-      if (formData.author) {
-        submitFormData.append('author', formData.author)
+      if (values.author) {
+        submitFormData.append('author', values.author)
       }
       
-      submitFormData.append('reportDate', formData.reportDate.toISODate())
+      // 确保日期被正确转换为字符串
+      const reportDate = values.reportDate instanceof DateTime
+        ? values.reportDate.toISODate()
+        : values.reportDate
+      if (reportDate) {
+        submitFormData.append('reportDate', reportDate)
+      }
 
       const response = await fetch('/api/industry-analysis', {
         method: 'POST',
@@ -89,14 +97,10 @@ export default function IndustryAnalysisProsperityModal({
         onClose()
         await onSuccess()
         // 重置表单
-        setFormData({
-          file: null,
-          fileUrl: '',
-          title: '',
-          publisher: '',
-          author: '',
-          reportDate: DateTime.now(),
-        })
+        setSelectedFile(null)
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ''
+        }
       } else {
         const error = await response.json()
         alert(`上传失败: ${error.error || '未知错误'}`)
@@ -105,7 +109,7 @@ export default function IndustryAnalysisProsperityModal({
       console.error('Failed to upload:', error)
       alert(`上传失败: ${error instanceof Error ? error.message : '未知错误'}`)
     } finally {
-      setLoading(false)
+      setSubmitting(false)
     }
   }
 
@@ -115,16 +119,20 @@ export default function IndustryAnalysisProsperityModal({
       onClose={onClose}
       title="上传行业景气度报告"
       onSubmit={handleSubmit}
-      submitText={loading ? '分析中...' : '上传并分析'}
+      submitText={submitting ? '分析中...' : '上传并分析'}
+      initialValues={{
+        fileUrl: '',
+        title: '',
+        publisher: '',
+        author: '',
+        reportDate: DateTime.now(),
+      }}
     >
       {/* 上传模式选择 */}
       <div className="flex gap-2 mb-4">
         <button
           type="button"
-          onClick={() => {
-            setUploadMode('file')
-            setFormData(prev => ({ ...prev, fileUrl: '' }))
-          }}
+          onClick={() => setUploadMode('file')}
           className={`flex-1 py-2 px-3 rounded border transition-colors ${
             uploadMode === 'file'
               ? 'bg-blue-500 text-white border-blue-500'
@@ -137,7 +145,10 @@ export default function IndustryAnalysisProsperityModal({
           type="button"
           onClick={() => {
             setUploadMode('url')
-            setFormData(prev => ({ ...prev, file: null }))
+            setSelectedFile(null)
+            if (fileInputRef.current) {
+              fileInputRef.current.value = ''
+            }
           }}
           className={`flex-1 py-2 px-3 rounded border transition-colors ${
             uploadMode === 'url'
@@ -163,11 +174,11 @@ export default function IndustryAnalysisProsperityModal({
               onChange={handleFileSelect}
               className="hidden"
             />
-            {formData.file ? (
+            {selectedFile ? (
               <div className="text-sm">
-                <p className="font-medium text-blue-600">{formData.file.name}</p>
+                <p className="font-medium text-blue-600">{selectedFile.name}</p>
                 <p className="text-slate-500 mt-1">
-                  {(formData.file.size / 1024 / 1024).toFixed(2)}MB
+                  {(selectedFile.size / 1024 / 1024).toFixed(2)}MB
                 </p>
               </div>
             ) : (
@@ -184,11 +195,7 @@ export default function IndustryAnalysisProsperityModal({
       {uploadMode === 'url' && (
         <FormLabel label="PDF链接" required>
           <FormItem field="fileUrl">
-            <Input
-              placeholder="请输入PDF文件链接（http://...）"
-              value={formData.fileUrl}
-              onChange={(value) => setFormData(prev => ({ ...prev, fileUrl: value }))}
-            />
+            <Input placeholder="请输入PDF文件链接（http://...）" />
           </FormItem>
         </FormLabel>
       )}
@@ -196,40 +203,25 @@ export default function IndustryAnalysisProsperityModal({
       {/* 可选字段 */}
       <FormLabel label="报告日期">
         <FormItem field="reportDate">
-          <DatePicker
-            value={formData.reportDate}
-            onChange={(date) => setFormData(prev => ({ ...prev, reportDate: date }))}
-          />
+          <DatePicker />
         </FormItem>
       </FormLabel>
 
       <FormLabel label="标题（可选）">
         <FormItem field="title">
-          <Input
-            placeholder="如：2024年新能源汽车行业分析报告"
-            value={formData.title}
-            onChange={(value) => setFormData(prev => ({ ...prev, title: value }))}
-          />
+          <Input placeholder="如：2024年新能源汽车行业分析报告" />
         </FormItem>
       </FormLabel>
 
       <FormLabel label="发布方（可选）">
         <FormItem field="publisher">
-          <Input
-            placeholder="如：中国汽车工业协会"
-            value={formData.publisher}
-            onChange={(value) => setFormData(prev => ({ ...prev, publisher: value }))}
-          />
+          <Input placeholder="如：中国汽车工业协会" />
         </FormItem>
       </FormLabel>
 
       <FormLabel label="作者（可选）">
         <FormItem field="author">
-          <Input
-            placeholder="如：李明"
-            value={formData.author}
-            onChange={(value) => setFormData(prev => ({ ...prev, author: value }))}
-          />
+          <Input placeholder="如：李明" />
         </FormItem>
       </FormLabel>
     </ModalForm>
