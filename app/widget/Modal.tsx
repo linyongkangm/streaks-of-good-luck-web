@@ -10,7 +10,7 @@
  */
 'use client'
 
-import { ReactNode } from 'react'
+import { ReactNode, useRef, useEffect } from 'react'
 
 interface ModalProps {
   open: boolean
@@ -37,14 +37,30 @@ export default function Modal({
   maxWidth = '2xl',
   className = '',
 }: ModalProps) {
+  const mouseDownOnOverlay = useRef(false)
+  useEffect(() => {
+    if (!open) return
+    const handleWindowMouseUp = () => {
+      mouseDownOnOverlay.current = false
+    }
+    window.addEventListener('mouseup', handleWindowMouseUp)
+    return () => window.removeEventListener('mouseup', handleWindowMouseUp)
+  }, [open])
   if (!open) return null
-
   return (
-    <div 
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" 
-      onClick={onClose}
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) mouseDownOnOverlay.current = true
+      }}
+      onMouseUp={(e) => {
+        if (e.target === e.currentTarget && mouseDownOnOverlay.current) {
+          onClose()
+        }
+        mouseDownOnOverlay.current = false
+      }}
     >
-      <div 
+      <div
         className={`bg-white rounded-xl shadow-2xl p-8 ${maxWidthClasses[maxWidth]} w-full mx-4 max-h-[90vh] overflow-y-auto ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
