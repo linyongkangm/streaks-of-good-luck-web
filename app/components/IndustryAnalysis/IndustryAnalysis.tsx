@@ -8,7 +8,6 @@ import IndustryAnalysisIndustryInfo from './IndustryAnalysisIndustryInfo'
 import IndustryAnalysisRelateArticles from './IndustryAnalysisRelateArticles'
 import IndustryAnalysisArticleModal from './IndustryAnalysisArticleModal'
 import IndustryAnalysisTimeLine from './IndustryAnalysisTimeLine'
-import IndustryAnalysisCoreStats from './IndustryAnalysisCoreStats'
 import IndustryAnalysisProsperity from './IndustryAnalysisProsperity'
 export default function IndustryAnalysis() {
   const [selectedIndustryId, setSelectedIndustryId] = useState<number | null>(null)

@@ -19,8 +19,6 @@ export async function GET(request: NextRequest) {
         _count: {
           select: {
             relation__industry_articles: true,
-            relation__industry_or_company_calibration_industry: true,
-            sub_industry_calibrations: true,
           }
         }
       }

@@ -16,12 +16,7 @@ import {
   quote__cash_flow_sheet,
   view_financial_statements,
   info__milestone,
-  relation__industry_or_company_milestone,
-  info__core_statistic_template,
-  info__core_data,
-  relation__industry_or_company_core_statistic_template,
-  info__calibration,
-  relation__industry_or_company_calibration_industry
+  relation__industry_or_company_milestone
 } from '@prisma/client'
 
 // 导出 Prisma 生成的所有类型
@@ -46,11 +41,6 @@ export {
   type view_financial_statements,
   type info__milestone,
   type relation__industry_or_company_milestone,
-  type info__core_statistic_template,
-  type info__core_data,
-  type relation__industry_or_company_core_statistic_template,
-  type info__calibration,
-  type relation__industry_or_company_calibration_industry,
 } from '@prisma/client'
 
 // API 响应类型
@@ -140,8 +130,6 @@ export interface IndustryWithArticles extends info__industry {
 export interface IndustryWithCount extends info__industry {
   _count: {
     relation__industry_articles: number
-    relation__industry_or_company_calibration_industry: number
-    sub_industry_calibrations: number
   }
 }
 
@@ -187,79 +175,6 @@ export interface UpdateMilestoneRequest {
   keyword?: string
   industry_ids?: number[]
   company_ids?: number[]
-}
-
-// 核心统计模板相关类型
-export type CoreStatisticTemplateListResponse = ApiResponse<info__core_statistic_template[]>
-export type CoreStatisticTemplateDetailResponse = ApiResponse<info__core_statistic_template>
-
-export interface CreateCoreStatisticTemplateRequest {
-  name: string
-  relate_table: string
-  core_formula: string
-  description?: string
-}
-
-export interface UpdateCoreStatisticTemplateRequest {
-  name?: string
-  relate_table?: string
-  core_formula?: string
-  description?: string
-}
-
-// 核心数据相关类型
-export type CoreDataListResponse = ApiResponse<info__core_data[]>
-export type CoreDataDetailResponse = ApiResponse<info__core_data>
-
-export interface CreateCoreDataRequest {
-  industry_id?: number
-  company_id?: number
-  date?: string | Date
-  table: string
-  data: Record<string, any>
-}
-
-export interface UpdateCoreDataRequest {
-  date?: string | Date
-  table?: string
-  data?: Record<string, any>
-}
-
-// 口径相关类型
-export type CalibrationListResponse = ApiResponse<info__calibration[]>
-
-export interface CalibrationWithSubIndustries extends info__calibration {
-  relation__industry_or_company_calibration_industry: (relation__industry_or_company_calibration_industry & {
-    sub_industry: info__industry
-  })[]
-}
-
-export type CalibrationDetailResponse = ApiResponse<CalibrationWithSubIndustries>
-
-export interface CreateCalibrationRequest {
-  name: string
-  description?: string
-}
-
-export interface UpdateCalibrationRequest {
-  name?: string
-  description?: string
-}
-
-// 行业核心统计扩展类型
-export interface IndustryTemplateRelation extends relation__industry_or_company_core_statistic_template {
-  info__core_statistic_template: info__core_statistic_template
-}
-
-export interface IndustryCalibrationRelation extends relation__industry_or_company_calibration_industry {
-  info__calibration: info__calibration
-  sub_industry: info__industry
-}
-
-export interface IndustryWithCoreStats extends IndustryWithArticles {
-  relation__industry_or_company_core_statistic_template?: IndustryTemplateRelation[]
-  info__core_data?: info__core_data[]
-  relation__industry_or_company_calibration_industry?: IndustryCalibrationRelation[]
 }
 
 // 公式解析类型
