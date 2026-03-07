@@ -36,7 +36,10 @@ export default function IndustryAnalysisIndustryList({
       const response = await fetch(`/api/industries?${params}`)
       const data = await response.json()
       const rawIndustries: IndustryWithCount[] = data.data || []
-      setIndustries(rawIndustries)
+      const sortedIndustries = [...rawIndustries].sort((a, b) => {
+        return b._count.relation__industry_articles - a._count.relation__industry_articles
+      })
+      setIndustries(sortedIndustries)
     } catch (error) {
       console.error('Failed to fetch industries:', error)
     } finally {
