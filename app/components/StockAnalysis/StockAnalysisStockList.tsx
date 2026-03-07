@@ -113,16 +113,10 @@ export default function StockAnalysisStockList({ companies, selectedCompany, sin
 
         if (!isMounted) return
 
-        // 过滤出没有作为子行业的行业（参考IndustryAnalysisIndustryList的逻辑）
-        // 即：sub_industry_calibrations === 0 的行业
-        const topLevelIndustries = allIndustries.filter((ind: any) => 
-          !ind._count || ind._count.sub_industry_calibrations === 0
-        )
-
         // 构建行业选项列表
         const options: { value: number | 'all'; label: string }[] = [
           { value: 'all', label: '全部' },
-          ...topLevelIndustries.map((ind: info__industry) => ({
+          ...allIndustries.map((ind: info__industry) => ({
             value: ind.id,
             label: ind.name,
           })),
