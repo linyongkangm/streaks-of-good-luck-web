@@ -199,7 +199,7 @@ export default function IndustryAnalysisRelateArticles({
                                 👤 {article.contributor}
                               </span>
                             )}
-                            {article.tags && article.tags.split(',').map((tag, idx) => (
+                            {article.tags && article.tags.split(/,|，/).map((tag, idx) => (
                               <span
                                 key={idx}
                                 className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium"
@@ -210,7 +210,7 @@ export default function IndustryAnalysisRelateArticles({
                           </div>
 
                           {article.summary && (
-                            <p className="text-sm text-slate-600 leading-relaxed line-clamp-3">
+                            <p className="text-sm text-slate-600 leading-relaxed">
                               {article.summary.length > 200
                                 ? article.summary.substring(0, 200) + '...'
                                 : article.summary}

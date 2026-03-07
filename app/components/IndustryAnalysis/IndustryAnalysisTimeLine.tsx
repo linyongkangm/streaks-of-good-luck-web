@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react"
 import Panel from "@/app/widget/Panel"
 import Button from "@/app/widget/Button"
 import IndustryAnalysisMilestoneModal from "./IndustryAnalysisMilestoneModal"
+import IndustryAnalysisMilestoneSelectorModal from "./IndustryAnalysisMilestoneSelectorModal"
 import type { MilestoneWithRelations } from "@/types"
 import { DateTime } from "luxon"
 
@@ -21,6 +22,7 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
   const [milestones, setMilestones] = useState<MilestoneWithRelations[]>([])
   const [loading, setLoading] = useState(false)
   const [milestoneModalOpen, setMilestoneModalOpen] = useState(false)
+  const [milestoneSelectorOpen, setMilestoneSelectorOpen] = useState(false)
   const [editingMilestone, setEditingMilestone] = useState<MilestoneWithRelations | null>(null)
   const [hoverDate, setHoverDate] = useState<HoverDate | null>(null)
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
@@ -85,6 +87,16 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
   const handleCloseMilestoneModal = () => {
     setMilestoneModalOpen(false)
     setEditingMilestone(null)
+  }
+
+  // 打开选择已有事件弹窗
+  const handleOpenSelector = () => {
+    setMilestoneSelectorOpen(true)
+  }
+
+  // 关闭选择已有事件弹窗
+  const handleCloseSelector = () => {
+    setMilestoneSelectorOpen(false)
   }
 
   // 切换年份展开/折叠
@@ -283,9 +295,12 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
     <Panel
       title="行业事件"
       headerAction={
-        <Button size="small" onClick={handleOpenCreate}>
-          新增事件
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="small" onClick={handleOpenCreate}>
+            新增事件
+          </Button>
+          <Button size="small" look="secondary" onClick={handleOpenSelector}>选择事件</Button>
+        </div>
       }>
 
       {loading ? (
@@ -459,6 +474,13 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
         onSuccess={handleMilestoneModalSuccess}
         industryId={industryId}
         initialValues={editingMilestone}
+      />
+
+      <IndustryAnalysisMilestoneSelectorModal
+        open={milestoneSelectorOpen}
+        onClose={handleCloseSelector}
+        onSuccess={handleMilestoneModalSuccess}
+        industryId={industryId}
       />
     </Panel>
   )

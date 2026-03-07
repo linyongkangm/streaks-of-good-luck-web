@@ -444,7 +444,7 @@ export default function ArticleAnalysis() {
                     <div className="flex items-start gap-2">
                       <span className="text-slate-500">🏷️ 标签：</span>
                       <div className="flex flex-wrap gap-2">
-                        {predictPreview.article.tags.split(',').map((tag: string, idx: number) => (
+                        {predictPreview.article.tags.split(/,|，/).map((tag: string, idx: number) => (
                           <span
                             key={idx}
                             className="px-2 py-0.5 bg-slate-200 text-slate-700 rounded text-xs font-medium"
