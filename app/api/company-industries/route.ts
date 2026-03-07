@@ -2,16 +2,46 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
 // GET /api/company-industries?company_id={id} - 获取公司的行业列表
+// GET /api/company-industries?industry_id={id} - 获取行业关联的公司列表
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const companyIdStr = searchParams.get('company_id')
+    const industryIdStr = searchParams.get('industry_id')
 
-    if (!companyIdStr) {
+    if (!companyIdStr && !industryIdStr) {
       return NextResponse.json(
-        { error: 'company_id is required' },
+        { error: 'company_id or industry_id is required' },
         { status: 400 }
       )
+    }
+
+    if (industryIdStr) {
+      const industryId = Number(industryIdStr)
+
+      if (Number.isNaN(industryId)) {
+        return NextResponse.json(
+          { error: 'Invalid industry_id' },
+          { status: 400 }
+        )
+      }
+
+      const relations = await prisma.relation__industry_company.findMany({
+        where: {
+          industry_id: industryId,
+        },
+        select: {
+          id: true,
+          company_id: true,
+          industry_id: true,
+          weight: true,
+        },
+        orderBy: {
+          weight: 'desc',
+        },
+      })
+
+      return NextResponse.json({ data: relations })
     }
 
     const companyId = Number(companyIdStr)

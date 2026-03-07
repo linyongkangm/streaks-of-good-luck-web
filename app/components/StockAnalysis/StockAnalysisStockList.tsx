@@ -17,11 +17,6 @@ interface StockValuationSummary {
   pb_percentile_3y: number | null;
 }
 
-interface IndustryInfo {
-  id: number;
-  name: string;
-}
-
 interface Props {
   companies: info__stock_company[];
   selectedCompany: info__stock_company | null;
@@ -34,7 +29,7 @@ export default function StockAnalysisStockList({ companies, selectedCompany, sin
   const [valuationMap, setValuationMap] = useState<Record<number, StockValuationSummary>>({})
   const [selectedIndustry, setSelectedIndustry] = useState<number | 'all'>('all')
   const [industryOptions, setIndustryOptions] = useState<{ value: number | 'all'; label: string }[]>([])
-  const [companyIndustries, setCompanyIndustries] = useState<Record<number, number[]>>({})
+  const [selectedIndustryCompanyIds, setSelectedIndustryCompanyIds] = useState<number[]>([])
 
   useEffect(() => {
     if (companies.length === 0) {
@@ -81,11 +76,10 @@ export default function StockAnalysisStockList({ companies, selectedCompany, sin
     }
   }, [companies])
 
-  // 获取公司关联的行业和行业信息
+  // 获取行业列表（用于下拉框）
   useEffect(() => {
     if (companies.length === 0) {
       setIndustryOptions([])
-      setCompanyIndustries({})
       return
     }
 
@@ -100,17 +94,6 @@ export default function StockAnalysisStockList({ companies, selectedCompany, sin
         const industriesResult = await industriesRes.json()
         const allIndustries: info__industry[] = industriesResult?.data || []
 
-        // 获取每个公司的关联行业
-        const companyIndustriesMap: Record<number, number[]> = {}
-        for (const company of companies) {
-          const res = await fetch(`/api/company-industries?company_id=${company.id}`)
-          if (res.ok) {
-            const result = await res.json()
-            const industries = result?.data || []
-            companyIndustriesMap[company.id] = industries.map((ind: any) => ind.industry_id)
-          }
-        }
-
         if (!isMounted) return
 
         // 构建行业选项列表
@@ -123,7 +106,6 @@ export default function StockAnalysisStockList({ companies, selectedCompany, sin
         ]
 
         setIndustryOptions(options)
-        setCompanyIndustries(companyIndustriesMap)
       } catch (error) {
         console.error('Failed to fetch industries:', error)
       }
@@ -135,6 +117,38 @@ export default function StockAnalysisStockList({ companies, selectedCompany, sin
       isMounted = false
     }
   }, [companies])
+
+  // 根据选中的行业获取关联公司ID（由 Next API 在服务端查询）
+  useEffect(() => {
+    if (selectedIndustry === 'all') {
+      setSelectedIndustryCompanyIds([])
+      return
+    }
+
+    let isMounted = true
+
+    const fetchIndustryCompanyIds = async () => {
+      try {
+        const res = await fetch(`/api/company-industries?industry_id=${selectedIndustry}`)
+        if (!res.ok) return
+
+        const result = await res.json()
+        const relations: Array<{ company_id: number }> = result?.data || []
+        const companyIds = relations.map((item) => item.company_id)
+
+        if (!isMounted) return
+        setSelectedIndustryCompanyIds(companyIds)
+      } catch (error) {
+        console.error('Failed to fetch company ids by industry:', error)
+      }
+    }
+
+    fetchIndustryCompanyIds()
+
+    return () => {
+      isMounted = false
+    }
+  }, [selectedIndustry])
 
   const formatter = useMemo(() => {
     return {
@@ -164,10 +178,7 @@ export default function StockAnalysisStockList({ companies, selectedCompany, sin
 
     // 根据选中的行业筛选
     if (selectedIndustry !== 'all') {
-      filtered = filtered.filter((company) => {
-        const industries = companyIndustries[company.id] || []
-        return industries.includes(Number(selectedIndustry))
-      })
+      filtered = filtered.filter((company) => selectedIndustryCompanyIds.includes(company.id))
     }
 
     // 排序
@@ -190,7 +201,7 @@ export default function StockAnalysisStockList({ companies, selectedCompany, sin
 
       return aValue - bValue
     })
-  }, [companies, sinkCompanyIds, valuationMap, selectedIndustry, companyIndustries])
+  }, [companies, sinkCompanyIds, valuationMap, selectedIndustry, selectedIndustryCompanyIds])
 
   return <div className="bg-white rounded-xl shadow-lg p-4 sticky">
     <div className="flex items-center justify-between mb-3">
