@@ -51,6 +51,33 @@ async def gen_industry_prosperity_analysis(file_path: str, industry_name: str = 
                 raise FileNotFoundError(f"文件不存在: {file_path}")
             file_content = utils.parse_file_to_text(file_path)
 
+        return await gen_industry_prosperity_analysis_by_text(file_content, industry_name)
+    except Exception as e:
+        logger.error(f"行业景气度分析失败: {e}")
+        raise
+
+
+async def gen_industry_prosperity_analysis_by_text(source_text: str, industry_name: str = ''):
+    """
+    基于原文文本的行业景气度分析。
+    Args:
+        source_text (str): 原文文本内容。
+        industry_name (str): 行业名称（可选）。
+    Returns:
+        dict: {
+            "demand": str,
+            "price": str,
+            "supply": str,
+            "profitability": str,
+            "summary": str
+        }
+    """
+    logger = utils.locator.get_project_logger()
+
+    try:
+        if not source_text or not source_text.strip():
+            raise ValueError("source_text is empty")
+
         # 构建行业信息提示词
         industry_info = f"行业: {industry_name}\n" if industry_name else ""
 
@@ -61,12 +88,12 @@ async def gen_industry_prosperity_analysis(file_path: str, industry_name: str = 
                 "role": "user",
                 "content": INDUSTRY_PROSPERITY_ANALYSIS_PROMPT_TEMPLATE.format(
                     industry_info=industry_info,
-                    file_content=file_content
+                    file_content=source_text
                 ),
             }
         ]
 
-        logger.info(f"正在分析行业景气度 {industry_name or ''}...")
+        logger.info(f"正在分析行业景气度（文本模式）{industry_name or ''}...")
         # 使用 asyncio.to_thread 将同步调用改为异步，避免阻塞
         responseText = await asyncio.to_thread(llmClient.think, cast(List, messages))
 
@@ -112,7 +139,7 @@ async def gen_industry_prosperity_analysis(file_path: str, industry_name: str = 
                 "summary": summary
             }
     except Exception as e:
-        logger.error(f"行业景气度分析失败: {e}")
+        logger.error(f"行业景气度文本分析失败: {e}")
         raise
 
 

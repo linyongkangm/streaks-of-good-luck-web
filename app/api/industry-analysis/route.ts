@@ -93,6 +93,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const file = formData.get('file') as File | null
     const fileUrl = formData.get('fileUrl') as string | null
+    const sourceText = formData.get('sourceText') as string | null
     const industryId = formData.get('industryId') as string | null
     const title = formData.get('title') as string | null
     const publisher = formData.get('publisher') as string | null
@@ -107,9 +108,9 @@ export async function POST(request: NextRequest) {
             })
           )?.name
         : undefined
-    if (!file && !fileUrl) {
+    if (!file && !fileUrl && !sourceText) {
       return NextResponse.json(
-        { error: '必须提供PDF文件或文件URL' },
+        { error: '必须提供PDF文件、文件URL或原文内容' },
         { status: 400 }
       )
     }
@@ -141,26 +142,38 @@ export async function POST(request: NextRequest) {
       console.log(`File saved: ${filePath}`)
     }
 
-    // 确定要分析的文件路径
-    const analysisFilePath = filePath || fileUrl
-    if (!analysisFilePath) {
-      return NextResponse.json(
-        { error: '无法确定文件路径' },
-        { status: 400 }
-      )
+    let response: Response
+
+    if (sourceText && sourceText.trim()) {
+      console.log('Calling Python API for text-based analysis...')
+      response = await fetch(`${PYTHON_API_URL}/analyze-industry-prosperity-by-text`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source_text: sourceText,
+          industry_name: industryName,
+        }),
+      })
+    } else {
+      // 确定要分析的文件路径
+      const analysisFilePath = filePath || fileUrl
+      if (!analysisFilePath) {
+        return NextResponse.json(
+          { error: '无法确定文件路径' },
+          { status: 400 }
+        )
+      }
+
+      console.log('Calling Python API for file/url analysis...')
+      response = await fetch(`${PYTHON_API_URL}/analyze-industry-prosperity`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          file_path: analysisFilePath,
+          industry_name: industryName,
+        }),
+      })
     }
-
-
-
-    console.log(`Calling Python API for analysis...`)
-    const response = await fetch(`${PYTHON_API_URL}/analyze-industry-prosperity`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        file_path: analysisFilePath,
-        industry_name: industryName,
-      }),
-    })
 
     if (!response.ok) {
       const error = await response.text()

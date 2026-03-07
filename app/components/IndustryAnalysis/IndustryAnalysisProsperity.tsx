@@ -272,6 +272,7 @@ export default function IndustryAnalysisProsperity({ industryDetail }: IndustryA
         onClose={() => setShowModal(false)}
         onSuccess={fetchAnalyses}
         industryId={industryId || undefined}
+        relatedArticles={industryDetail?.relation__industry_articles.map((r) => r.summary__article) || []}
       />
 
       <IndustryAnalysisEditModal

@@ -68,6 +68,13 @@ class IndustryProsperityAnalysisRequest(BaseModel):
     industry_name: str | None = None  # 行业名称（可选）
 
 
+class IndustryProsperityTextAnalysisRequest(BaseModel):
+    """行业景气度文本分析请求模型"""
+
+    source_text: str
+    industry_name: str | None = None  # 行业名称（可选）
+
+
 class ProsperityTrendAnalysisRequest(BaseModel):
     """景气度趋势分析请求模型"""
 
@@ -205,7 +212,7 @@ async def api_analyze_industry_prosperity(request: IndustryProsperityAnalysisReq
         logger.info(f"开始分析行业景气度: {request.file_path}")
         result = await tasks.gen_industry_prosperity_analysis(
             request.file_path,
-            request.industry_name
+            request.industry_name or "",
         )
         if not result:
             logger.warning("分析未返回结果")
@@ -216,6 +223,33 @@ async def api_analyze_industry_prosperity(request: IndustryProsperityAnalysisReq
         import traceback
 
         logger.error(f"✗ 行业景气度分析失败: {e}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# /analyze-industry-prosperity-by-text 路由
+@app.post("/analyze-industry-prosperity-by-text")
+async def api_analyze_industry_prosperity_by_text(request: IndustryProsperityTextAnalysisRequest):
+    """API 接口：基于原文文本分析行业景气度"""
+    logger = utils.locator.get_project_logger()
+    try:
+        if not request.source_text or not request.source_text.strip():
+            return {"success": False, "message": "source_text is required"}
+
+        logger.info(f"开始分析行业景气度（文本模式），长度: {len(request.source_text)}")
+        result = await tasks.gen_industry_prosperity_analysis_by_text(
+            request.source_text,
+            request.industry_name or "",
+        )
+        if not result:
+            logger.warning("分析未返回结果")
+            return {"success": False, "message": "Analysis returned no result"}
+        logger.info("✓ 行业景气度文本分析完成")
+        return {"success": True, "analysis": result}
+    except Exception as e:
+        import traceback
+
+        logger.error(f"✗ 行业景气度文本分析失败: {e}")
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 

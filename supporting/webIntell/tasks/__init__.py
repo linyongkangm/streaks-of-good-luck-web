@@ -7,6 +7,7 @@ from .gen_predicts import gen_predicts as gen_predicts
 from .gen_milestone_keyword import gen_milestone_keyword as gen_milestone_keyword
 from .gen_milestone_impact import gen_milestone_impact as gen_milestone_impact
 from .gen_industry_prosperity_analysis import gen_industry_prosperity_analysis as gen_industry_prosperity_analysis
+from .gen_industry_prosperity_analysis import gen_industry_prosperity_analysis_by_text as gen_industry_prosperity_analysis_by_text
 from .gen_industry_prosperity_analysis import analyze_prosperity_trend as analyze_prosperity_trend
 from .call_akshare import call_akshare as call_akshare
 

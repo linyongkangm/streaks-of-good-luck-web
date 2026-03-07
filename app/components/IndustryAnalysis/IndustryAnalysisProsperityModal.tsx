@@ -2,16 +2,19 @@
 
 import { useState, useRef } from 'react'
 import ModalForm from '@/app/widget/ModalForm'
+import type { FormRef } from '@/app/widget/Form'
 import { FormItem, FormLabel } from '@/app/widget/Form'
 import Input, { TextArea } from '@/app/widget/Input'
 import DatePicker from '@/app/widget/DatePicker'
 import { DateTime } from 'luxon'
+import type { summary__article } from '@/types'
 
 interface IndustryAnalysisProsperityModalProps {
   open: boolean
   onClose: () => void
   onSuccess: () => Promise<void>
   industryId?: number
+  relatedArticles?: summary__article[]
 }
 
 export interface ProsperityFormData {
@@ -27,17 +30,34 @@ export default function IndustryAnalysisProsperityModal({
   onClose,
   onSuccess,
   industryId,
+  relatedArticles = [],
 }: IndustryAnalysisProsperityModalProps) {
   const [submitting, setSubmitting] = useState(false)
-  const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file')
+  const [uploadMode, setUploadMode] = useState<'file' | 'url' | 'article'>('file')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [selectedArticle, setSelectedArticle] = useState<summary__article | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const formRef = useRef<FormRef>(null)
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       setSelectedFile(file)
     }
+  }
+
+  const handleSelectArticle = (article: summary__article) => {
+    setSelectedArticle(article)
+    const currentValues = formRef.current?.getValues() || {}
+    formRef.current?.setValues({
+      ...currentValues,
+      title: article.title || '',
+      publisher: article.publication || '',
+      author: article.contributor || '',
+      reportDate: article.issue_date
+        ? DateTime.fromJSDate(new Date(article.issue_date))
+        : currentValues.reportDate,
+    })
   }
 
   const handleSubmit = async (e: React.FormEvent, values: ProsperityFormData) => {
@@ -54,6 +74,16 @@ export default function IndustryAnalysisProsperityModal({
       return
     }
 
+    if (uploadMode === 'article' && !selectedArticle) {
+      alert('请选择关联文章')
+      return
+    }
+
+    if (uploadMode === 'article' && !selectedArticle?.source_text?.trim()) {
+      alert('所选文章缺少原文内容，无法直接生成景气度报告')
+      return
+    }
+
     setSubmitting(true)
     try {
       const submitFormData = new FormData()
@@ -62,30 +92,41 @@ export default function IndustryAnalysisProsperityModal({
         submitFormData.append('file', selectedFile)
       } else if (uploadMode === 'url') {
         submitFormData.append('fileUrl', values.fileUrl)
+      } else if (uploadMode === 'article' && selectedArticle) {
+        submitFormData.append('sourceText', selectedArticle.source_text || '')
       }
       
       if (industryId) {
         submitFormData.append('industryId', industryId.toString())
       }
       
-      if (values.title) {
-        submitFormData.append('title', values.title)
+      const finalTitle = values.title || selectedArticle?.title
+      if (finalTitle) {
+        submitFormData.append('title', finalTitle)
       }
       
-      if (values.publisher) {
-        submitFormData.append('publisher', values.publisher)
+      const finalPublisher = values.publisher || selectedArticle?.publication || ''
+      if (finalPublisher) {
+        submitFormData.append('publisher', finalPublisher)
       }
       
-      if (values.author) {
-        submitFormData.append('author', values.author)
+      const finalAuthor = values.author || selectedArticle?.contributor || ''
+      if (finalAuthor) {
+        submitFormData.append('author', finalAuthor)
       }
       
       // 确保日期被正确转换为字符串
       const reportDate = values.reportDate instanceof DateTime
         ? values.reportDate.toISODate()
         : values.reportDate
-      if (reportDate) {
-        submitFormData.append('reportDate', reportDate)
+      const articleReportDate = selectedArticle?.issue_date
+        ? DateTime.fromJSDate(new Date(selectedArticle.issue_date)).toISODate()
+        : null
+      const finalReportDate = uploadMode === 'article'
+        ? (articleReportDate || reportDate)
+        : reportDate
+      if (finalReportDate) {
+        submitFormData.append('reportDate', finalReportDate)
       }
 
       const response = await fetch('/api/industry-analysis', {
@@ -98,6 +139,8 @@ export default function IndustryAnalysisProsperityModal({
         await onSuccess()
         // 重置表单
         setSelectedFile(null)
+        setSelectedArticle(null)
+        setUploadMode('file')
         if (fileInputRef.current) {
           fileInputRef.current.value = ''
         }
@@ -115,6 +158,7 @@ export default function IndustryAnalysisProsperityModal({
 
   return (
     <ModalForm
+      formRef={formRef}
       open={open}
       onClose={onClose}
       title="上传行业景气度报告"
@@ -145,6 +189,7 @@ export default function IndustryAnalysisProsperityModal({
           type="button"
           onClick={() => {
             setUploadMode('url')
+            setSelectedArticle(null)
             setSelectedFile(null)
             if (fileInputRef.current) {
               fileInputRef.current.value = ''
@@ -157,6 +202,23 @@ export default function IndustryAnalysisProsperityModal({
           }`}
         >
           链接方式
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setUploadMode('article')
+            setSelectedFile(null)
+            if (fileInputRef.current) {
+              fileInputRef.current.value = ''
+            }
+          }}
+          className={`flex-1 py-2 px-3 rounded border transition-colors ${
+            uploadMode === 'article'
+              ? 'bg-blue-500 text-white border-blue-500'
+              : 'bg-white text-slate-700 border-slate-300'
+          }`}
+        >
+          关联文章
         </button>
       </div>
 
@@ -197,6 +259,40 @@ export default function IndustryAnalysisProsperityModal({
           <FormItem field="fileUrl">
             <Input placeholder="请输入PDF文件链接（http://...）" />
           </FormItem>
+        </FormLabel>
+      )}
+
+      {uploadMode === 'article' && (
+        <FormLabel label="选择关联文章" required>
+          {relatedArticles.length > 0 ? (
+            <div className="max-h-56 overflow-y-auto divide-y rounded border border-slate-200">
+              {relatedArticles.map((article) => {
+                const isSelected = String(selectedArticle?.id) === String(article.id)
+                return (
+                  <button
+                    key={String(article.id)}
+                    type="button"
+                    onClick={() => handleSelectArticle(article)}
+                    className={`w-full text-left px-3 py-2 transition-colors ${
+                      isSelected ? 'bg-blue-50' : 'hover:bg-slate-50'
+                    }`}
+                  >
+                    <p className="text-sm font-medium text-slate-800 truncate">{article.title}</p>
+                    <p className="text-xs text-slate-500 mt-1 truncate">
+                      {article.publication || '未知来源'}
+                      {article.issue_date
+                        ? ` · ${DateTime.fromJSDate(new Date(article.issue_date)).toFormat('yyyy-MM-dd')}`
+                        : ''}
+                    </p>
+                  </button>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="text-sm text-slate-500 border border-dashed border-slate-300 rounded p-3">
+              当前行业暂无关联文章，请先在行业详情中关联文章。
+            </div>
+          )}
         </FormLabel>
       )}
 
