@@ -76,7 +76,8 @@ export default function IndustryAnalysis() {
                 />
 
                 {/* 行业景气度分析 */}
-                <IndustryAnalysisProsperity industryDetail={industryDetail} />
+                {/* industry.id=14是宏观，不显示行业景气度 */}
+                {industryDetail.id !== 14 && <IndustryAnalysisProsperity industryDetail={industryDetail} />}
 
                 {/* 行业里程碑时间轴 */}
                 <IndustryAnalysisTimeLine industryId={selectedIndustryId} />
