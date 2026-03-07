@@ -31,24 +31,14 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
     return new Date().toISOString().split('T')[0]
   }, [])
 
-  // 计算日期范围
+  // 计算日期范围：过去2年整年 + 当年整年 + 未来1年整年（共 4 年）
   const dateRange = useMemo(() => {
     const now = new Date()
     const currentYear = now.getFullYear()
-    const currentMonth = now.getMonth() + 1 // 0-based to 1-based
 
-    let startDate: Date
-    let endDate: Date
-
-    if (currentMonth <= 6) {
-      // 上半年：展示上一年下半年 + 当年
-      startDate = new Date(currentYear - 1, 6, 1) // 上一年7月1日
-      endDate = new Date(currentYear, 11, 31) // 当年12月31日
-    } else {
-      // 下半年：展示当年 + 下一年上半年
-      startDate = new Date(currentYear, 0, 1) // 当年1月1日
-      endDate = new Date(currentYear + 1, 5, 30) // 下一年6月30日
-    }
+    // 覆盖的年份：currentYear - 2, currentYear - 1, currentYear, currentYear + 1
+    const startDate = new Date(currentYear - 2, 0, 1) // 1月1日
+    const endDate = new Date(currentYear + 1, 11, 31) // 12月31日
 
     return { startDate, endDate }
   }, [])
@@ -307,6 +297,7 @@ export default function IndustryAnalysisTimeLine({ industryId }: IndustryAnalysi
           {Object.keys(yearMonthData)
             .map(Number)
             .sort((a, b) => a - b)
+            .filter(year => (milestonesByYear[year] && milestonesByYear[year].length > 0))
             .map(year => {
               const yearMilestones = milestonesByYear[year] || []
               const isExpanded = expandedYears.includes(year)
