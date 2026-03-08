@@ -31,6 +31,8 @@ export default function TweetAnalysis() {
   const [isAddingCollectFrom, setIsAddingCollectFrom] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string>('')
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false)
+  const [isAnalyzingAll, setIsAnalyzingAll] = useState(false)
+  const [isSendingAll, setIsSendingAll] = useState(false)
 
   useEffect(() => {
     fetchCollectFromList()
@@ -117,6 +119,50 @@ export default function TweetAnalysis() {
     setIsFetchingLatest(false)
   }
 
+  const fetchLatestTweetsForAll = async () => {
+    if (collectFromList.length === 0) {
+      alert('暂无可抓取的推文来源')
+      return
+    }
+
+    setIsFetchingLatest(true)
+    let totalSuccessful = 0
+    let totalFailed = 0
+    const sourceErrors: string[] = []
+
+    try {
+      // 扩展抓取通过事件驱动，按来源串行执行更稳定。
+      for (const collectFrom of collectFromList) {
+        try {
+          const data = await ctools.collectLatestTweets(collectFrom)
+          totalSuccessful += Number(data.successful || 0)
+          totalFailed += Number(data.failed || 0)
+        } catch (error) {
+          console.error(`Failed to fetch latest tweets for ${collectFrom}:`, error)
+          sourceErrors.push(collectFrom)
+        }
+      }
+
+      alert(
+        `批量抓取完成\n` +
+        `来源数: ${collectFromList.length}\n` +
+        `成功导入: ${totalSuccessful} 条\n` +
+        `失败导入: ${totalFailed} 条\n` +
+        `来源失败: ${sourceErrors.length} 个`
+      )
+
+      setTimeout(() => {
+        fetchSummaries()
+        fetchCollectFromList()
+      }, 1000)
+    } catch (error) {
+      console.error('Failed to fetch latest tweets for all collect_from:', error)
+      alert('批量获取失败，请稍后重试')
+    } finally {
+      setIsFetchingLatest(false)
+    }
+  }
+
   const fetchRelatedTweets = async (summary: summary__tweet) => {
     setSelectedSummary(summary)
     setTweetsLoading(true)
@@ -174,6 +220,76 @@ export default function TweetAnalysis() {
     }
   }
 
+  const analyzeAllToday = async () => {
+    setIsAnalyzingAll(true)
+    try {
+      const response = await fetch('/api/generate-and-send-tweet-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'analyze',
+          date: DateTime.now().setZone('America/New_York').toISODate(),
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        alert(`全部分析完成：已分析 ${data.generatedCount} 个来源`)
+      } else {
+        const generationFailCount = Array.isArray(data.generationFailed) ? data.generationFailed.length : 0
+        alert(
+          `${data.message || '全部分析执行失败'}\n` +
+          `分析成功: ${data.generatedCount || 0}\n` +
+          `分析失败: ${generationFailCount}`
+        )
+      }
+
+      setPage(1)
+      fetchSummaries()
+    } catch (error) {
+      console.error('Failed to analyze all sources for today:', error)
+      alert('全部分析失败，请稍后重试')
+    } finally {
+      setIsAnalyzingAll(false)
+    }
+  }
+
+  const sendAllToday = async () => {
+    setIsSendingAll(true)
+    try {
+      const response = await fetch('/api/generate-and-send-tweet-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'send',
+          date: DateTime.now().setZone('America/New_York').toISODate(),
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        alert(`全部发送完成：已发送 ${data.sentCount} 个来源`)
+      } else {
+        const sendFailCount = Array.isArray(data.sendFailed) ? data.sendFailed.length : 0
+        alert(
+          `${data.message || '全部发送执行失败'}\n` +
+          `发送成功: ${data.sentCount || 0}\n` +
+          `发送失败: ${sendFailCount}`
+        )
+      }
+
+      setPage(1)
+      fetchSummaries()
+    } catch (error) {
+      console.error('Failed to send all sources for today:', error)
+      alert('全部发送失败，请稍后重试')
+    } finally {
+      setIsSendingAll(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
@@ -198,28 +314,56 @@ export default function TweetAnalysis() {
                 ...collectFromList.map(item => ({ label: item, value: item }))
               ]}
             />
-            {selectedCollectFrom !== 'all' && (
-              <Button
-                onClick={fetchLatestTweets}
-                disabled={isFetchingLatest}
-                size="small"
-                look="success"
-              >
-                {isFetchingLatest ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                    获取中...
-                  </>
-                ) : (
-                  <>
-                    <span className="mr-2">🔄</span>
-                    获取最新推文
-                  </>
-                )}
-              </Button>
-            )}
+            <Button
+              onClick={selectedCollectFrom === 'all' ? fetchLatestTweetsForAll : fetchLatestTweets}
+              disabled={isFetchingLatest}
+              size="small"
+              look="success"
+            >
+              {isFetchingLatest ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                  获取中...
+                </>
+              ) : (
+                <>
+                  <span className="mr-2">🔄</span>
+                  {selectedCollectFrom === 'all' ? '获取全部CollectFrom的推文' : '获取最新推文'}
+                </>
+              )}
+            </Button>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={analyzeAllToday}
+              disabled={isAnalyzingAll || isSendingAll}
+              size="small"
+              look="primary"
+            >
+              {isAnalyzingAll ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent inline-block mr-2"></div>
+                  执行中...
+                </>
+              ) : (
+                <>全部分析</>
+              )}
+            </Button>
+            <Button
+              onClick={sendAllToday}
+              disabled={isAnalyzingAll || isSendingAll}
+              size="small"
+              look="success"
+            >
+              {isSendingAll ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent inline-block mr-2"></div>
+                  发送中...
+                </>
+              ) : (
+                <>全部发送</>
+              )}
+            </Button>
             {/* 增加 CollectFrom 输入框 */}
             <div className="flex gap-2 mr-16">
               <TextInput
