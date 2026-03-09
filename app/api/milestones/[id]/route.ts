@@ -93,13 +93,6 @@ export async function PUT(
 
     // 仅在客户端明确传了 industry_ids 时，才替换行业关联
     if (hasIndustryIds) {
-      await prisma.relation__industry_or_company_milestone.deleteMany({
-        where: {
-          milestone_id: id,
-          industry_id: { not: null },
-        },
-      })
-
       for (const industryId of industry_ids) {
         const industry = await prisma.info__industry.findUnique({
           where: { id: industryId },
@@ -114,7 +107,11 @@ export async function PUT(
             impact = await extractMilestoneImpact(title, description, impactContext)
           }
           relationDataPromises.push(
-            prisma.relation__industry_or_company_milestone.create({
+            prisma.relation__industry_or_company_milestone.updateMany({
+              where: {
+                milestone_id: id,
+                industry_id: industryId,
+              },
               data: {
                 milestone_id: id,
                 industry_id: industryId,
@@ -128,13 +125,6 @@ export async function PUT(
 
     // 仅在客户端明确传了 company_ids 时，才替换公司关联
     if (hasCompanyIds) {
-      await prisma.relation__industry_or_company_milestone.deleteMany({
-        where: {
-          milestone_id: id,
-          company_id: { not: null },
-        },
-      })
-
       for (const companyId of company_ids) {
         const company = await prisma.info__stock_company.findUnique({
           where: { id: companyId },
@@ -149,7 +139,11 @@ export async function PUT(
             impact = await extractMilestoneImpact(title, description, impactContext)
           }
           relationDataPromises.push(
-            prisma.relation__industry_or_company_milestone.create({
+            prisma.relation__industry_or_company_milestone.updateMany({
+              where: {
+                milestone_id: id,
+                company_id: companyId,
+              },
               data: {
                 milestone_id: id,
                 company_id: companyId,
