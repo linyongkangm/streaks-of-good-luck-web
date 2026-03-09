@@ -48,7 +48,7 @@ export async function PUT(
   try {
     const id = parseInt((await params).id)
     const body = await request.json()
-    const { title, description, milestone_date, industry_ids = [], company_ids = [], keyword: clientKeyword, impact: clientImpact } = body
+    const { title, description, milestone_date, industry_ids, company_ids, keyword: clientKeyword, impact: clientImpact } = body
 
     if (!title || !milestone_date) {
       return NextResponse.json(
@@ -60,10 +60,22 @@ export async function PUT(
     // 如果客户端提供了 keyword，就用客户端的；否则调用 LLM 生成
     const keyword = clientKeyword ? clientKeyword : await extractMilestoneKeyword(title, description)
 
-    // 先删除旧的关联
-    await prisma.relation__industry_or_company_milestone.deleteMany({
-      where: { milestone_id: id },
-    })
+    const hasIndustryIds = Array.isArray(industry_ids)
+    const hasCompanyIds = Array.isArray(company_ids)
+
+    if (!hasIndustryIds && industry_ids !== undefined) {
+      return NextResponse.json(
+        { error: 'industry_ids 必须是数组' },
+        { status: 400 }
+      )
+    }
+
+    if (!hasCompanyIds && company_ids !== undefined) {
+      return NextResponse.json(
+        { error: 'company_ids 必须是数组' },
+        { status: 400 }
+      )
+    }
 
     // 更新 milestone
     const milestone = await prisma.info__milestone.update({
@@ -79,55 +91,73 @@ export async function PUT(
     // 为每个行业或公司计算 impact 并创建新的关联
     const relationDataPromises: Promise<any>[] = []
 
-    // 处理行业关联
-    for (const industryId of industry_ids) {
-      const industry = await prisma.info__industry.findUnique({
-        where: { id: industryId },
+    // 仅在客户端明确传了 industry_ids 时，才替换行业关联
+    if (hasIndustryIds) {
+      await prisma.relation__industry_or_company_milestone.deleteMany({
+        where: {
+          milestone_id: id,
+          industry_id: { not: null },
+        },
       })
-      if (industry) {
-        // 如果客户端提供了 impact，就用客户端的；否则调用 LLM 生成
-        let impact: string
-        if (clientImpact) {
-          impact = clientImpact
-        } else {
-          const impactContext = `行业: ${industry.name}`
-          impact = await extractMilestoneImpact(title, description, impactContext)
+
+      for (const industryId of industry_ids) {
+        const industry = await prisma.info__industry.findUnique({
+          where: { id: industryId },
+        })
+        if (industry) {
+          // 如果客户端提供了 impact，就用客户端的；否则调用 LLM 生成
+          let impact: string
+          if (clientImpact) {
+            impact = clientImpact
+          } else {
+            const impactContext = `行业: ${industry.name}`
+            impact = await extractMilestoneImpact(title, description, impactContext)
+          }
+          relationDataPromises.push(
+            prisma.relation__industry_or_company_milestone.create({
+              data: {
+                milestone_id: id,
+                industry_id: industryId,
+                impact,
+              },
+            })
+          )
         }
-        relationDataPromises.push(
-          prisma.relation__industry_or_company_milestone.create({
-            data: {
-              milestone_id: id,
-              industry_id: industryId,
-              impact,
-            },
-          })
-        )
       }
     }
 
-    // 处理公司关联
-    for (const companyId of company_ids) {
-      const company = await prisma.info__stock_company.findUnique({
-        where: { id: companyId },
+    // 仅在客户端明确传了 company_ids 时，才替换公司关联
+    if (hasCompanyIds) {
+      await prisma.relation__industry_or_company_milestone.deleteMany({
+        where: {
+          milestone_id: id,
+          company_id: { not: null },
+        },
       })
-      if (company) {
-        // 如果客户端提供了 impact，就用客户端的；否则调用 LLM 生成
-        let impact: string
-        if (clientImpact) {
-          impact = clientImpact
-        } else {
-          const impactContext = `公司: ${company.company_name}`
-          impact = await extractMilestoneImpact(title, description, impactContext)
+
+      for (const companyId of company_ids) {
+        const company = await prisma.info__stock_company.findUnique({
+          where: { id: companyId },
+        })
+        if (company) {
+          // 如果客户端提供了 impact，就用客户端的；否则调用 LLM 生成
+          let impact: string
+          if (clientImpact) {
+            impact = clientImpact
+          } else {
+            const impactContext = `公司: ${company.company_name}`
+            impact = await extractMilestoneImpact(title, description, impactContext)
+          }
+          relationDataPromises.push(
+            prisma.relation__industry_or_company_milestone.create({
+              data: {
+                milestone_id: id,
+                company_id: companyId,
+                impact,
+              },
+            })
+          )
         }
-        relationDataPromises.push(
-          prisma.relation__industry_or_company_milestone.create({
-            data: {
-              milestone_id: id,
-              company_id: companyId,
-              impact,
-            },
-          })
-        )
       }
     }
 
