@@ -60,6 +60,10 @@ export async function GET(request: NextRequest) {
       where,
       include: {
         relation__industry_or_company_milestone: {
+          where: {
+            ...(industryId && { industry_id: parseInt(industryId) }),
+            ...(companyId && { company_id: parseInt(companyId) }),
+          },
           include: {
             info__industry: true,
             info__stock_company: true,
