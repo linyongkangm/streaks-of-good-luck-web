@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as ctools from "@/app/tools/ctools";
 export type ArticleProcessResult = {
   title: string;
@@ -9,6 +9,7 @@ export type ArticleProcessResult = {
 };
 
 type PendingArticle = ArticleProcessResult & { id: string };
+const MAX_CONCURRENT = 5;
 
 export default function useStoreArticle() {
   // Placeholder for future article storage logic
@@ -16,27 +17,30 @@ export default function useStoreArticle() {
   const [showArticlePopup, setShowArticlePopup] = useState(false);
   const [processingCount, setProcessingCount] = useState(0);
   const [pendingQueue, setPendingQueue] = useState<PendingArticle[]>([]);
+  const queueRef = useRef<PendingArticle[]>([]);
+  const activeWorkersRef = useRef(0);
+  const isDrivingRef = useRef(false);
 
-  // 处理队列中的下一个任务
-  const processNextInQueue = async (queue: PendingArticle[], processing: number) => {
-    if (queue.length === 0 || processing >= 5) {
-      return;
-    }
-
-    const nextArticle = queue[0];
-    const remainingQueue = queue.slice(1);
-    setPendingQueue(remainingQueue);
-
-    // 更新状态为"处理中..."
+  const setArticleStatus = (sourceUrl: string, status: string) => {
     setArticleResults(prev =>
       prev.map(item =>
-        item.source_url === nextArticle.source_url
-          ? { ...item, status: '处理中...' }
+        item.source_url === sourceUrl
+          ? { ...item, status }
           : item
       )
     );
+  };
 
-    setProcessingCount(processing + 1);
+  const syncQueueState = () => {
+    setPendingQueue([...queueRef.current]);
+  };
+
+  const processSingleArticle = async (nextArticle: PendingArticle) => {
+    // 更新状态为"处理中..."
+    setArticleStatus(nextArticle.source_url, '处理中...');
+
+    activeWorkersRef.current += 1;
+    setProcessingCount(activeWorkersRef.current);
 
     try {
       const result = await ctools.processArticles([nextArticle.rawData]);
@@ -49,29 +53,47 @@ export default function useStoreArticle() {
           ? '已存在，无需处理'
           : '处理失败';
 
-      setArticleResults(prev =>
-        prev.map(item =>
-          item.source_url === nextArticle.source_url
-            ? { ...item, status: newStatus }
-            : item
-        )
-      );
+      setArticleStatus(nextArticle.source_url, newStatus);
     } catch (error) {
       console.error('Failed to process article:', error);
-      setArticleResults(prev =>
-        prev.map(item =>
-          item.source_url === nextArticle.source_url
-            ? { ...item, status: '处理失败' }
-            : item
-        )
-      );
+      setArticleStatus(nextArticle.source_url, '处理失败');
+    } finally {
+      activeWorkersRef.current = Math.max(0, activeWorkersRef.current - 1);
+      setProcessingCount(activeWorkersRef.current);
+      driveQueue();
+    }
+  };
+
+  // 单驱动循环：只有这个入口负责拉起任务
+  const driveQueue = () => {
+    if (isDrivingRef.current) {
+      return;
     }
 
-    setProcessingCount(prev => Math.max(0, prev - 1));
-    // 递归处理下一个
-    setTimeout(() => {
-      processNextInQueue(remainingQueue, processing);
-    }, 0);
+    isDrivingRef.current = true;
+    try {
+      while (activeWorkersRef.current < MAX_CONCURRENT && queueRef.current.length > 0) {
+        const nextArticle = queueRef.current.shift();
+        if (!nextArticle) {
+          break;
+        }
+
+        syncQueueState();
+        void processSingleArticle(nextArticle);
+      }
+    } finally {
+      isDrivingRef.current = false;
+    }
+  };
+
+  const enqueueArticles = (articles: PendingArticle[]) => {
+    if (articles.length === 0) {
+      return;
+    }
+
+    queueRef.current = [...queueRef.current, ...articles];
+    syncQueueState();
+    driveQueue();
   };
 
   // 直接保存文章（不生成摘要）
@@ -134,32 +156,10 @@ export default function useStoreArticle() {
     };
 
     // 更新为队列中状态
-    setArticleResults(prev =>
-      prev.map(item =>
-        item.source_url === article.source_url
-          ? { ...item, status: '队列中' }
-          : item
-      )
-    );
-
-    setPendingQueue(prev => [...prev, articleWithId]);
-
-    // 如果还有位置，立即处理队列
-    if (processingCount < 5) {
-      processNextInQueue([...pendingQueue, articleWithId], processingCount);
-    }
+    setArticleStatus(article.source_url, '队列中');
+    enqueueArticles([articleWithId]);
   };
 
-  // 监听 processingCount 和 pendingQueue 变化，自动处理下一个
-  useEffect(() => {
-    try {
-      if (processingCount < 5 && pendingQueue.length > 0) {
-        processNextInQueue(pendingQueue, processingCount);
-      }
-    } catch (error) {
-      console.error('Error processing queue:', error);
-    }
-  }, [processingCount, pendingQueue]);
   useEffect(() => {
     console.log('Setting up spider event listener');
     const handler = async (e: Event) => {
@@ -185,12 +185,12 @@ export default function useStoreArticle() {
         rawData: rec,
         id: `${rec.source_url}_${idx}_${Date.now()}`,
       }));
-      
-      setPendingQueue(prev => [...prev, ...articlesWithId]);
+
+      enqueueArticles(articlesWithId);
     };
     document.addEventListener('STORE_ARTICLE', handler);
     return () => document.removeEventListener('STORE_ARTICLE', handler);
-  }, [processingCount, pendingQueue]);
+  }, []);
 
   return { 
     articleResults, 

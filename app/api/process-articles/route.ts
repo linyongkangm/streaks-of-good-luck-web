@@ -18,11 +18,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // 先按 source_url 去重，避免同一批次重复入库触发唯一键冲突
+    const uniqueArticles = Array.from(
+      new Map(
+        articles
+          .filter((a: summary__article) => !!a?.source_url)
+          .map((a: summary__article) => [a.source_url, a])
+      ).values()
+    )
+
     // 检查是否已存在相同的文章（基于source_url）
     const existingArticles = await prisma.summary__article.findMany({
       where: {
         source_url: {
-          in: articles.map((a: summary__article) => a.source_url),
+          in: uniqueArticles.map((a: summary__article) => a.source_url),
         },
       },
       select: { source_url: true },
@@ -30,7 +39,7 @@ export async function POST(request: NextRequest) {
     const existingUrls = new Set(existingArticles.map((a) => a.source_url))
 
     // 只处理新文章，过滤掉已存在的文章
-    const newArticles = articles.filter((a: summary__article) => !existingUrls.has(a.source_url))
+    const newArticles = uniqueArticles.filter((a: summary__article) => !existingUrls.has(a.source_url))
 
     if (newArticles.length === 0) {
       return NextResponse.json({
@@ -38,7 +47,7 @@ export async function POST(request: NextRequest) {
         message: '所有文章均已存在，未处理任何新文章',
         successful: 0,
         failed: 0,
-        skipped: articles.length,
+        skipped: uniqueArticles.length,
         existingSourceUrls: Array.from(existingUrls),
       })
     }
@@ -59,7 +68,7 @@ export async function POST(request: NextRequest) {
     // 统计成功和失败的数量
     const successful = results.filter((r) => r.status === 'fulfilled' && (r.value as any).success).length
     const failed = results.filter((r) => r.status === 'rejected' || (r.value as any).success === false).length
-    const skipped = articles.length - newArticles.length
+    const skipped = uniqueArticles.length - newArticles.length
 
     return NextResponse.json({
       success: true,
@@ -67,7 +76,7 @@ export async function POST(request: NextRequest) {
       successful,
       failed,
       skipped,
-      total: articles.length,
+      total: uniqueArticles.length,
       successfulSourceUrls: newArticles
         .filter((_, index) => results[index].status === 'fulfilled' && (results[index] as any).value.success)
         .map((a: any) => a.source_url),

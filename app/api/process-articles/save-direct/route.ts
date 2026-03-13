@@ -14,23 +14,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 检查文章是否已存在
-    const existing = await prisma.summary__article.findUnique({
+    // 直接保存文章，重复提交时按 source_url 幂等处理
+    const savedArticle = await prisma.summary__article.upsert({
       where: {
         source_url: article.source_url,
       },
-    })
-
-    if (existing) {
-      return NextResponse.json({
-        success: false,
-        message: '文章已存在',
-      })
-    }
-
-    // 直接保存文章，使用原始文本作为摘要
-    const savedArticle = await prisma.summary__article.create({
-      data: {
+      update: {},
+      create: {
         title: article.title || '未命名文章',
         summary: article.source_text ? article.source_text.substring(0, 500) : '无摘要',
         source_url: article.source_url,

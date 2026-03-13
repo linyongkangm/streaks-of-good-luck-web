@@ -51,20 +51,12 @@ export async function generateArticleAnalysis(article: summary__article, isUpdat
       if (issue_date) data.issue_date = new Date(issue_date);
       if (contributor) data.contributor = contributor;
 
-      if (isUpdate) {
-        // 更新现有文章
-        await prisma.summary__article.update({
-          where: { source_url },
-          data,
-        });
-        console.log(`✓ Article "${title}" updated in database`);
-      } else {
-        // 创建新文章
-        await prisma.summary__article.create({
-          data,
-        });
-        console.log(`✓ Article "${title}" saved to database`);
-      }
+      await prisma.summary__article.upsert({
+        where: { source_url },
+        update: data,
+        create: data,
+      });
+      console.log(`✓ Article "${title}" ${isUpdate ? 'updated' : 'saved'} in database`);
 
       return { success: true, data: data };
     }
