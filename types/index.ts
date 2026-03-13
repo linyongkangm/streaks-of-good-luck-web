@@ -269,8 +269,8 @@ export interface StockValuationItem {
 }
 
 export type StockValuationResponse = ApiResponse<{
-  results: StockValuationItem[]
-  quantileData: QuantileData
+  results: StockValuationItem[] // 每日行情，按复权区分close_price、valuation和quantile_prices。quantile_prices包含不同估值指标的10%、30%、50%、70%、90%分位价格
+  quantileData: QuantileData // 按复权，在不同估值指标上的10%、30%、50%、70%、90%分位指标
 }>
 
 // 财务预测（indicator__predict_financial_report）相关类型

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Chart } from '@antv/g2'
-import type { info__stock_company, info__milestone, StockValuationResponse, ValuationNumbers, QuantilePriceSet, StockPredictionItem } from '@/types'
+import type { info__stock_company, info__milestone, StockValuationResponse, ValuationNumbers, QuantilePriceSet, StockPredictionItem, StockValuationItem } from '@/types'
 import * as tools from '@/app/tools'
 import Select from '@/app/widget/Select'
 import { DateTime } from 'luxon'
@@ -10,6 +10,37 @@ import { FormLabel } from '@/app/widget/Form'
 import Loading from '@/app/widget/Loading'
 import Panel from '@/app/widget/Panel'
 import Radio from '@/app/widget/Radio'
+const DATE_FORMAT = 'yyyy-MM-dd'
+interface ValuationChartData {
+  date: Date,
+  closePrice: number,
+  valuation: number,
+  total_market_value: number,
+  quantile_price_p10: number,
+  quantile_price_p30: number,
+  quantile_price_p50: number,
+  quantile_price_p70: number,
+  quantile_price_p90: number,
+  milestones?: info__milestone[],
+}
+
+interface PredictChartData {
+  date: Date,
+  predict_quantile_price_p10: number,
+  predict_quantile_price_p30: number,
+  predict_quantile_price_p50: number,
+  predict_quantile_price_p70: number,
+  predict_quantile_price_p90: number,
+  milestones?: info__milestone[],
+}
+
+interface JustMilestoneChartData {
+  date: Date,
+  y: number,
+  milestones?: info__milestone[],
+  [key: string]: any,
+}
+
 
 interface FinancialMetrics {
   pe: number[];
@@ -95,7 +126,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
 
   // `dateRange` is computed on demand via `getDateRange()`
 
-  const fetchData = async () => {
+  const fetchValuationData = async () => {
     if (!selectedCompany?.id) return
 
     setLoading(true)
@@ -177,169 +208,157 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
 
   useEffect(() => {
     if (selectedCompany) {
-      fetchData()
+      fetchValuationData()
       fetchPredictData()
       fetchMilestones()
     }
   }, [selectedCompany, timeRange])
 
   useEffect(() => {
-    if (!chartRef.current || !valuationData) return
-
-    const chartData = valuationData.results || []
-
-    if (chartData.length === 0) return
-
-    const q4PredictByYear = new Map<number, any>()
-    predictData?.forEach((item) => {
-      const reportDate = tools.toLuxon(item.report_date)
-      if (!reportDate.isValid || reportDate.quarter !== 4) return
-      q4PredictByYear.set(reportDate.year, item)
-    })
-
-    const chartDatasource: any[] = []
-    chartData.forEach((item) => {
-      const valuation = (item[`${adjustType}_valuation`] as ValuationNumbers)?.[metric]
-      const closePrice = item[`${adjustType}_close_price`]
-      const totalShares = Number(item.total_shares)
-      const marketValue = Number(closePrice) * totalShares
-      const predictDividendYieldTexts = new Map<string, string>()
-      q4PredictByYear.forEach((predict, year) => {
-        if (
-          predict &&
-          Number.isFinite(Number(predict.parent_netprofit)) &&
-          Number.isFinite(Number(predict.dividend_payout_ratio))) {
-          const dividendYield = ((Number(predict.parent_netprofit) * (Number(predict.dividend_payout_ratio) / 100)) / marketValue) * 100
-          predictDividendYieldTexts.set(`predictDividendYieldText${year}Q4`, `${dividendYield.toFixed(2)}%`)
-        } else {
-          predictDividendYieldTexts.set(`predictDividendYieldText${year}Q4`, '--')
+    if (!chartRef.current || !valuationData || !predictData || !milestones) return
+    const totalShare = valuationData.results[valuationData.results.length - 1]?.total_shares!; // 总股本
+    const quantileData = valuationData.quantileData?.[adjustType]?.[metric]; // 分位数数据
+    const chartDatasourceMap = new Map<string, Partial<ValuationChartData & PredictChartData & JustMilestoneChartData>>()
+    const mergeSetChartDatasourceMap = (key: string, chartData: ValuationChartData | PredictChartData | JustMilestoneChartData) => {
+      if (chartDatasourceMap.has(key)) {
+        const existingData = chartDatasourceMap.get(key)!
+        const newData = {
+          ...existingData,
+          ...chartData,
         }
-      })
-      const dataPoint: any = {
-        trade_date: new Date(item.trade_date),
-        total_market_value: Number.isFinite(marketValue) ? marketValue : undefined,
-        ...Object.fromEntries(predictDividendYieldTexts),
+        newData.y = newData.closePrice || newData.predict_quantile_price_p50 || newData.y;
+        chartDatasourceMap.set(key, newData)
+      } else {
+        const newData: Partial<ValuationChartData & PredictChartData & JustMilestoneChartData> = {
+          ...chartData,
+        }
+        newData.y = newData.closePrice || newData.predict_quantile_price_p50 || newData.y;
+        chartDatasourceMap.set(key, newData)
       }
-      if (item.company_id) {
-        dataPoint.company_name = item.company_name
-        dataPoint.company_code = item.company_code
-        dataPoint.company_id = item.company_id
+    };
+    const milestonesMap = new Map<string, info__milestone[]>()
+    milestones.forEach(milestone => {
+      const milestoneDatetime = tools.toLuxon(milestone.milestone_date)
+      const key = `${milestoneDatetime.toFormat(DATE_FORMAT)}`;
+      if (!milestonesMap.has(key)) {
+        milestonesMap.set(key, [])
       }
-      dataPoint.closePrice = parseFloat(closePrice.toFixed(2))
+      milestonesMap.get(key)?.push(milestone)
+    })
+    const stockValuationItemMap = new Map<string, StockValuationItem>()
+    valuationData.results.forEach(item => {
+      const key = `${tools.toLuxon(item.trade_date).toFormat(DATE_FORMAT)}`;
+      stockValuationItemMap.set(key, item)
+    })
+    const start_date = tools.toLuxon(valuationData.results[0].trade_date)
+    const end_date = tools.toLuxon(valuationData.results[valuationData.results.length - 1].trade_date)
+    let prevValuationChartData: ValuationChartData | undefined = undefined
+    for (let i_date = tools.toLuxon(start_date); i_date <= end_date; i_date = i_date.plus({ days: 1 })) {
+      const key = i_date.toFormat(DATE_FORMAT)
+      const iMilestones = milestonesMap.get(key)
+      milestonesMap.delete(key) // 从milestonesMap中删除这个日期的milestones，表示这个日期的milestones已经被处理过了，不需要再处理了
+      const stockValuationItem = stockValuationItemMap.get(key)
 
-      // 只有当 valuation 存在且为正数时，才添加 valuation 和 quantile_price 数据
-      if (valuation && valuation > 0) {
-        dataPoint.valuation = parseFloat(valuation.toFixed(2))
-        const quantile_price: QuantilePriceSet = item.quantile_prices?.[adjustType]?.[metric]
-        if (quantile_price) {
-          Object.entries(quantile_price).forEach(([key, value]) => {
-            if (value !== null) {
-              dataPoint[`quantile_price_${key}`] = parseFloat(value.toFixed(2))
-            }
+      if (stockValuationItem) {
+        const quantilePriceSet: QuantilePriceSet = stockValuationItem.quantile_prices?.[adjustType]?.[metric];
+        prevValuationChartData = {
+          date: i_date.toJSDate(),
+          closePrice: stockValuationItem[`${adjustType}_close_price`],
+          valuation: (stockValuationItem[`${adjustType}_valuation`] as ValuationNumbers)?.[metric] as number,
+          total_market_value: Number(stockValuationItem.qfq_close_price) * Number(stockValuationItem.total_shares),
+          quantile_price_p10: quantilePriceSet['p10'] as number,
+          quantile_price_p30: quantilePriceSet['p30'] as number,
+          quantile_price_p50: quantilePriceSet['p50'] as number,
+          quantile_price_p70: quantilePriceSet['p70'] as number,
+          quantile_price_p90: quantilePriceSet['p90'] as number,
+          milestones: iMilestones,
+        }
+        mergeSetChartDatasourceMap(key, prevValuationChartData)
+      } else if (iMilestones) {
+        // 如果没有估值数据但有里程碑，也要把这个日期加到图表数据中，这样里程碑事件才能显示在图表上
+        if (prevValuationChartData) {
+          mergeSetChartDatasourceMap(key, {
+            date: i_date.toJSDate(),
+            y: prevValuationChartData.closePrice,
+            total_market_value: prevValuationChartData.total_market_value,
+            quantile_price_p10: prevValuationChartData.quantile_price_p10,
+            quantile_price_p30: prevValuationChartData.quantile_price_p30,
+            quantile_price_p50: prevValuationChartData.quantile_price_p50,
+            quantile_price_p70: prevValuationChartData.quantile_price_p70,
+            quantile_price_p90: prevValuationChartData.quantile_price_p90,
+            milestones: iMilestones,
           })
         }
       }
+    }
 
-      chartDatasource.push(dataPoint)
-    })
-
-    const quantileData: QuantileData = valuationData.quantileData || {}
-
-
-    predictData?.forEach((item, index, array) => {
+    predictData.forEach((item, index, arr) => {
+      const reportDate = tools.toLuxon(item.report_date)
+      if (!reportDate.isValid) return
       const fieldName = ValuationFieldMap[metric]
-      const metricValue = item[fieldName]
-
-      if (!metricValue) return
-      const trade_date = new Date(item.report_date)
-      const dataPoint: any = {
-        trade_date: trade_date,
+      const predictValue = Number(item[fieldName])
+      if (!predictValue) return
+      const predictChartData: PredictChartData = {
+        date: reportDate.toJSDate(),
+        predict_quantile_price_p10: (Number(predictValue) / totalShare) * quantileData[0],
+        predict_quantile_price_p30: (Number(predictValue) / totalShare) * quantileData[1],
+        predict_quantile_price_p50: (Number(predictValue) / totalShare) * quantileData[2],
+        predict_quantile_price_p70: (Number(predictValue) / totalShare) * quantileData[3],
+        predict_quantile_price_p90: (Number(predictValue) / totalShare) * quantileData[4],
       }
-      const totalShare = chartData[chartData.length - 1].total_shares
-      Quantiles.forEach((q, index) => {
-        const quantile = quantileData[adjustType]?.[metric]?.[index]
-        dataPoint[`predict_quantile_price_p${q}`] = parseFloat(((Number(metricValue) / totalShare) * quantile).toFixed(2))
-      });
-
-      if (index === 0 && dataPoint.trade_date > chartDatasource[chartDatasource.length - 1].trade_date) {
-        const lastChartDataPoint = chartDatasource[chartDatasource.length - 1]
-        const lastTradeDate = new Date(lastChartDataPoint.trade_date)
-        lastTradeDate.setDate(lastTradeDate.getDate() - 30)
-        chartDatasource.push({
-          ...dataPoint,
-          trade_date: lastTradeDate,
-        })
-      }
-      chartDatasource.push(dataPoint)
-
-      const nextPredictData = array[index + 1]
-      const endTradeDate = nextPredictData ? new Date(nextPredictData.report_date) : new Date(item.report_date)
-      if (nextPredictData) {
-        endTradeDate.setDate(endTradeDate.getDate() - 1)
-      } else {
-        endTradeDate.setDate(endTradeDate.getDate() + 3 * 30)
-      }
-      chartDatasource.push({
-        ...dataPoint,
-        trade_date: endTradeDate,
-      })
-    });
-
-    // 将里程碑数据合并到chartDatasource中
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
-    milestones?.forEach((milestone) => {
-      const milestoneDate = new Date(milestone.milestone_date as any)
-      milestoneDate.setHours(0, 0, 0, 0)
-
-      const isFuture = milestoneDate > today
-
-      if (isFuture) {
-        // 未来事件：在预测分位区域的P50处显示
-        const closestPredictPoint = chartDatasource
-          .filter(d => d.predict_quantile_price_p50 !== undefined)
-          .reduce((prev, curr) => {
-            if (!prev) return curr
-            const prevDiff = Math.abs(new Date(prev.trade_date).getTime() - milestoneDate.getTime())
-            const currDiff = Math.abs(new Date(curr.trade_date).getTime() - milestoneDate.getTime())
-            return currDiff < prevDiff ? curr : prev
-          }, null as any)
-
-        if (closestPredictPoint) {
-          if (chartDatasource[chartDatasource.length - 1].trade_date.getTime() > milestoneDate.getTime()) {
-            // 在P50分位线上创建里程碑点
-            chartDatasource.splice(chartDatasource.indexOf(closestPredictPoint) + 1, 0, {
-              ...closestPredictPoint,
-              trade_date: milestoneDate,
-              is_milestone: true,
-              milestone_title: milestone.title,
-              milestone_keyword: milestone.keyword || undefined,
+      const appendPredictMilestoneChartData = (start: DateTime, end: DateTime) => {
+        Array.from(milestonesMap.values()).forEach(milestones => {
+          const milestone_date = tools.toLuxon(milestones[0].milestone_date);
+          if (start <= milestone_date && milestone_date <= end) {
+            const key = milestone_date.toFormat(DATE_FORMAT)
+            milestonesMap.delete(key)
+            mergeSetChartDatasourceMap(key, {
+              y: predictChartData.predict_quantile_price_p50,
+              milestones,
+              date: milestone_date.toJSDate(),
             })
           }
+        })
+      }
+
+      // 如果第一个预测数据的报告日期在现有数据的最后一个日期之后，则在图表中添加一个过渡点，日期为最后一个现有数据日期的前一个季度交易日，数值与最后一个现有数据点相同
+      if (index === 0 && end_date < reportDate) {
+        const date = end_date.minus({ quarter: 1 })
+        mergeSetChartDatasourceMap(date.toFormat(DATE_FORMAT), {
+          ...predictChartData,
+          date: date.toJSDate(),
+        })
+        appendPredictMilestoneChartData(date, reportDate)
+      }
+
+      mergeSetChartDatasourceMap(reportDate.toFormat(DATE_FORMAT), predictChartData);
+
+      const nextPredictData = arr[index + 1]
+      if (nextPredictData) {
+        // 在下一个预测数据前一天添加一个过渡点，数值与当前预测数据相同
+        const nextReportDate = tools.toLuxon(nextPredictData.report_date).minus({ days: 1 }) // 下一个预测数据的报告日期的前一个交易日
+        appendPredictMilestoneChartData(reportDate, nextReportDate)
+        if (nextReportDate.isValid && reportDate < nextReportDate) {
+          mergeSetChartDatasourceMap(nextReportDate.toFormat(DATE_FORMAT), {
+            ...predictChartData,
+            date: nextReportDate.toJSDate(),
+          })
         }
       } else {
-        // 历史事件：在实际价格线上显示
-        const closestDataPoint = chartDatasource
-          .filter(d => d.closePrice !== undefined && !d.predict_quantile_price_p50)
-          .reduce((prev, curr) => {
-            if (!prev) return curr
-            const prevDiff = Math.abs(new Date(prev.trade_date).getTime() - milestoneDate.getTime())
-            const currDiff = Math.abs(new Date(curr.trade_date).getTime() - milestoneDate.getTime())
-            return currDiff < prevDiff ? curr : prev
-          }, null as any)
-
-        if (closestDataPoint) {
-          closestDataPoint.is_milestone = true
-          closestDataPoint.milestone_title = milestone.title
-          closestDataPoint.milestone_keyword = milestone.keyword || undefined
-        }
+        // 如果是最后一个预测数据，则在图表中添加一个过渡点，日期为报告日期的后一个季度交易日，数值与当前预测数据相同
+        const closePredictReportDate = reportDate.plus({ days: 90 })
+        appendPredictMilestoneChartData(reportDate, closePredictReportDate)
+        mergeSetChartDatasourceMap(closePredictReportDate.toFormat(DATE_FORMAT), {
+          ...predictChartData,
+          date: reportDate.plus({ days: 90 }).toJSDate(),
+        })
       }
-    })
-
+    });
     if (chartInstance.current) {
       chartInstance.current.destroy()
     }
+    const chartDatasource = Array.from(chartDatasourceMap.values())
+    chartDatasource.sort((a, b) => (a?.date?.getTime() || 0) - (b?.date?.getTime() || 0))
     const chart = new Chart({
       container: chartRef.current,
       autoFit: true,
@@ -349,7 +368,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
       type: 'view',
       data: chartDatasource,
       encode: {
-        x: 'trade_date',
+        x: 'date',
       },
       legend: false,
       axis: {
@@ -365,11 +384,73 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
       interaction: {
         tooltip: {
           filter: (d) => {
-            return d.value !== 'undefined'
+            return d.value !== 'undefined' && d.value !== '-'
           },
         }
       },
       children: [
+        {
+          type: 'line',
+          encode: {
+            y: `y`,
+          },
+          style: {
+            lineWidth: 0,
+          },
+          tooltip: {
+            title: (d) => {
+              return `${tools.toLuxon(d.date).toFormat('yyyy-MM-dd')}`
+            },
+            items: [
+              {
+                name: `收盘价(${adjustTypeLabels[adjustType]})`,
+                field: 'closePrice',
+              },
+              {
+                name: metricLabels[metric],
+                field: 'valuation',
+                valueFormatter: tools.formatNumber,
+              },
+              {
+                name: '总市值',
+                field: 'total_market_value',
+                valueFormatter: tools.formatNumber,
+              },
+              // ...q4PredictByYear.size > 0 ? Array.from(q4PredictByYear.keys()).map(year => {
+              //   return {
+              //     name: `${year}股息率`,
+              //     field: `predictDividendYieldText${year}Q4`,
+              //   }
+              // }) : [],
+              ...Quantiles.map((q, index) => {
+                return {
+                  name: `${q}分位(${valuationData.quantileData[adjustType]?.[metric]?.[index] ? `${valuationData.quantileData[adjustType][metric][index].toFixed(2)}` : ''})`,
+                  field: `quantile_price_p${q}`,
+                  color: GrayGradient[index],
+                  valueFormatter: tools.formatNumber,
+                }
+              }).reverse(),
+              ...Quantiles.map((q, index) => {
+                return {
+                  name: `预测${q}分位(${valuationData.quantileData[adjustType]?.[metric]?.[index] ? `${valuationData.quantileData[adjustType][metric][index].toFixed(2)}` : ''})`,
+                  field: `predict_quantile_price_p${q}`,
+                  color: YellowGradient[index],
+                  valueFormatter: tools.formatNumber,
+                }
+              }).reverse(),
+              {
+                name: '事件',
+                field: 'milestones',
+                color: '#ff6b6b',
+                valueFormatter: (milestones: info__milestone[]) => {
+                  if (!milestones || milestones.length === 0) return undefined as any
+                  return milestones.map(m => m.keyword).join(', ')
+                }
+              },
+            ]
+          },
+        },
+        // 收盘价线
         {
           type: 'line',
           encode: {
@@ -381,54 +462,12 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
             },
           },
           style: {
+            connect: true,
             lineWidth: 2,
           },
-          tooltip: [
-            {
-              name: `收盘价(${adjustTypeLabels[adjustType]})`,
-              channel: 'y',
-            },
-            {
-              name: metricLabels[metric],
-              field: 'valuation',
-            },
-            {
-              name: '总市值',
-              field: 'total_market_value',
-              valueFormatter: (value) => {
-                if (value === undefined || value === null || Number.isNaN(Number(value))) {
-                  return undefined
-                }
-                return tools.formatNumber(Number(value))
-              },
-            },
-            ...q4PredictByYear.size > 0 ? Array.from(q4PredictByYear.keys()).map(year => {
-              return {
-                name: `${year}股息率`,
-                field: `predictDividendYieldText${year}Q4`,
-              }
-            }) : [],
-            ...Quantiles.map((q, index) => {
-              return {
-                name: `${q}分位(${quantileData[adjustType]?.[metric]?.[index] ? `${quantileData[adjustType][metric][index].toFixed(2)}` : ''})`,
-                field: `quantile_price_p${q}`,
-                color: GrayGradient[index],
-              }
-            }).reverse(),
-            ...(chartDatasource[chartDatasource.length - 1]?.predict_quantile_price_p10 ? Quantiles.map((q, index) => {
-              return {
-                name: `预测${q}分位(${quantileData[adjustType]?.[metric]?.[index] ? `${quantileData[adjustType][metric][index].toFixed(2)}` : ''})`,
-                field: `predict_quantile_price_p${q}`,
-                color: YellowGradient[index],
-              }
-            }) : []).reverse(),
-            {
-              name: '事件',
-              field: 'milestone_title',
-              color: '#ff6b6b',
-            },
-          ],
+          tooltip: false
         },
+        // 分位数阶梯线
         ...Quantiles.map((q, index) => {
           return {
             type: 'line',
@@ -436,50 +475,54 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
               y: `quantile_price_p${q}`,
             },
             style: {
+              connect: true,
               lineWidth: 1,
               stroke: GrayGradient[index],
             },
             tooltip: false,
           }
         }),
-        ...(chartDatasource[chartDatasource.length - 1]?.predict_quantile_price_p10 ? Quantiles.map((q, index) => {
-          return [{
+        // 预测分位数阶梯线
+        ...(predictData.length > 0 ? Quantiles.map((q, index) => {
+          return {
             type: 'line',
             encode: {
               y: `predict_quantile_price_p${q}`,
             },
             style: {
+              connect: true,
               lineWidth: 1,
               stroke: YellowGradient[index],
             },
             tooltip: false,
-          },
-          {
+          }
+        }) : []),
+        // 显示预测分位数数据点
+        ...(predictData.length > 0 ? Quantiles.map((q, index) => {
+          return {
             type: 'point',
             encode: {
               y: `predict_quantile_price_p${q}`,
-              shape: (d: any) => d.is_milestone ? 'diamond' : 'circle',
-              size: 5
+              size: 3
             },
             style: {
               fill: YellowGradient[index],
               stroke: YellowGradient[index],
             },
             tooltip: false,
-          }]
-        }).flat() : []),
-        // 显示所有数据点，里程碑用特殊样式标记
+          }
+        }) : []),
+        // 显示里程碑数据点
         {
           type: 'point',
           encode: {
-            y: 'closePrice',
-            shape: (d: any) => d.is_milestone ? 'diamond' : 'circle',
-            size: 5,
-            color: (d: any) => d.is_milestone ? '#ff6b6b' : '#ffffff00',
+            y: 'y',
+            shape: 'diamond',
+            size: 8,
           },
           style: {
-            stroke: (d: any) => d.is_milestone ? '#ff6b6b' : '#ffffff00',
-            fill: (d: any) => d.is_milestone ? '#ff6b6b' : '#ffffff00',
+            stroke: (d: ValuationChartData) => d.milestones ? '#ff6b6b' : '#ffffff00',
+            fill: (d: ValuationChartData) => d.milestones ? '#ff6b6b' : '#ffffff00',
           },
           tooltip: false
         },
