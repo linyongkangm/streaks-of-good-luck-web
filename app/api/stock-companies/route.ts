@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import type { StockCompanyListResponse } from '@/types'
+import { runInitialCompanySync } from './company-sync-utils'
 
 // GET /api/stock-companies - 获取所有股票公司信息
 export async function GET(request: NextRequest): Promise<NextResponse<StockCompanyListResponse | { error: string }>> {
@@ -93,7 +94,15 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json(company);
+    const syncResult = await runInitialCompanySync(company)
+
+    return NextResponse.json({
+      message: syncResult.success
+        ? '公司创建成功，并已同步财报和行情数据'
+        : '公司创建成功，但部分同步失败',
+      data: company,
+      sync: syncResult,
+    });
   } catch (error) {
     console.error('创建公司失败:', error);
     return NextResponse.json({ error: '创建公司失败' }, { status: 500 });

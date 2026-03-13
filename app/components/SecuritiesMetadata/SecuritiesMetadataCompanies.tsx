@@ -148,7 +148,23 @@ export default function SecuritiesMetadataCompanies({ selectedCompany, onSelectC
       })
 
       if (res.ok) {
-        alert(editingCompany ? '更新成功' : '创建成功')
+        const result = await res.json()
+        if (editingCompany) {
+          alert('更新成功')
+        } else {
+          const sync = result.sync
+          const financialCounts = sync?.financials?.counts
+          const quoteInfo = sync?.quotes
+          const warnings = [sync?.financials?.error, sync?.quotes?.error].filter(Boolean)
+          alert(
+            `${result.message || '创建成功'}\n` +
+            `资产负债表: ${financialCounts?.balanceSheet ?? 0} 条\n` +
+            `利润表: ${financialCounts?.profitSheet ?? 0} 条\n` +
+            `现金流量表: ${financialCounts?.cashFlowSheet ?? 0} 条\n` +
+            `行情: ${quoteInfo?.count ?? 0} 条 (${quoteInfo?.startDate ?? '-'} ~ ${quoteInfo?.endDate ?? '-'})` +
+            `${warnings.length > 0 ? `\n警告: ${warnings.join('；')}` : ''}`
+          )
+        }
         setShowForm(false)
         setEditingCompany(null)
         resetForm()
