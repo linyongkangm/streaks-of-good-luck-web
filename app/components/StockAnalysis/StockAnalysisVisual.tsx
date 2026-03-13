@@ -71,47 +71,45 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
   const [adjustType, setAdjustType] = useState<AdjustType>('qfq')
   const [metric, setMetric] = useState<ValuationMetric>('pe')
   const [timeRange, setTimeRange] = useState<TimeRange>('3')
-  const [dateRange, setDateRange] = useState({
-    start_date: DateTime.now().minus({ years: 3 }),
-    end_date: DateTime.now(),
-  })
-  const [data, setData] = useState<StockValuationResponse['data'] | null>(null)
-  const [predictData, setPredictData] = useState<StockPredictionItem[] | null>(null)
-  const [milestones, setMilestones] = useState<info__milestone[] | null>(null)
 
-  useEffect(() => {
+  const getDateRange = () => {
     if (timeRange === 'all') {
-      // 使用企业上市日期作为起始日期
       const listDate = selectedCompany?.ipo_date
         ? tools.toLuxon(selectedCompany.ipo_date)
         : DateTime.now().minus({ years: 10 })
-      setDateRange({
+      return {
         start_date: listDate,
         end_date: DateTime.now(),
-      })
+      }
     } else {
       const years = parseInt(timeRange)
-      setDateRange({
+      return {
         start_date: DateTime.now().minus({ years }),
         end_date: DateTime.now(),
-      })
+      }
     }
-  }, [timeRange, selectedCompany])
+  }
+  const [valuationData, setValuationData] = useState<StockValuationResponse['data'] | null>(null)
+  const [predictData, setPredictData] = useState<StockPredictionItem[] | null>(null)
+  const [milestones, setMilestones] = useState<info__milestone[] | null>(null)
+
+  // `dateRange` is computed on demand via `getDateRange()`
 
   const fetchData = async () => {
     if (!selectedCompany?.id) return
 
     setLoading(true)
     try {
+      const { start_date, end_date } = getDateRange()
       const params = new URLSearchParams({
-        start_date: dateRange.start_date.toISODate() || '',
-        end_date: dateRange.end_date.toISODate() || '',
+        start_date: start_date.toISODate() || '',
+        end_date: end_date.toISODate() || '',
       })
 
       const res = await fetch(`/api/stock-companies/${selectedCompany.id}/valuation?${params}`)
       if (res.ok) {
         const result = await res.json()
-        setData(result.data)
+        setValuationData(result.data)
       }
     } catch (error) {
       console.error('获取估值数据失败:', error)
@@ -156,8 +154,9 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
       }
 
       // 获取每个行业的里程碑
+      const startDateIso = getDateRange().start_date.toISODate()
       const milestonePromises = industries.map((industryRelation: any) =>
-        fetch(`/api/milestones?industryId=${industryRelation.industry_id}&startDate=${dateRange.start_date.toISODate()}`)
+        fetch(`/api/milestones?industryId=${industryRelation.industry_id}&startDate=${startDateIso}`)
           .then(res => res.ok ? res.json() : { data: [] })
           .then(result => result.data || [])
       )
@@ -182,12 +181,12 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
       fetchPredictData()
       fetchMilestones()
     }
-  }, [selectedCompany, dateRange])
+  }, [selectedCompany, timeRange])
 
   useEffect(() => {
-    if (!chartRef.current || !data) return
+    if (!chartRef.current || !valuationData) return
 
-    const chartData = data.results || []
+    const chartData = valuationData.results || []
 
     if (chartData.length === 0) return
 
@@ -244,7 +243,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
       chartDatasource.push(dataPoint)
     })
 
-    const quantileData: QuantileData = data.quantileData || {}
+    const quantileData: QuantileData = valuationData.quantileData || {}
 
 
     predictData?.forEach((item, index, array) => {
@@ -494,7 +493,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
         chartInstance.current.destroy()
       }
     }
-  }, [data, adjustType, metric, predictData, selectedCompany])
+  }, [valuationData, adjustType, metric, predictData, selectedCompany])
 
   return (
     <Panel>
@@ -533,7 +532,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
 
       {loading ? (
         <Loading />
-      ) : !data || data.results.length === 0 ? (
+      ) : !valuationData || valuationData.results.length === 0 ? (
         <div className="text-center py-12 text-slate-500">暂无数据</div>
       ) : (
         <div ref={chartRef} className="w-full"></div>
