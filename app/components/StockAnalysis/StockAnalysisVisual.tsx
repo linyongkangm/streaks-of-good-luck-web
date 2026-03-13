@@ -52,6 +52,13 @@ const timeRangeLabels = {
   'all': '全部',
 }
 
+const ValuationFieldMap: Record<ValuationMetric, 'parent_netprofit' | 'total_parent_equity' | 'operate_income' | 'netcash_operate'> = {
+  pe: 'parent_netprofit',
+  pb: 'total_parent_equity',
+  ps: 'operate_income',
+  pc: 'netcash_operate',
+}
+
 const Quantiles = [10, 30, 50, 70, 90];
 const GrayGradient = tools.genColorGradient(Quantiles.length, '#6e8a8d', '#2b677f');
 const YellowGradient = tools.genColorGradient(Quantiles.length, '#8f773a', '#d71a1a');
@@ -75,7 +82,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
   useEffect(() => {
     if (timeRange === 'all') {
       // 使用企业上市日期作为起始日期
-      const listDate = selectedCompany?.ipo_date 
+      const listDate = selectedCompany?.ipo_date
         ? tools.toLuxon(selectedCompany.ipo_date)
         : DateTime.now().minus({ years: 10 })
       setDateRange({
@@ -239,14 +246,9 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
 
     const quantileData: QuantileData = data.quantileData || {}
 
-    const fieldMap: Record<ValuationMetric, 'parent_netprofit' | 'total_parent_equity' | 'operate_income' | 'netcash_operate'> = {
-      pe: 'parent_netprofit',
-      pb: 'total_parent_equity',
-      ps: 'operate_income',
-      pc: 'netcash_operate',
-    }
+
     predictData.forEach((item, index, array) => {
-      const fieldName = fieldMap[metric]
+      const fieldName = ValuationFieldMap[metric]
       const metricValue = item[fieldName]
 
       if (!metricValue) return
