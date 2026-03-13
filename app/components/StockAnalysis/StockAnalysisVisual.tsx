@@ -71,13 +71,13 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
   const [adjustType, setAdjustType] = useState<AdjustType>('qfq')
   const [metric, setMetric] = useState<ValuationMetric>('pe')
   const [timeRange, setTimeRange] = useState<TimeRange>('3')
-  const [data, setData] = useState<StockValuationResponse['data'] | null>(null)
   const [dateRange, setDateRange] = useState({
     start_date: DateTime.now().minus({ years: 3 }),
     end_date: DateTime.now(),
   })
-  const [predictData, setPredictData] = useState<StockPredictionItem[]>([])
-  const [milestones, setMilestones] = useState<info__milestone[]>([])
+  const [data, setData] = useState<StockValuationResponse['data'] | null>(null)
+  const [predictData, setPredictData] = useState<StockPredictionItem[] | null>(null)
+  const [milestones, setMilestones] = useState<info__milestone[] | null>(null)
 
   useEffect(() => {
     if (timeRange === 'all') {
@@ -192,7 +192,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
     if (chartData.length === 0) return
 
     const q4PredictByYear = new Map<number, any>()
-    predictData.forEach((item) => {
+    predictData?.forEach((item) => {
       const reportDate = tools.toLuxon(item.report_date)
       if (!reportDate.isValid || reportDate.quarter !== 4) return
       q4PredictByYear.set(reportDate.year, item)
@@ -247,7 +247,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
     const quantileData: QuantileData = data.quantileData || {}
 
 
-    predictData.forEach((item, index, array) => {
+    predictData?.forEach((item, index, array) => {
       const fieldName = ValuationFieldMap[metric]
       const metricValue = item[fieldName]
 
@@ -290,7 +290,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    milestones.forEach((milestone) => {
+    milestones?.forEach((milestone) => {
       const milestoneDate = new Date(milestone.milestone_date as any)
       milestoneDate.setHours(0, 0, 0, 0)
 
