@@ -137,8 +137,12 @@ export default function IndustryAnalysisProsperity({ industryDetail }: IndustryA
     setShowEditModal(true)
   }
 
+  const getAnalysisSourceUrl = (analysis: IndustryAnalysisWithIndustry) => {
+    return analysis.original_url || analysis.original_file || ''
+  }
+
   const handleView = (analysis: IndustryAnalysisWithIndustry) => {
-    const fileUrl = analysis.original_file || analysis.original_url
+    const fileUrl = getAnalysisSourceUrl(analysis)
     if (fileUrl) {
       window.open(fileUrl, '_blank')
     } else {
@@ -156,7 +160,28 @@ export default function IndustryAnalysisProsperity({ industryDetail }: IndustryA
     {
       title: '标题',
       dataIndex: 'title',
-      render: (value: any, row: IndustryAnalysisWithIndustry) => <>{row.publisher}<br />{value}</>
+      render: (value: any, row: IndustryAnalysisWithIndustry) => {
+        const sourceUrl = getAnalysisSourceUrl(row)
+
+        return (
+          <div>
+            <div>{row.publisher}</div>
+            {sourceUrl ? (
+              <a
+                href={sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-blue-600 hover:text-blue-800 hover:underline break-all"
+                title="点击查看原文"
+              >
+                {value}
+              </a>
+            ) : (
+              <span>{value}</span>
+            )}
+          </div>
+        )
+      }
     },
     {
       title: '需求信号',
