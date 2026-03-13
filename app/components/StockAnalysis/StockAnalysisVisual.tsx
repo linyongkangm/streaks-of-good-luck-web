@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Chart } from '@antv/g2'
-import type { info__stock_company, info__milestone } from '@/types'
+import type { info__stock_company, info__milestone, StockValuationResponse, ValuationNumbers, QuantilePriceSet, StockPredictionItem } from '@/types'
 import * as tools from '@/app/tools'
 import Select from '@/app/widget/Select'
 import { DateTime } from 'luxon'
@@ -64,12 +64,12 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
   const [adjustType, setAdjustType] = useState<AdjustType>('qfq')
   const [metric, setMetric] = useState<ValuationMetric>('pe')
   const [timeRange, setTimeRange] = useState<TimeRange>('3')
-  const [data, setData] = useState<{ results: any[]; quantileData: any } | null>(null)
+  const [data, setData] = useState<StockValuationResponse['data'] | null>(null)
   const [dateRange, setDateRange] = useState({
     start_date: DateTime.now().minus({ years: 3 }),
     end_date: DateTime.now(),
   })
-  const [predictData, setPredictData] = useState<any[]>([])
+  const [predictData, setPredictData] = useState<StockPredictionItem[]>([])
   const [milestones, setMilestones] = useState<info__milestone[]>([])
 
   useEffect(() => {
@@ -186,14 +186,14 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
 
     const q4PredictByYear = new Map<number, any>()
     predictData.forEach((item) => {
-      const reportDate = DateTime.fromISO(item.report_date)
+      const reportDate = tools.toLuxon(item.report_date)
       if (!reportDate.isValid || reportDate.quarter !== 4) return
       q4PredictByYear.set(reportDate.year, item)
     })
 
     const chartDatasource: any[] = []
     chartData.forEach((item) => {
-      const valuation = item[`${adjustType}_valuation`]?.[metric]
+      const valuation = (item[`${adjustType}_valuation`] as ValuationNumbers)?.[metric]
       const closePrice = item[`${adjustType}_close_price`]
       const totalShares = Number(item.total_shares)
       const marketValue = Number(closePrice) * totalShares
@@ -224,12 +224,14 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
       // 只有当 valuation 存在且为正数时，才添加 valuation 和 quantile_price 数据
       if (valuation && valuation > 0) {
         dataPoint.valuation = parseFloat(valuation.toFixed(2))
-        const quantile_price = item.quantile_prices?.[adjustType]?.[metric] || {}
-        Object.keys(quantile_price).forEach((key) => {
-          if (quantile_price[key] !== null) {
-            dataPoint[`quantile_price_${key}`] = parseFloat(quantile_price[key].toFixed(2))
-          }
-        })
+        const quantile_price: QuantilePriceSet = item.quantile_prices?.[adjustType]?.[metric]
+        if (quantile_price) {
+          Object.entries(quantile_price).forEach(([key, value]) => {
+            if (value !== null) {
+              dataPoint[`quantile_price_${key}`] = parseFloat(value.toFixed(2))
+            }
+          })
+        }
       }
 
       chartDatasource.push(dataPoint)
@@ -237,7 +239,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
 
     const quantileData: QuantileData = data.quantileData || {}
 
-    const fieldMap: Record<ValuationMetric, string> = {
+    const fieldMap: Record<ValuationMetric, 'parent_netprofit' | 'total_parent_equity' | 'operate_income' | 'netcash_operate'> = {
       pe: 'parent_netprofit',
       pb: 'total_parent_equity',
       ps: 'operate_income',
@@ -255,7 +257,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
       const totalShare = chartData[chartData.length - 1].total_shares
       Quantiles.forEach((q, index) => {
         const quantile = quantileData[adjustType]?.[metric]?.[index]
-        dataPoint[`predict_quantile_price_p${q}`] = parseFloat(((metricValue / totalShare) * quantile).toFixed(2))
+        dataPoint[`predict_quantile_price_p${q}`] = parseFloat(((Number(metricValue) / totalShare) * quantile).toFixed(2))
       });
 
       if (index === 0 && dataPoint.trade_date > chartDatasource[chartDatasource.length - 1].trade_date) {

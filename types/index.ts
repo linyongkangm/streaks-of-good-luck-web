@@ -217,3 +217,62 @@ export interface IndustryAnalysisListResponse extends ApiResponse<{
     pages: number
   }
 }> {}
+
+// 个股估值相关类型
+export type ValuationAdjustType = 'none' | 'qfq' | 'hfq'
+export type ValuationMetric = 'pe' | 'pb' | 'ps' | 'pc'
+
+export interface ValuationNumbers {
+  pe: number | null
+  pb: number | null
+  ps: number | null
+  pc: number | null
+}
+
+export interface QuantilePriceSet {
+  p10: number | null
+  p30: number | null
+  p50: number | null
+  p70: number | null
+  p90: number | null
+}
+
+export type QuantilePrices = {
+  none: Record<ValuationMetric, QuantilePriceSet>
+  qfq: Record<ValuationMetric, QuantilePriceSet>
+  hfq: Record<ValuationMetric, QuantilePriceSet>
+}
+
+export type QuantileData = {
+  none: Record<ValuationMetric, number[]>
+  qfq: Record<ValuationMetric, number[]>
+  hfq: Record<ValuationMetric, number[]>
+}
+
+export interface StockValuationItem {
+  trade_date: string | Date
+  company_id: number
+  company_code?: string | null
+  company_name?: string | null
+  total_shares: number
+  parent_netprofit_ttm: number
+  total_parent_equity: number
+  operate_income_ttm: number
+  netcash_operate_ttm: number
+  none_close_price: number
+  qfq_close_price: number
+  hfq_close_price: number
+  none_valuation: ValuationNumbers | Record<string, unknown>
+  qfq_valuation: ValuationNumbers | Record<string, unknown>
+  hfq_valuation: ValuationNumbers | Record<string, unknown>
+  quantile_prices: QuantilePrices
+}
+
+export type StockValuationResponse = ApiResponse<{
+  results: StockValuationItem[]
+  quantileData: QuantileData
+}>
+
+// 财务预测（indicator__predict_financial_report）相关类型
+export type StockPredictionItem = indicator__predict_financial_report
+export type StockPredictionListResponse = ApiResponse<StockPredictionItem[]>
