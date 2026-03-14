@@ -95,14 +95,6 @@ const fieldDescriptions: Record<FinancialViewField, string> = {
 }
 
 const fieldOrder: FinancialViewField[] = [
-  'roe_ttm',
-  'sales_net_margin_ttm',
-  'total_asset_turnover_ttm',
-  'equity_multiplier_ttm',
-  'cashflow_ratio_ttm',
-  'gross_profit_margin_ttm',
-  'net_profit_margin_ttm',
-  'free_cash_flow_ttm',
   'total_parent_equity',
   'total_operate_income_ttm',
   'operate_income_ttm',
@@ -114,6 +106,14 @@ const fieldOrder: FinancialViewField[] = [
   'netcash_invest_ttm',
   'netcash_finance_ttm',
   'rate_change_effect_ttm',
+  'roe_ttm',
+  'sales_net_margin_ttm',
+  'total_asset_turnover_ttm',
+  'equity_multiplier_ttm',
+  'cashflow_ratio_ttm',
+  'gross_profit_margin_ttm',
+  'net_profit_margin_ttm',
+  'free_cash_flow_ttm',
   'contract_liab_ttm',
   'note_accounts_rece_ttm',
   'note_accounts_payable_ttm',
@@ -125,14 +125,10 @@ const fieldOrder: FinancialViewField[] = [
 ]
 
 const quickSelectFields: FinancialViewField[] = [
-  'roe_ttm',
-  'sales_net_margin_ttm',
-  'total_asset_turnover_ttm',
-  'equity_multiplier_ttm',
   'cashflow_ratio_ttm',
+  'free_cash_flow_ttm',
   'gross_profit_margin_ttm',
   'net_profit_margin_ttm',
-  'free_cash_flow_ttm',
 ]
 
 const otherFields: FinancialViewField[] = fieldOrder.filter((field) => !quickSelectFields.includes(field))
@@ -312,7 +308,7 @@ function useFetchFinancialData(selectedCompany: Props['selectedCompany']) {
   return { records, milestones, loading }
 }
 
-function ttmIntervalTypeFilter(datasource: (CharDataForSingle | ChartDataForUpstreamDownstreamBargainingPower)[], ttmIntervalType: TTMIntervalType) {
+function ttmIntervalTypeFilter(datasource: (CharDataForSingle | ChartDataForGroup)[], ttmIntervalType: TTMIntervalType) {
   let sorted = [...datasource].sort((a, b) => a.report_date.getTime() - b.report_date.getTime())
   // 如果是年度数据，只保留每年第四季度的数据点（如果存在），因为年度数据通常以第四季度的 TTM 数据为代表
   if (ttmIntervalType === TTMIntervalType.Annual) {
@@ -353,22 +349,16 @@ interface CharDataForSingle {
   milestones?: MilestoneWithRelations[]
 }
 
-interface ChartDataForUpstreamDownstreamBargainingPower {
+interface ChartDataForGroup {
   report_date: Date,
   value: number,
-  contract_liab_margin_ttm: number,
-  contract_liab_margin_ttm_sequential_ratio: number,
-  note_accounts_payable_margin_ttm: number,
-  note_accounts_payable_margin_ttm_sequential_ratio: number,
-  prepayment_margin_ttm: number,
-  prepayment_margin_ttm_sequential_ratio: number,
-  note_accounts_rece_margin_ttm: number,
-  note_accounts_rece_margin_ttm_sequential_ratio: number,
   milestones?: MilestoneWithRelations[],
+  [key: string]: any
 }
 
 enum FieldGroup {
   UpstreamDownstreamBargainingPower = '上下游议价能力',
+  ROE = 'ROE分析',
 }
 const FieldGroupOptions: Record<FieldGroup, { yTitle: string, fields: string[] }> = {
   [FieldGroup.UpstreamDownstreamBargainingPower]: {
@@ -380,6 +370,16 @@ const FieldGroupOptions: Record<FieldGroup, { yTitle: string, fields: string[] }
       'prepayment_margin_ttm',
     ]
   },
+  [FieldGroup.ROE]: {
+    yTitle: 'ROE',
+    fields: [
+      'roe_ttm',
+      'sales_net_margin_ttm',
+      'total_asset_turnover_ttm',
+      'equity_multiplier_ttm',
+    ]
+  },
+
 }
 
 export default function StockAnalysisFinancialViewChart({ selectedCompany }: Props) {
@@ -392,6 +392,7 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
   const [ttmIntervalType, setTtmIntervalType] = useState<TTMIntervalType>(TTMIntervalType.TTM)
 
   useEffect(() => {
+
     if (Object.values(FieldGroup).includes(fieldForInput as FieldGroup)) {
       setFieldGroup(fieldForInput as FieldGroup)
       setField(null)
@@ -403,17 +404,17 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
 
   useEffect(() => {
     if (!chartRef.current || !records || records.length === 0 || !milestones) return
-    let chartDatasource: (CharDataForSingle | ChartDataForUpstreamDownstreamBargainingPower)[] = []
+    let chartDatasource: (CharDataForSingle | ChartDataForGroup)[] = []
     // 将数据按照报告期聚合，并计算指标值和关联的里程碑事件
     records.forEach((item) => {
       const report_date = toLuxon(item.report_date!)
-      if (fieldGroup === FieldGroup.UpstreamDownstreamBargainingPower) {
-        const charData: ChartDataForUpstreamDownstreamBargainingPower = {
+      if (fieldGroup) {
+        const charData: ChartDataForGroup = {
           report_date: report_date.toJSDate(),
           value: 0, // 这个值不重要，主要是为了展示里程碑事件，实际的数值展示在各自的线条上
           ...FieldGroupOptions[fieldGroup].fields.reduce((acc, marginField) => {
-            acc[marginField as keyof ChartDataForUpstreamDownstreamBargainingPower] = calculateMetricValue(marginField as FinancialViewField, item)
-            acc[`${marginField}_sequential_ratio` as keyof ChartDataForUpstreamDownstreamBargainingPower] = Number.NaN
+            acc[marginField as keyof ChartDataForGroup] = calculateMetricValue(marginField as FinancialViewField, item)
+            acc[`${marginField}_sequential_ratio` as keyof ChartDataForGroup] = Number.NaN
             return acc
           }, {} as any),
           milestones: milestonesFilter(milestones, report_date, ttmIntervalType),
@@ -435,21 +436,21 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
     chartDatasource = ttmIntervalTypeFilter(chartDatasource, ttmIntervalType)
 
     // 计算环比增长率
-    if (fieldGroup === FieldGroup.UpstreamDownstreamBargainingPower) {
-      (chartDatasource as ChartDataForUpstreamDownstreamBargainingPower[]).forEach((chartData, i, arr) => {
+    if (fieldGroup) {
+      (chartDatasource as ChartDataForGroup[]).forEach((chartData, i, arr) => {
         if (i !== 0) {
           const prevChartData = arr[i - 1];
           FieldGroupOptions[fieldGroup].fields.forEach((marginField) => {
-            const sequentialRatioField = `${marginField}_sequential_ratio` as keyof ChartDataForUpstreamDownstreamBargainingPower
-            const currentValue = chartData[marginField as keyof ChartDataForUpstreamDownstreamBargainingPower] as number
-            const prevValue = prevChartData[marginField as keyof ChartDataForUpstreamDownstreamBargainingPower] as number
+            const sequentialRatioField = `${marginField}_sequential_ratio` as keyof ChartDataForGroup
+            const currentValue = chartData[marginField as keyof ChartDataForGroup] as number
+            const prevValue = prevChartData[marginField as keyof ChartDataForGroup] as number
             if (Number.isFinite(currentValue) && Number.isFinite(prevValue) && prevValue !== 0) {
               chartData[sequentialRatioField] = (currentValue - prevValue) / Math.abs(prevValue) as any
             }
           });
         }
       })
-    } else {
+    } else if (field) {
       (chartDatasource as CharDataForSingle[]).forEach((d, i, arr) => {
         if (i !== 0) {
           const prevValue = arr[i - 1].value
@@ -603,7 +604,7 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
         chartInstance.current = null
       }
     }
-  }, [records, milestones, field, ttmIntervalType])
+  }, [records, milestones, field, fieldGroup, ttmIntervalType])
 
   const fieldGroupOptions: { value: string; label: string }[] = Object.values(FieldGroup).map((value) => ({
     value,
@@ -655,7 +656,7 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
             <h3 className="font-semibold mb-2">{fieldGroup}</h3>
             {
               FieldGroupOptions[fieldGroup].fields.map((marginField) => (
-                <p className="leading-relaxed">{(fieldLabels as any)[marginField]}：{(fieldDescriptions as any)[marginField]}</p>
+                <p className="leading-relaxed" key={marginField}>{(fieldLabels as any)[marginField]}：{(fieldDescriptions as any)[marginField]}</p>
               ))
             }
           </>
