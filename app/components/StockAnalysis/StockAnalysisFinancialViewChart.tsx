@@ -18,7 +18,7 @@ interface Props {
 type DataType = 'ttm' | 'annual'
 
 type FinancialViewField =
-  Exclude<keyof view_financial_statements, 'total_shares' | 'company_id' | 'report_date' | 'total_operate_income_last_year' | 'operate_income_last_year' | 'total_operate_cost_last_year' | 'operate_cost_last_year' | 'netprofit_last_year' | 'parent_netprofit_last_year' | 'netcash_operate_last_year' | 'netcash_invest_last_year' | 'netcash_finance_last_year' | 'rate_change_effect_last_year' | 'free_cash_flow_last_year' | 'contract_liab_ttm' | 'contract_liab_last_year' | 'note_accounts_payable_ttm' | 'note_accounts_payable_last_year' | 'prepayment_ttm' | 'prepayment_last_year' | 'note_accounts_rece_ttm' | 'note_accounts_rece_last_year'>
+  Exclude<keyof view_financial_statements, 'total_shares' | 'company_id' | 'report_date' | 'total_operate_income_last_year' | 'operate_income_last_year' | 'total_operate_cost_last_year' | 'operate_cost_last_year' | 'netprofit_last_year' | 'parent_netprofit_last_year' | 'netcash_operate_last_year' | 'netcash_invest_last_year' | 'netcash_finance_last_year' | 'rate_change_effect_last_year' | 'free_cash_flow_last_year' | 'contract_liab_last_year' | 'note_accounts_payable_last_year' | 'prepayment_last_year' | 'note_accounts_rece_last_year'>
   | 'cashflow_ratio_ttm' | 'gross_profit_margin_ttm' | 'net_profit_margin_ttm' | 'sales_net_margin_ttm' | 'total_asset_turnover_ttm' | 'equity_multiplier_ttm' | 'roe_ttm'
 
 const fieldLabels: Record<FinancialViewField, string> = {
@@ -49,6 +49,10 @@ const fieldLabels: Record<FinancialViewField, string> = {
   netcash_finance_ttm: '筹资现金流',
   rate_change_effect_ttm: '汇率变动影响',
   free_cash_flow_ttm: '自由现金流',
+  contract_liab_ttm: '合同负债',
+  note_accounts_payable_ttm: '应付账款和应付票据',
+  prepayment_ttm: '预付款项',
+  note_accounts_rece_ttm: '应收账款和应收票据',
 }
 
 const fieldDescriptions: Record<FinancialViewField, string> = {
@@ -72,6 +76,10 @@ const fieldDescriptions: Record<FinancialViewField, string> = {
   netcash_finance_ttm: '最近12个月筹资活动产生的净现金流，反映公司的融资和分配活动。',
   rate_change_effect_ttm: '最近12个月汇率变动对现金及现金等价物的影响，反映汇兑损益。',
   free_cash_flow_ttm: '最近12个月的自由现金流，衡量公司的真实现金生成能力和可支配能力。',
+  contract_liab_ttm: '最近12个月的合同负债，反映公司已收款但尚未履约的金额，代表未来的收入确认。',
+  note_accounts_payable_ttm: '最近12个月的应付账款和应付票据，反映公司因购买商品或接受劳务而产生的短期债务。',
+  prepayment_ttm: '最近12个月的预付款项，反映公司已支付但尚未收到商品或服务的金额，代表未来的成本确认。',
+  note_accounts_rece_ttm: '最近12个月的应收账款和应收票据，反映公司因销售商品或提供劳务而产生的短期债权。',
 }
 
 const fieldOrder: FinancialViewField[] = [
@@ -94,6 +102,10 @@ const fieldOrder: FinancialViewField[] = [
   'netcash_invest_ttm',
   'netcash_finance_ttm',
   'rate_change_effect_ttm',
+  'contract_liab_ttm',
+  'note_accounts_payable_ttm',
+  'prepayment_ttm',
+  'note_accounts_rece_ttm',
 ]
 
 const quickSelectFields: FinancialViewField[] = [
