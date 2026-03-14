@@ -232,14 +232,6 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
   const [dataType, setDataType] = useState<DataType>('ttm')
   const isPercentField = field === 'gross_profit_margin_ttm' || field === 'net_profit_margin_ttm' || field === 'cashflow_ratio_ttm' || field === 'sales_net_margin_ttm' || field === 'roe_ttm'
 
-  // 根据数据类型获取实际字段名
-  const getFieldForDataType = (baseField: FinancialViewField, type: DataType): string => {
-    if (type === 'ttm') return baseField
-    // 年度数据使用每年第四季度的 TTM 字段
-    if (type === 'annual') return baseField
-    return baseField
-  }
-
   useEffect(() => {
     const fetchData = async () => {
       if (!selectedCompany?.id) return
