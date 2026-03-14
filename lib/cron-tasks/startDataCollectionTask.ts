@@ -66,7 +66,7 @@ export async function startDataCollectionTaskHalfMonthCallback() {
 }
 
 function startDataCollectionTaskHalfMonth() {
-  const expression = `2 9 1,16 * *`;
+  const expression = `20 9 1,16 * *`;
   cron.schedule(expression, startDataCollectionTaskHalfMonthCallback);
   console.log(`Data collection task scheduled: every half month at ${expression}`);
 }
