@@ -83,7 +83,7 @@ export default function SecuritiesMetadataBalanceSheet({ selectedCompany }: Prop
       format: ColumnFormatType.NUMBER,
     },
     {
-      title: '应付票据及应付账款',
+      title: '应付账款和票据',
       dataIndex: 'note_accounts_payable',
       format: ColumnFormatType.NUMBER,
     },
@@ -93,7 +93,7 @@ export default function SecuritiesMetadataBalanceSheet({ selectedCompany }: Prop
       format: ColumnFormatType.NUMBER,
     },
     {
-      title: '应收票据及应收账款',
+      title: '应收账款和票据',
       dataIndex: 'note_accounts_rece',
       format: ColumnFormatType.NUMBER,
     }

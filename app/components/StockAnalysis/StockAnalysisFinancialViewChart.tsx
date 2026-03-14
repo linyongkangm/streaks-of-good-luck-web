@@ -3,7 +3,7 @@
 import { use, useEffect, useRef, useState } from 'react'
 import { Chart } from '@antv/g2'
 import { DateTime } from 'luxon'
-import type { info__stock_company, view_financial_statements, info__milestone, MilestoneWithRelations } from '@/types'
+import type { info__stock_company, view_financial_statements, MilestoneWithRelations } from '@/types'
 import Panel from '@/app/widget/Panel'
 import Select from '@/app/widget/Select'
 import Radio from '@/app/widget/Radio'
@@ -15,7 +15,6 @@ interface Props {
   selectedCompany: info__stock_company
 }
 
-type DataType = 'ttm' | 'annual'
 
 type FinancialViewField =
   Exclude<keyof view_financial_statements, 'total_shares' | 'company_id' | 'report_date' | 'total_operate_income_last_year' | 'operate_income_last_year' | 'total_operate_cost_last_year' | 'operate_cost_last_year' | 'netprofit_last_year' | 'parent_netprofit_last_year' | 'netcash_operate_last_year' | 'netcash_invest_last_year' | 'netcash_finance_last_year' | 'rate_change_effect_last_year' | 'free_cash_flow_last_year' | 'contract_liab_last_year' | 'note_accounts_payable_last_year' | 'prepayment_last_year' | 'note_accounts_rece_last_year'>
@@ -59,9 +58,9 @@ const fieldLabels: Record<FinancialViewField, string> = {
   rate_change_effect_ttm: '汇率变动影响',
   free_cash_flow_ttm: '自由现金流',
   contract_liab_ttm: '合同负债',
-  note_accounts_payable_ttm: '应付账款和应付票据',
+  note_accounts_payable_ttm: '应付账款和票据',
   prepayment_ttm: '预付款项',
-  note_accounts_rece_ttm: '应收账款和应收票据',
+  note_accounts_rece_ttm: '应收账款和票据',
 }
 
 const fieldDescriptions: Record<FinancialViewField, string> = {
@@ -116,13 +115,13 @@ const fieldOrder: FinancialViewField[] = [
   'netcash_finance_ttm',
   'rate_change_effect_ttm',
   'contract_liab_ttm',
+  'note_accounts_rece_ttm',
   'note_accounts_payable_ttm',
   'prepayment_ttm',
-  'note_accounts_rece_ttm',
   'contract_liab_margin_ttm',
+  'note_accounts_rece_margin_ttm',
   'note_accounts_payable_margin_ttm',
   'prepayment_margin_ttm',
-  'note_accounts_rece_margin_ttm',
 ]
 
 const quickSelectFields: FinancialViewField[] = [
@@ -134,10 +133,6 @@ const quickSelectFields: FinancialViewField[] = [
   'gross_profit_margin_ttm',
   'net_profit_margin_ttm',
   'free_cash_flow_ttm',
-  'contract_liab_margin_ttm',
-  'note_accounts_payable_margin_ttm',
-  'prepayment_margin_ttm',
-  'note_accounts_rece_margin_ttm',
 ]
 
 const otherFields: FinancialViewField[] = fieldOrder.filter((field) => !quickSelectFields.includes(field))
@@ -228,59 +223,6 @@ function calculateMetricValue(field: FinancialViewField, record: view_financial_
   return record[field] !== undefined ? Number((record as any)[field]) : Number.NaN
 }
 
-function isPercentageField(field: string) {
-  return [
-    'gross_profit_margin_ttm',
-    'net_profit_margin_ttm',
-    'cashflow_ratio_ttm',
-    'sales_net_margin_ttm',
-    'roe_ttm',
-    'contract_liab_margin_ttm',
-    'note_accounts_payable_margin_ttm',
-    'prepayment_margin_ttm',
-    'note_accounts_rece_margin_ttm'
-  ].includes(field)
-}
-
-// 计算合理的坐标轴范围（排除极值）
-function calculateReasonableRange(values: number[]) {
-  const validValues = values.filter(v => Number.isFinite(v))
-  if (validValues.length === 0) return { min: undefined, max: undefined }
-  if (validValues.length === 1) {
-    const val = validValues[0]
-    const offset = Math.abs(val) * 0.1 || 0.1
-    return { min: val - offset, max: val + offset }
-  }
-
-  // 使用百分位数方法：保留 1%-99% 的数据范围（数据少时使用 5%-95%）
-  const sorted = [...validValues].sort((a, b) => a - b)
-  const useWideRange = sorted.length < 20
-  const lowPercentile = useWideRange ? 0.05 : 0.01
-  const highPercentile = useWideRange ? 0.95 : 0.99
-
-  const lowIndex = Math.max(0, Math.floor(sorted.length * lowPercentile))
-  const highIndex = Math.min(sorted.length - 1, Math.floor(sorted.length * highPercentile))
-
-  const min = sorted[lowIndex]
-  const max = sorted[highIndex]
-
-  // 计算范围
-  let range = max - min
-
-  // 如果范围太小（方差很小），使用均值的10%作为最小范围
-  if (Math.abs(range) < 1e-10) {
-    const mean = validValues.reduce((a, b) => a + b, 0) / validValues.length
-    range = Math.abs(mean) * 0.1 || 0.1 // 至少10%或0.1
-  }
-
-  // 添加缓冲空间（10%）
-  const buffer = Math.abs(range) * 0.1
-
-  return {
-    min: min - buffer,
-    max: max + buffer,
-  }
-}
 
 function useFetchFinancialData(selectedCompany: Props['selectedCompany']) {
   const [records, setRecords] = useState<view_financial_statements[] | null>(null)
@@ -370,87 +312,195 @@ function useFetchFinancialData(selectedCompany: Props['selectedCompany']) {
   return { records, milestones, loading }
 }
 
+function ttmIntervalTypeFilter(datasource: (CharDataForSingle | ChartDataForUpstreamDownstreamBargainingPower)[], ttmIntervalType: TTMIntervalType) {
+  let sorted = [...datasource].sort((a, b) => a.report_date.getTime() - b.report_date.getTime())
+  // 如果是年度数据，只保留每年第四季度的数据点（如果存在），因为年度数据通常以第四季度的 TTM 数据为代表
+  if (ttmIntervalType === TTMIntervalType.Annual) {
+    const lastChartData = sorted[sorted.length - 1]
+    sorted = sorted.filter(d => toLuxon(d.report_date).quarter === 4)
+    // 如果最后一个数据点不是第四季度的，说明缺失了年度数据，可以考虑保留这个数据点（虽然它不完整，但总比没有好）
+    if (lastChartData && toLuxon(lastChartData.report_date).quarter !== 4) {
+      sorted.push(lastChartData)
+    }
+  }
+  return sorted
+}
+
+function milestonesFilter(milestones: MilestoneWithRelations[], date: DateTime, ttmIntervalType: TTMIntervalType) {
+  return milestones.filter(milestone => {
+    const milestoneDate = toLuxon(milestone.milestone_date)
+    // 先按年份过滤
+    let isFiltered = milestoneDate.year === date.year
+    // 如果是 TTM 数据，进一步按季度过滤，确保里程碑事件与数据点在同一季度
+    if (isFiltered && ttmIntervalType === TTMIntervalType.TTM) {
+      isFiltered = milestoneDate.quarter === date.quarter
+    }
+    return isFiltered
+  })
+}
+const ColorList: string[] = ['#1890ff', '#2fc25b', '#facc14', '#223273', '#8543e0', '#13c2c2', '#3436c7', '#fa8c16']
+
+enum TTMIntervalType {
+  TTM = 'TTM',
+  Annual = '年末TTM',
+}
+
+
+interface CharDataForSingle {
+  report_date: Date;
+  value: number;
+  sequential_ratio: number;
+  milestones?: MilestoneWithRelations[]
+}
+
+interface ChartDataForUpstreamDownstreamBargainingPower {
+  report_date: Date,
+  value: number,
+  contract_liab_margin_ttm: number,
+  contract_liab_margin_ttm_sequential_ratio: number,
+  note_accounts_payable_margin_ttm: number,
+  note_accounts_payable_margin_ttm_sequential_ratio: number,
+  prepayment_margin_ttm: number,
+  prepayment_margin_ttm_sequential_ratio: number,
+  note_accounts_rece_margin_ttm: number,
+  note_accounts_rece_margin_ttm_sequential_ratio: number,
+  milestones?: MilestoneWithRelations[],
+}
+
+enum FieldGroup {
+  UpstreamDownstreamBargainingPower = '上下游议价能力',
+}
+const FieldGroupOptions: Record<FieldGroup, { yTitle: string, fields: string[] }> = {
+  [FieldGroup.UpstreamDownstreamBargainingPower]: {
+    yTitle: '占营收比率',
+    fields: [
+      'contract_liab_margin_ttm',
+      'note_accounts_rece_margin_ttm',
+      'note_accounts_payable_margin_ttm',
+      'prepayment_margin_ttm',
+    ]
+  },
+}
 
 export default function StockAnalysisFinancialViewChart({ selectedCompany }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
   const chartInstance = useRef<Chart | null>(null)
   const { records, milestones, loading } = useFetchFinancialData(selectedCompany)
-  const [field, setField] = useState<FinancialViewField>('parent_netprofit_ttm')
-  const [dataType, setDataType] = useState<DataType>('ttm')
-  const isPercentField = isPercentageField(field)
+  const [fieldForInput, setFieldForInput] = useState<FieldGroup | FinancialViewField>(FieldGroup.UpstreamDownstreamBargainingPower)
+  const [fieldGroup, setFieldGroup] = useState<FieldGroup | null>(null)
+  const [field, setField] = useState<FinancialViewField | null>(null)
+  const [ttmIntervalType, setTtmIntervalType] = useState<TTMIntervalType>(TTMIntervalType.TTM)
+
+  useEffect(() => {
+    if (Object.values(FieldGroup).includes(fieldForInput as FieldGroup)) {
+      setFieldGroup(fieldForInput as FieldGroup)
+      setField(null)
+    } else {
+      setField(fieldForInput as FinancialViewField)
+      setFieldGroup(null)
+    }
+  }, [fieldForInput]);
 
   useEffect(() => {
     if (!chartRef.current || !records || records.length === 0 || !milestones) return
-    const charDataMap = new Map<string, { report_date: Date; value: number; sequential_ratio: number; milestones: MilestoneWithRelations[] }>()
+    let chartDatasource: (CharDataForSingle | ChartDataForUpstreamDownstreamBargainingPower)[] = []
     // 将数据按照报告期聚合，并计算指标值和关联的里程碑事件
     records.forEach((item) => {
-      const metricValue = calculateMetricValue(field, item)
-      const date = toLuxon(item.report_date!)
-      charDataMap.set(date.toFormat('yyyy-Qq'), {
-        report_date: date.toJSDate(),
-        value: metricValue,
-        sequential_ratio: Number.NaN,
-        milestones: milestones.filter(milestone => {
-          const milestoneDate = toLuxon(milestone.milestone_date)
-          // 先按年份过滤
-          let isFiltered = milestoneDate.year === date.year
-          // 如果是 TTM 数据，进一步按季度过滤，确保里程碑事件与数据点在同一季度
-          if (isFiltered && dataType === 'ttm') {
-            isFiltered = milestoneDate.quarter === date.quarter
-          }
-          return isFiltered
-        }),
-      })
-    })
-    let chartData = Array.from(charDataMap.values()).sort((a, b) => a.report_date.getTime() - b.report_date.getTime())
-    // 如果是年度数据，只保留每年第四季度的数据点（如果存在），因为年度数据通常以第四季度的 TTM 数据为代表
-    if (dataType === 'annual') {
-      const lastChartData = chartData[chartData.length - 1]
-      chartData = chartData.filter(d => toLuxon(d.report_date).quarter === 4)
-      // 如果最后一个数据点不是第四季度的，说明缺失了年度数据，可以考虑保留这个数据点（虽然它不完整，但总比没有好）
-      if (lastChartData && toLuxon(lastChartData.report_date).quarter !== 4) {
-        chartData.push(lastChartData)
-      }
-    }
-    // 计算环比增长率
-    chartData.forEach((d, i) => {
-      if (i === 0) {
-        d.sequential_ratio = Number.NaN
-      } else {
-        const prevValue = chartData[i - 1].value
-        if (Number.isFinite(d.value) && Number.isFinite(prevValue) && prevValue !== 0) {
-          d.sequential_ratio = (d.value - prevValue) / Math.abs(prevValue)
-        } else {
-          d.sequential_ratio = Number.NaN
+      const report_date = toLuxon(item.report_date!)
+      if (fieldGroup === FieldGroup.UpstreamDownstreamBargainingPower) {
+        const charData: ChartDataForUpstreamDownstreamBargainingPower = {
+          report_date: report_date.toJSDate(),
+          value: 0, // 这个值不重要，主要是为了展示里程碑事件，实际的数值展示在各自的线条上
+          ...FieldGroupOptions[fieldGroup].fields.reduce((acc, marginField) => {
+            acc[marginField as keyof ChartDataForUpstreamDownstreamBargainingPower] = calculateMetricValue(marginField as FinancialViewField, item)
+            acc[`${marginField}_sequential_ratio` as keyof ChartDataForUpstreamDownstreamBargainingPower] = Number.NaN
+            return acc
+          }, {} as any),
+          milestones: milestonesFilter(milestones, report_date, ttmIntervalType),
         }
+        chartDatasource.push(charData);
+      } else if (field) {
+        const metricValue = calculateMetricValue(field, item)
+        const charData: CharDataForSingle = {
+          report_date: report_date.toJSDate(),
+          value: metricValue,
+          sequential_ratio: Number.NaN,
+          milestones: milestonesFilter(milestones, report_date, ttmIntervalType),
+        }
+        chartDatasource.push(charData);
       }
     })
 
-    if (chartData.length === 0) return
+    // 根据选择的 TTMIntervalType 过滤数据，如果是年度数据，则只保留每年第四季度的数据点（如果存在）
+    chartDatasource = ttmIntervalTypeFilter(chartDatasource, ttmIntervalType)
+
+    // 计算环比增长率
+    if (fieldGroup === FieldGroup.UpstreamDownstreamBargainingPower) {
+      (chartDatasource as ChartDataForUpstreamDownstreamBargainingPower[]).forEach((chartData, i, arr) => {
+        if (i !== 0) {
+          const prevChartData = arr[i - 1];
+          FieldGroupOptions[fieldGroup].fields.forEach((marginField) => {
+            const sequentialRatioField = `${marginField}_sequential_ratio` as keyof ChartDataForUpstreamDownstreamBargainingPower
+            const currentValue = chartData[marginField as keyof ChartDataForUpstreamDownstreamBargainingPower] as number
+            const prevValue = prevChartData[marginField as keyof ChartDataForUpstreamDownstreamBargainingPower] as number
+            if (Number.isFinite(currentValue) && Number.isFinite(prevValue) && prevValue !== 0) {
+              chartData[sequentialRatioField] = (currentValue - prevValue) / Math.abs(prevValue) as any
+            }
+          });
+        }
+      })
+    } else {
+      (chartDatasource as CharDataForSingle[]).forEach((d, i, arr) => {
+        if (i !== 0) {
+          const prevValue = arr[i - 1].value
+          if (Number.isFinite(d.value) && Number.isFinite(prevValue) && prevValue !== 0) {
+            d.sequential_ratio = (d.value - prevValue) / Math.abs(prevValue)
+          }
+        }
+      })
+    }
+
+
+    if (chartDatasource.length === 0) return
     if (chartInstance.current) {
       chartInstance.current.destroy()
       chartInstance.current = null
     }
 
 
-    const valueRange = calculateReasonableRange(chartData.map(d => d.value))
+    // const valueRange = calculateReasonableRange(chartData.map(d => d.value))
     const chart = new Chart({
       container: chartRef.current,
       autoFit: true,
-      height: 380,
+      height: 500,
     })
-
+    const chartOptions: {
+      yTitle: string,
+      fields?: string[],
+    } = fieldGroup ? FieldGroupOptions[fieldGroup] : { yTitle: field ? fieldLabels[field] : '' }
     chart.options({
       type: 'view',
-      data: chartData,
+      data: chartDatasource,
       encode: {
         x: 'report_date',
       },
       legend: false,
       axis: {
         x: {
-          title: `${selectedCompany.company_name} - ${dataType === 'ttm' ? 'TTM' : '年度'}报告期`,
+          title: `${selectedCompany.company_name} - ${ttmIntervalType === TTMIntervalType.TTM ? 'TTM' : '年度'}报告期`,
         },
+        y: {
+          title: chartOptions.yTitle,
+          labelFormatter: (value: number) => {
+            return formatNumber(value, 2)
+          },
+        },
+
+      },
+      scale: {
+        y: {
+          nice: true,
+        }
       },
       interaction: {
         tooltip: {
@@ -466,54 +516,43 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
             y: 'value',
           },
           style: {
-            lineWidth: 2,
-            stroke: '#1f77b4',
-          },
-          scale: {
-            y: {
-              nice: true,
-              domainMin: valueRange.min,
-              domainMax: valueRange.max,
-            }
-          },
-          axis: {
-            y: {
-              title: fieldLabels[field],
-              labelFormatter: (value: number) => {
-                if (isPercentField) {
-                  return `${(Number(value) * 100).toFixed(2)}%`
-                }
-                return formatNumber(value, 2)
-              },
-            },
+            lineWidth: chartOptions.fields && chartOptions.fields.length > 0 ? 0 : 2, // 如果有具体的指标线条要展示，就不单独展示这个总线
           },
           tooltip: {
             title: (d) => {
               return `${toLuxon(d.report_date).toFormat('yyyy-Qq')}`
             },
             items: [
-              {
-                name: '报告期',
-                channel: 'x',
-                valueFormatter: (value) => toLuxon(value).toFormat('yyyy-Qq'),
-              },
-              {
-                name: fieldLabels[field],
-                field: 'value',
-                valueFormatter: (value) =>
-                  isPercentField
-                    ? `${(Number(value) * 100).toFixed(2)}%`
-                    : formatNumber(Number(value)),
-              },
-              {
-                name: '环比',
-                field: 'sequential_ratio',
-                color: '#ff7f0e',
-                valueFormatter: (value) => {
-                  const v = Number(value)
-                  return Number.isFinite(v) ? `${(v * 100).toFixed(2)}%` : '-'
+              ...(
+                chartOptions.fields && chartOptions.fields.length > 0 ?
+                  chartOptions.fields.map((marginField, index) => {
+                    return [{
+                      name: (fieldLabels as any)[marginField],
+                      field: marginField,
+                      valueFormatter: formatNumber,
+                      color: ColorList[index],
+                    }, {
+                      name: (fieldLabels as any)[marginField] + '环比',
+                      field: marginField + '_sequential_ratio',
+                      valueFormatter: formatNumber,
+                      color: ColorList[index],
+                    }]
+                  }).flat() : []
+              ),
+              ...(field ? [
+                {
+                  name: fieldLabels[field],
+                  field: 'value',
+                  valueFormatter: formatNumber,
                 },
-              },
+                {
+                  name: '环比',
+                  field: 'sequential_ratio',
+                  color: '#ff7f0e',
+                  valueFormatter: formatNumber,
+                },
+              ] : []
+              ),
               {
                 name: '事件',
                 field: 'milestones',
@@ -524,9 +563,21 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
                   return milestones.map(m => m.keyword).join('<br/>')
                 },
               },
-            ],
+            ]
           }
         },
+        ...(chartOptions.fields && chartOptions.fields.map((marginField, index) => ({
+          type: 'line',
+          encode: {
+            y: marginField,
+            color: ColorList[index],
+          },
+          style: {
+            connect: true,
+            lineWidth: 2,
+          },
+          tooltip: false,
+        })) || []),
         {
           type: 'point',
           encode: {
@@ -535,12 +586,12 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
             size: 8,
           },
           style: {
-            stroke: (d: typeof chartData[number]) => getMilestonePointColor(d.milestones),
-            fill: (d: typeof chartData[number]) => getMilestonePointColor(d.milestones),
+            stroke: (d: typeof chartDatasource[number]) => getMilestonePointColor(d.milestones),
+            fill: (d: typeof chartDatasource[number]) => getMilestonePointColor(d.milestones),
           },
           tooltip: false
         },
-      ],
+      ]
     })
 
     chart.render()
@@ -552,45 +603,70 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
         chartInstance.current = null
       }
     }
-  }, [records, milestones, field, dataType, isPercentField])
+  }, [records, milestones, field, ttmIntervalType])
 
+  const fieldGroupOptions: { value: string; label: string }[] = Object.values(FieldGroup).map((value) => ({
+    value,
+    label: value,
+  }))
+  fieldGroupOptions.push(...quickSelectFields.map((value) => ({
+    value,
+    label: fieldLabels[value],
+  })))
   return (
     <Panel>
       <div className="flex gap-4 items-end flex-wrap">
         <FormLabel label="数据类型">
           <Radio
-            options={[
-              { value: 'ttm', label: 'TTM' },
-              { value: 'annual', label: '年度末TTM' },
-            ] as const}
-            value={dataType}
-            onChange={(v) => setDataType(v as DataType)}
-          />
-        </FormLabel>
-        <FormLabel label="常用指标">
-          <Radio
-            options={quickSelectFields.map((value) => ({
+            options={Object.values(TTMIntervalType).map((value) => ({
               value,
-              label: fieldLabels[value],
+              label: value,
             }))}
-            value={field}
-            onChange={setField}
+            value={ttmIntervalType}
+            onChange={(val) => setTtmIntervalType(val as TTMIntervalType)}
           />
         </FormLabel>
-        <FormLabel label="其他指标">
+        <FormLabel label="数据组">
+          <Radio
+            options={fieldGroupOptions}
+            value={fieldForInput}
+            onChange={(val) => {
+              if (val === null) {
+                return
+              }
+              setFieldForInput(val as FieldGroup)
+            }}
+          />
+        </FormLabel>
+        <FormLabel label="原始指标">
           <Select
             options={otherFields.map((value) => ({
               value,
               label: fieldLabels[value],
             }))}
-            value={field}
-            onChange={setField}
+            value={fieldForInput}
+            onChange={setFieldForInput}
           />
         </FormLabel>
       </div>
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4 text-sm text-blue-900">
-        <h3 className="font-semibold mb-2">{fieldLabels[field]}</h3>
-        <p className="leading-relaxed">{fieldDescriptions[field]}</p>
+        {
+          fieldGroup && <>
+            <h3 className="font-semibold mb-2">{fieldGroup}</h3>
+            {
+              FieldGroupOptions[fieldGroup].fields.map((marginField) => (
+                <p className="leading-relaxed">{(fieldLabels as any)[marginField]}：{(fieldDescriptions as any)[marginField]}</p>
+              ))
+            }
+          </>
+        }
+        {
+          field && <>
+            <h3 className="font-semibold mb-2">{fieldLabels[field]}</h3>
+            <p className="leading-relaxed">{fieldDescriptions[field]}</p>
+          </>
+        }
+
       </div>
       {loading ? (
         <Loading />

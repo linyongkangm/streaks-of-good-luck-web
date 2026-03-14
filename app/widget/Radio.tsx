@@ -16,10 +16,11 @@ interface RadioOption<T = string> {
 
 interface RadioProps<T = string> {
   options: RadioOption<T>[]
-  value: T
-  onChange: (value: T) => void
+  value: T | null
+  onChange: (value: T | null) => void
   disabled?: boolean
   className?: string
+  cancelable?: boolean
 }
 
 export default function Radio<T extends string = string>({
@@ -28,6 +29,7 @@ export default function Radio<T extends string = string>({
   onChange,
   disabled = false,
   className = '',
+  cancelable = false,
 }: RadioProps<T>) {
   return (
     <div className={`inline-flex rounded-lg overflow-hidden border border-slate-300 ${className}`}>
@@ -35,7 +37,7 @@ export default function Radio<T extends string = string>({
         <button
           key={option.value}
           type="button"
-          onClick={() => !disabled && onChange(option.value)}
+          onClick={() => !disabled && onChange(option.value === value && cancelable ? null : option.value)}
           disabled={disabled}
           className={`
             px-4 py-2 transition-colors
