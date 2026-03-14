@@ -88,7 +88,7 @@ class HelloAgentsLLM:
 
         except APIError as e:
             logger.error(f"❌ 调用LLM API时发生错误: {e}")
-            if "You have exceeded today's quota" in e.message:
+            if "You have exceeded today's quota" in e.message or "We have to rate limit you for model" in e.message:
                 # 还没有更智能的方式来判断是否需要切换模型，所以先简单地在遇到配额超限错误时切换模型
                 if cur_model == self.model:
                     self.shiftModel(1)
