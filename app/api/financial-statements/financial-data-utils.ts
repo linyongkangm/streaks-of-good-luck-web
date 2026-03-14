@@ -43,6 +43,7 @@ export async function fetchAndSaveFinancialStatements(companyId: number): Promis
 
   let balanceSheetCount = 0
   for (const item of balanceSheetData) {
+    const contractLiab = item.CONTRACT_LIAB || item.ADVANCE_RECEIVABLES || 0
     const balanceData = {
       total_parent_equity: item.TOTAL_PARENT_EQUITY || 0,
       total_assets: item.TOTAL_ASSETS || 0,
@@ -51,6 +52,10 @@ export async function fetchAndSaveFinancialStatements(companyId: number): Promis
       total_current_liab: item.TOTAL_CURRENT_LIAB || 0,
       total_noncurrent_liab: item.TOTAL_NONCURRENT_LIAB || 0,
       total_liabilities: item.TOTAL_LIABILITIES || 0,
+      contract_liab: contractLiab,
+      note_accounts_payable: item.NOTE_ACCOUNTS_PAYABLE || 0,
+      prepayment: item.PREPAYMENT || 0,
+      note_accounts_rece: item.NOTE_ACCOUNTS_RECE || 0,
     }
 
     await prisma.quote__balance_sheet.upsert({

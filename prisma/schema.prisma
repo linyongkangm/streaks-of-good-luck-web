@@ -243,6 +243,10 @@ model quote__balance_sheet {
   total_current_liab    Decimal?            @db.Decimal(20, 2)
   total_noncurrent_liab Decimal?            @db.Decimal(20, 2)
   total_liabilities     Decimal?            @db.Decimal(20, 2)
+  contract_liab         Decimal?            @db.Decimal(20, 2)
+  note_accounts_payable Decimal?            @db.Decimal(20, 2)
+  prepayment            Decimal?            @db.Decimal(20, 2)
+  note_accounts_rece    Decimal?            @db.Decimal(20, 2)
   create_time           DateTime            @default(now()) @db.DateTime(0)
   update_time           DateTime            @default(now()) @updatedAt @db.DateTime(0)
   info__stock_company   info__stock_company @relation(fields: [company_id], references: [id], map: "fk_balance_sheet_company_id")
@@ -335,6 +339,14 @@ view view_financial_statements {
   rate_change_effect_last_year   Decimal?  @db.Decimal(42, 2)
   free_cash_flow_ttm             Decimal?  @db.Decimal(42, 2)
   free_cash_flow_last_year       Decimal?  @db.Decimal(42, 2)
+  contract_liab_ttm              Decimal?  @db.Decimal(42, 2)
+  contract_liab_last_year        Decimal?  @db.Decimal(42, 2)
+  note_accounts_payable_ttm      Decimal?  @db.Decimal(42, 2)
+  note_accounts_payable_last_year Decimal? @db.Decimal(42, 2)
+  prepayment_ttm                 Decimal?  @db.Decimal(42, 2)
+  prepayment_last_year           Decimal?  @db.Decimal(42, 2)
+  note_accounts_rece_ttm         Decimal?  @db.Decimal(42, 2)
+  note_accounts_rece_last_year   Decimal?  @db.Decimal(42, 2)
 }
 
 enum VerifyStatus {

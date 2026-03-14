@@ -76,6 +76,26 @@ export default function SecuritiesMetadataBalanceSheet({ selectedCompany }: Prop
       title: '负债合计',
       dataIndex: 'total_liabilities',
       format: ColumnFormatType.NUMBER,
+    },
+    {
+      title: '合同负债',
+      dataIndex: 'contract_liab',
+      format: ColumnFormatType.NUMBER,
+    },
+    {
+      title: '应付票据及应付账款',
+      dataIndex: 'note_accounts_payable',
+      format: ColumnFormatType.NUMBER,
+    },
+    {
+      title: '预付款项',
+      dataIndex: 'prepayment',
+      format: ColumnFormatType.NUMBER,
+    },
+    {
+      title: '应收票据及应收账款',
+      dataIndex: 'note_accounts_rece',
+      format: ColumnFormatType.NUMBER,
     }
   ]
 
