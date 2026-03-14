@@ -2,7 +2,16 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Chart } from '@antv/g2'
-import type { info__stock_company, info__milestone, StockValuationResponse, ValuationNumbers, QuantilePriceSet, StockPredictionItem, StockValuationItem } from '@/types'
+import type {
+  info__stock_company,
+  MilestoneWithRelations,
+  StockValuationResponse,
+  ValuationNumbers,
+  QuantilePriceSet,
+  StockPredictionItem,
+  StockValuationItem,
+  relation__industry_or_company_milestone
+} from '@/types'
 import * as tools from '@/app/tools'
 import Select from '@/app/widget/Select'
 import { DateTime } from 'luxon'
@@ -22,7 +31,7 @@ interface ValuationChartData {
   quantile_price_p70: number,
   quantile_price_p90: number,
   predictDividendYields?: Record<number, number>,
-  milestones?: info__milestone[],
+  milestones?: MilestoneWithRelations[],
 }
 
 interface PredictChartData {
@@ -32,13 +41,13 @@ interface PredictChartData {
   predict_quantile_price_p50: number,
   predict_quantile_price_p70: number,
   predict_quantile_price_p90: number,
-  milestones?: info__milestone[],
+  milestones?: MilestoneWithRelations[],
 }
 
 interface JustMilestoneChartData {
   date: Date,
   y: number,
-  milestones?: info__milestone[],
+  milestones?: MilestoneWithRelations[],
   [key: string]: any,
 }
 
@@ -95,6 +104,13 @@ const Quantiles = [10, 30, 50, 70, 90];
 const GrayGradient = tools.genColorGradient(Quantiles.length, '#6e8a8d', '#2b677f');
 const YellowGradient = tools.genColorGradient(Quantiles.length, '#8f773a', '#d71a1a');
 
+function getMilestonePointColor(milestones: MilestoneWithRelations[] | undefined): string {
+  if (!milestones || milestones.length === 0) return '#ffffff00'
+  const hasNegative = milestones.some(milestone => milestone.relation__industry_or_company_milestone?.some(relation => /负面/.test(relation.impact || '')))
+  const hasPositive = milestones.some(milestone => milestone.relation__industry_or_company_milestone?.some(relation => /正面/.test(relation.impact || '')))
+  if (!hasNegative && !hasPositive) return '#51a2ff'
+  return hasNegative ? '#00c950' : '#fb2c36'
+}
 
 export default function StockAnalysisVisual({ selectedCompany }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
@@ -123,7 +139,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
   }
   const [valuationData, setValuationData] = useState<StockValuationResponse['data'] | null>(null)
   const [predictData, setPredictData] = useState<StockPredictionItem[] | null>(null)
-  const [milestones, setMilestones] = useState<info__milestone[] | null>(null)
+  const [milestones, setMilestones] = useState<MilestoneWithRelations[] | null>(null)
 
   // `dateRange` is computed on demand via `getDateRange()`
 
@@ -198,10 +214,10 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
 
       // 去重（基于 id）
       const uniqueMilestones = Array.from(
-        new Map(allMilestones.map((item: info__milestone) => [item.id, item])).values()
+        new Map(allMilestones.map((item: MilestoneWithRelations) => [item.id, item])).values()
       )
 
-      setMilestones(uniqueMilestones as info__milestone[])
+      setMilestones(uniqueMilestones)
     } catch (error) {
       console.error('获取里程碑数据失败:', error)
     }
@@ -239,7 +255,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
     };
 
     // 预处理
-    const milestonesMap = new Map<string, info__milestone[]>()
+    const milestonesMap = new Map<string, MilestoneWithRelations[]>()
     milestones.forEach(milestone => {
       const milestoneDatetime = tools.toLuxon(milestone.milestone_date)
       const key = `${milestoneDatetime.toFormat(DATE_FORMAT)}`;
@@ -460,8 +476,8 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
               {
                 name: '事件',
                 field: 'milestones',
-                color: '#ff6b6b',
-                valueFormatter: (milestones: info__milestone[]) => {
+                color: '#51a2ff',
+                valueFormatter: (milestones: MilestoneWithRelations[]) => {
                   if (!milestones || milestones.length === 0) return undefined as any
                   return milestones.map(m => m.keyword).join('<br/>')
                 }
@@ -540,8 +556,8 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
             size: 8,
           },
           style: {
-            stroke: (d: ValuationChartData) => d.milestones ? '#ff6b6b' : '#ffffff00',
-            fill: (d: ValuationChartData) => d.milestones ? '#ff6b6b' : '#ffffff00',
+            stroke: (d: ValuationChartData) => getMilestonePointColor(d.milestones),
+            fill: (d: ValuationChartData) => getMilestonePointColor(d.milestones),
           },
           tooltip: false
         },

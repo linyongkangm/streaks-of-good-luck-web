@@ -1,5 +1,5 @@
-import { 
-  info__stock_company, 
+import {
+  info__stock_company,
   info__tweet,
 
   info__industry_analysis,
@@ -206,7 +206,7 @@ export interface IndustryProsperityAnalysisRequest {
   reportDate?: string
 }
 
-export interface IndustryProsperityAnalysisResponse extends ApiResponse<IndustryAnalysisWithIndustry> {}
+export interface IndustryProsperityAnalysisResponse extends ApiResponse<IndustryAnalysisWithIndustry> { }
 
 export interface IndustryAnalysisListResponse extends ApiResponse<{
   data: IndustryAnalysisWithIndustry[]
@@ -216,7 +216,7 @@ export interface IndustryAnalysisListResponse extends ApiResponse<{
     total: number
     pages: number
   }
-}> {}
+}> { }
 
 // 个股估值相关类型
 export type ValuationAdjustType = 'none' | 'qfq' | 'hfq'
