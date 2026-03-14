@@ -1,9 +1,9 @@
 import * as tools from '@/app/tools';
 import cron from 'node-cron';
 
-const SYNC_HOUR = 16; // 同步股票行情的小时（24小时制）
+const SYNC_HOUR = 18; // 同步股票行情的小时（24小时制）
 // 定时任务：每天同步股票行情数据
-// 每天下午16点执行
+// 每天下午18点执行
 export function startStockQuoteSyncTask() {
   cron.schedule(`0 ${SYNC_HOUR} * * *`, async () => {
     console.log('Starting stock quote sync task...');
