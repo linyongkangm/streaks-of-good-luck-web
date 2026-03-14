@@ -226,16 +226,10 @@ function calculateReasonableRange(values: number[]) {
   }
 }
 
-export default function StockAnalysisFinancialViewChart({ selectedCompany }: Props) {
-  const chartRef = useRef<HTMLDivElement>(null)
-  const chartInstance = useRef<Chart | null>(null)
-  const [loading, setLoading] = useState(false)
+function useFetchFinancialData(selectedCompany: Props['selectedCompany']) {
   const [records, setRecords] = useState<view_financial_statements[] | null>(null)
   const [milestones, setMilestones] = useState<MilestoneWithRelations[] | null>(null)
-  const [field, setField] = useState<FinancialViewField>('parent_netprofit_ttm')
-  const [dataType, setDataType] = useState<DataType>('ttm')
-  const isPercentField = isPercentageField(field)
-
+  const [loading, setLoading] = useState(false)
   useEffect(() => {
     const fetchData = async () => {
       if (!selectedCompany?.id) return
@@ -289,17 +283,15 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
         }
 
         // 获取数据范围
-        const sortedRecords = [...records].sort((a, b) =>
-          new Date(a.report_date as any).getTime() - new Date(b.report_date as any).getTime()
+        const sortedRecords = [...records].sort((a, b) => new Date(a.report_date as any).getTime() - new Date(b.report_date as any).getTime()
         )
         const startDate = DateTime.fromJSDate(new Date(sortedRecords[0].report_date as any)).toISODate()
         const endDate = DateTime.fromJSDate(new Date(sortedRecords[sortedRecords.length - 1].report_date as any)).toISODate()
 
         // 获取每个行业的里程碑
-        const milestonePromises = industries.map((industryRelation: any) =>
-          fetch(`/api/milestones?industryId=${industryRelation.industry_id}&startDate=${startDate}&endDate=${endDate}`)
-            .then(res => res.ok ? res.json() : { data: [] })
-            .then(result => result.data || [])
+        const milestonePromises = industries.map((industryRelation: any) => fetch(`/api/milestones?industryId=${industryRelation.industry_id}&startDate=${startDate}&endDate=${endDate}`)
+          .then(res => res.ok ? res.json() : { data: [] })
+          .then(result => result.data || [])
         )
 
         const milestonesArrays = await Promise.all(milestonePromises)
@@ -319,12 +311,20 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
       fetchMilestones()
     }
   }, [records])
+  return { records, milestones, loading }
+}
 
+
+export default function StockAnalysisFinancialViewChart({ selectedCompany }: Props) {
+  const chartRef = useRef<HTMLDivElement>(null)
+  const chartInstance = useRef<Chart | null>(null)
+  const { records, milestones, loading } = useFetchFinancialData(selectedCompany)
+  const [field, setField] = useState<FinancialViewField>('parent_netprofit_ttm')
+  const [dataType, setDataType] = useState<DataType>('ttm')
+  const isPercentField = isPercentageField(field)
 
   useEffect(() => {
     if (!chartRef.current || !records || records.length === 0 || !milestones) return
-
-
     const charDataMap = new Map<string, { report_date: Date; value: number; sequential_ratio: number; milestones: MilestoneWithRelations[] }>()
     // 将数据按照报告期聚合，并计算指标值和关联的里程碑事件
     records.forEach((item) => {
@@ -546,5 +546,6 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
     </Panel>
   )
 }
+
 
 
