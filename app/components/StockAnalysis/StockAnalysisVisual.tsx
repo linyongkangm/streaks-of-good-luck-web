@@ -21,6 +21,7 @@ interface ValuationChartData {
   quantile_price_p50: number,
   quantile_price_p70: number,
   quantile_price_p90: number,
+  predictDividendYields?: Record<number, number>,
   milestones?: info__milestone[],
 }
 
@@ -236,6 +237,8 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
         chartDatasourceMap.set(key, newData)
       }
     };
+
+    // 预处理
     const milestonesMap = new Map<string, info__milestone[]>()
     milestones.forEach(milestone => {
       const milestoneDatetime = tools.toLuxon(milestone.milestone_date)
@@ -250,6 +253,12 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
       const key = `${tools.toLuxon(item.trade_date).toFormat(DATE_FORMAT)}`;
       stockValuationItemMap.set(key, item)
     })
+    const predictDataQ4 = predictData.filter(item => {
+      const reportDate = tools.toLuxon(item.report_date)
+      return reportDate.isValid && reportDate.quarter === 4
+    })
+
+    // 开始
     const start_date = tools.toLuxon(valuationData.results[0].trade_date)
     const end_date = tools.toLuxon(valuationData.results[valuationData.results.length - 1].trade_date)
     let prevValuationChartData: ValuationChartData | undefined = undefined
@@ -261,16 +270,23 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
 
       if (stockValuationItem) {
         const quantilePriceSet: QuantilePriceSet = stockValuationItem.quantile_prices?.[adjustType]?.[metric];
+        const total_market_value = Number(stockValuationItem.qfq_close_price) * Number(stockValuationItem.total_shares)
         prevValuationChartData = {
           date: i_date.toJSDate(),
           closePrice: stockValuationItem[`${adjustType}_close_price`],
           valuation: (stockValuationItem[`${adjustType}_valuation`] as ValuationNumbers)?.[metric] as number,
-          total_market_value: Number(stockValuationItem.qfq_close_price) * Number(stockValuationItem.total_shares),
+          total_market_value: total_market_value,
           quantile_price_p10: quantilePriceSet['p10'] as number,
           quantile_price_p30: quantilePriceSet['p30'] as number,
           quantile_price_p50: quantilePriceSet['p50'] as number,
           quantile_price_p70: quantilePriceSet['p70'] as number,
           quantile_price_p90: quantilePriceSet['p90'] as number,
+          predictDividendYields: predictDataQ4.reduce((acc, predictData) => {
+            const reportDate = tools.toLuxon(predictData.report_date)
+            const dividendYield = ((Number(predictData.parent_netprofit) * (Number(predictData.dividend_payout_ratio) / 100)) / total_market_value) * 100
+            acc[reportDate.year] = dividendYield
+            return acc
+          }, {} as Record<number, number>),
           milestones: iMilestones,
         }
         mergeSetChartDatasourceMap(key, prevValuationChartData)
@@ -331,6 +347,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
         appendPredictMilestoneChartData(date, reportDate)
       }
 
+      // 正经的，当下的
       mergeSetChartDatasourceMap(reportDate.toFormat(DATE_FORMAT), predictChartData);
 
       const nextPredictData = arr[index + 1]
@@ -416,12 +433,14 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
                 field: 'total_market_value',
                 valueFormatter: tools.formatNumber,
               },
-              // ...q4PredictByYear.size > 0 ? Array.from(q4PredictByYear.keys()).map(year => {
-              //   return {
-              //     name: `${year}股息率`,
-              //     field: `predictDividendYieldText${year}Q4`,
-              //   }
-              // }) : [],
+              {
+                name: '预测股息率',
+                field: 'predictDividendYields',
+                valueFormatter: (predictDividendYields: ValuationChartData['predictDividendYields']) => {
+                  if (!predictDividendYields || Object.keys(predictDividendYields).length === 0) return undefined as any
+                  return Object.entries(predictDividendYields).map(([year, dividendYield]) => `${year}年: ${dividendYield.toFixed(2)}%`).join('<br/>');
+                },
+              },
               ...Quantiles.map((q, index) => {
                 return {
                   name: `${q}分位(${valuationData.quantileData[adjustType]?.[metric]?.[index] ? `${valuationData.quantileData[adjustType][metric][index].toFixed(2)}` : ''})`,
@@ -444,7 +463,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
                 color: '#ff6b6b',
                 valueFormatter: (milestones: info__milestone[]) => {
                   if (!milestones || milestones.length === 0) return undefined as any
-                  return milestones.map(m => m.keyword).join(', ')
+                  return milestones.map(m => m.keyword).join('<br/>')
                 }
               },
             ]
