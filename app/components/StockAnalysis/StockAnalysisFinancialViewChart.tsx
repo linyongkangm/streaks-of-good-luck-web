@@ -19,15 +19,9 @@ type DataType = 'ttm' | 'annual'
 
 type FinancialViewField =
   Exclude<keyof view_financial_statements, 'total_shares' | 'company_id' | 'report_date' | 'total_operate_income_last_year' | 'operate_income_last_year' | 'total_operate_cost_last_year' | 'operate_cost_last_year' | 'netprofit_last_year' | 'parent_netprofit_last_year' | 'netcash_operate_last_year' | 'netcash_invest_last_year' | 'netcash_finance_last_year' | 'rate_change_effect_last_year' | 'free_cash_flow_last_year' | 'contract_liab_last_year' | 'note_accounts_payable_last_year' | 'prepayment_last_year' | 'note_accounts_rece_last_year'>
-  | 'cashflow_ratio_ttm' | 'gross_profit_margin_ttm' | 'net_profit_margin_ttm' | 'sales_net_margin_ttm' | 'total_asset_turnover_ttm' | 'equity_multiplier_ttm' | 'roe_ttm'
+  | 'cashflow_ratio_ttm' | 'gross_profit_margin_ttm' | 'net_profit_margin_ttm' | 'sales_net_margin_ttm' | 'total_asset_turnover_ttm' | 'equity_multiplier_ttm' | 'roe_ttm' | 'contract_liab_margin_ttm' | 'note_accounts_payable_margin_ttm' | 'prepayment_margin_ttm' | 'note_accounts_rece_margin_ttm'
 
 const fieldLabels: Record<FinancialViewField, string> = {
-  // 净利润现金含量 = 经营现金流(TTM) / 归母净利润(TTM)
-  cashflow_ratio_ttm: '净利润现金含量',
-  // 毛利率 = (营业收入(TTM) - 营业成本(TTM)) / 营业收入(TTM)
-  gross_profit_margin_ttm: '毛利率',
-  // 净利率 = 净利润(TTM) / 营业收入(TTM)
-  net_profit_margin_ttm: '净利率',
   // 销售净利率 = 归母净利润(TTM) / 营业收入(TTM)
   sales_net_margin_ttm: '销售净利率',
   // 总资产周转率 = 营业收入(TTM) / 期末总资产
@@ -36,6 +30,21 @@ const fieldLabels: Record<FinancialViewField, string> = {
   equity_multiplier_ttm: '权益乘数',
   // ROE = 销售净利率 × 总资产周转率 × 权益乘数
   roe_ttm: 'ROE',
+  // 净利润现金含量 = 经营现金流(TTM) / 归母净利润(TTM)
+  cashflow_ratio_ttm: '净利润现金含量',
+  // 毛利率 = (营业收入(TTM) - 营业成本(TTM)) / 营业收入(TTM)
+  gross_profit_margin_ttm: '毛利率',
+  // 净利率 = 净利润(TTM) / 营业收入(TTM)
+  net_profit_margin_ttm: '净利率',
+  // 合同负债占营业收入比率 = 合同负债(TTM) / 营业收入(TTM)
+  contract_liab_margin_ttm: '合同负债占营业收入比率',
+  // 应付账款占营业收入比率 = 应付账款(TTM) / 营业收入(TTM)
+  note_accounts_payable_margin_ttm: '应付账款占营业收入比率',
+  // 预付款项占营业收入比率 = 预付款项(TTM) / 营业收入(TTM)
+  prepayment_margin_ttm: '预付款项占营业收入比率',
+  // 应收账款占营业收入比率 = 应收账款(TTM) / 营业收入(TTM)
+  note_accounts_rece_margin_ttm: '应收账款占营业收入比率',
+
   total_assets: '资产总计',
   total_parent_equity: '归母权益',
   total_operate_income_ttm: '营业总收入',
@@ -80,6 +89,10 @@ const fieldDescriptions: Record<FinancialViewField, string> = {
   note_accounts_payable_ttm: '最近12个月的应付账款和应付票据，反映公司因购买商品或接受劳务而产生的短期债务。',
   prepayment_ttm: '最近12个月的预付款项，反映公司已支付但尚未收到商品或服务的金额，代表未来的成本确认。',
   note_accounts_rece_ttm: '最近12个月的应收账款和应收票据，反映公司因销售商品或提供劳务而产生的短期债权。',
+  contract_liab_margin_ttm: '衡量公司合同负债占营业收入的比率，反映公司预收款项的规模和未来收入的确认情况。数值越高可能意味着公司预收款项较多，未来收入确认较快。计算公式：合同负债(TTM) ÷ 营业收入(TTM)',
+  note_accounts_payable_margin_ttm: '衡量公司应付账款占营业收入的比率，反映公司利用供应商信用的程度。数值较高可能意味着公司在利用供应商信用进行融资，但过高可能存在偿债风险。计算公式：应付账款(TTM) ÷ 营业收入(TTM)',
+  prepayment_margin_ttm: '衡量公司预付款项占营业收入的比率，反映公司预付货款或服务款的规模。数值较高可能意味着公司预付账款较多，未来成本确认较快。计算公式：预付款项(TTM) ÷ 营业收入(TTM)',
+  note_accounts_rece_margin_ttm: '衡量公司应收账款占营业收入的比率，反映公司赊销业务的规模和回款风险。数值较高可能意味着公司赊销较多，存在较大的回款风险。计算公式：应收账款(TTM) ÷ 营业收入(TTM)',
 }
 
 const fieldOrder: FinancialViewField[] = [
@@ -106,6 +119,10 @@ const fieldOrder: FinancialViewField[] = [
   'note_accounts_payable_ttm',
   'prepayment_ttm',
   'note_accounts_rece_ttm',
+  'contract_liab_margin_ttm',
+  'note_accounts_payable_margin_ttm',
+  'prepayment_margin_ttm',
+  'note_accounts_rece_margin_ttm',
 ]
 
 const quickSelectFields: FinancialViewField[] = [
@@ -117,6 +134,10 @@ const quickSelectFields: FinancialViewField[] = [
   'gross_profit_margin_ttm',
   'net_profit_margin_ttm',
   'free_cash_flow_ttm',
+  'contract_liab_margin_ttm',
+  'note_accounts_payable_margin_ttm',
+  'prepayment_margin_ttm',
+  'note_accounts_rece_margin_ttm',
 ]
 
 const otherFields: FinancialViewField[] = fieldOrder.filter((field) => !quickSelectFields.includes(field))
@@ -191,11 +212,34 @@ function calculateMetricValue(field: FinancialViewField, record: view_financial_
     const equityMultiplier = totalAssets / totalParentEquity
     return salesNetMargin * totalAssetTurnover * equityMultiplier
   }
+
+  if (
+    'contract_liab_margin_ttm' === field ||
+    'note_accounts_payable_margin_ttm' === field ||
+    'prepayment_margin_ttm' === field ||
+    'note_accounts_rece_margin_ttm' === field
+  ) {
+    if (!Number.isFinite(operateIncomeTtm) || operateIncomeTtm === 0) {
+      return Number.NaN
+    }
+    return Number((record as any)[`${field.replace('_margin_ttm', '_ttm')}`]) / operateIncomeTtm
+  }
+
   return record[field] !== undefined ? Number((record as any)[field]) : Number.NaN
 }
 
 function isPercentageField(field: string) {
-  return field === 'gross_profit_margin_ttm' || field === 'net_profit_margin_ttm' || field === 'cashflow_ratio_ttm' || field === 'sales_net_margin_ttm' || field === 'roe_ttm'
+  return [
+    'gross_profit_margin_ttm',
+    'net_profit_margin_ttm',
+    'cashflow_ratio_ttm',
+    'sales_net_margin_ttm',
+    'roe_ttm',
+    'contract_liab_margin_ttm',
+    'note_accounts_payable_margin_ttm',
+    'prepayment_margin_ttm',
+    'note_accounts_rece_margin_ttm'
+  ].includes(field)
 }
 
 // 计算合理的坐标轴范围（排除极值）
