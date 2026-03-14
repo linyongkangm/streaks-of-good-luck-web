@@ -117,6 +117,111 @@ function getMilestonePointColor(milestones: MilestoneWithRelations[] | undefined
   return hasNegative ? '#00c950' : '#fb2c36'
 }
 
+function calculateMetricValue(field: FinancialViewField, record: view_financial_statements) {
+
+
+  const operateIncomeTtm = Number(record.operate_income_ttm || 0)
+  const operateCostTtm = Number(record.operate_cost_ttm || 0)
+  const netprofitTtm = Number(record.netprofit_ttm || 0)
+  const parentNetprofitTtm = Number(record.parent_netprofit_ttm || 0)
+  const netcashOperateTtm = Number(record.netcash_operate_ttm || 0)
+  const totalParentEquity = Number(record.total_parent_equity || 0)
+  const totalAssets = Number(record.total_assets || 0)
+
+  if (field === 'cashflow_ratio_ttm') {
+    if (!Number.isFinite(netcashOperateTtm) || !Number.isFinite(parentNetprofitTtm) || parentNetprofitTtm === 0) {
+      return Number.NaN
+    }
+    return netcashOperateTtm / parentNetprofitTtm
+  }
+
+  if (field === 'gross_profit_margin_ttm') {
+    if (!Number.isFinite(operateIncomeTtm) || !Number.isFinite(operateCostTtm) || operateIncomeTtm === 0) {
+      return Number.NaN
+    }
+    return (operateIncomeTtm - operateCostTtm) / operateIncomeTtm
+  }
+
+  if (field === 'net_profit_margin_ttm') {
+    if (!Number.isFinite(operateIncomeTtm) || !Number.isFinite(netprofitTtm) || operateIncomeTtm === 0) {
+      return Number.NaN
+    }
+    return netprofitTtm / operateIncomeTtm
+  }
+
+  if (field === 'sales_net_margin_ttm') {
+    if (!Number.isFinite(operateIncomeTtm) || !Number.isFinite(parentNetprofitTtm) || operateIncomeTtm === 0) {
+      return Number.NaN
+    }
+    return parentNetprofitTtm / operateIncomeTtm
+  }
+
+  if (field === 'total_asset_turnover_ttm') {
+    if (!Number.isFinite(operateIncomeTtm) || !Number.isFinite(totalAssets) || totalAssets === 0) {
+      return Number.NaN
+    }
+    return operateIncomeTtm / totalAssets
+  }
+
+  if (field === 'equity_multiplier_ttm') {
+    if (!Number.isFinite(totalAssets) || !Number.isFinite(totalParentEquity) || totalParentEquity === 0) {
+      return Number.NaN
+    }
+    return totalAssets / totalParentEquity
+  }
+
+  if (field === 'roe_ttm') {
+    if (!Number.isFinite(operateIncomeTtm) || !Number.isFinite(parentNetprofitTtm) || !Number.isFinite(totalAssets) || !Number.isFinite(totalParentEquity) || operateIncomeTtm === 0 || totalAssets === 0 || totalParentEquity === 0) {
+      return Number.NaN
+    }
+    const salesNetMargin = parentNetprofitTtm / operateIncomeTtm
+    const totalAssetTurnover = operateIncomeTtm / totalAssets
+    const equityMultiplier = totalAssets / totalParentEquity
+    return salesNetMargin * totalAssetTurnover * equityMultiplier
+  }
+  return record[field] !== undefined ? Number((record as any)[field]) : Number.NaN
+}
+
+// 计算合理的坐标轴范围（排除极值）
+function calculateReasonableRange(values: number[]) {
+  const validValues = values.filter(v => Number.isFinite(v))
+  if (validValues.length === 0) return { min: undefined, max: undefined }
+  if (validValues.length === 1) {
+    const val = validValues[0]
+    const offset = Math.abs(val) * 0.1 || 0.1
+    return { min: val - offset, max: val + offset }
+  }
+
+  // 使用百分位数方法：保留 1%-99% 的数据范围（数据少时使用 5%-95%）
+  const sorted = [...validValues].sort((a, b) => a - b)
+  const useWideRange = sorted.length < 20
+  const lowPercentile = useWideRange ? 0.05 : 0.01
+  const highPercentile = useWideRange ? 0.95 : 0.99
+
+  const lowIndex = Math.max(0, Math.floor(sorted.length * lowPercentile))
+  const highIndex = Math.min(sorted.length - 1, Math.floor(sorted.length * highPercentile))
+
+  const min = sorted[lowIndex]
+  const max = sorted[highIndex]
+
+  // 计算范围
+  let range = max - min
+
+  // 如果范围太小（方差很小），使用均值的10%作为最小范围
+  if (Math.abs(range) < 1e-10) {
+    const mean = validValues.reduce((a, b) => a + b, 0) / validValues.length
+    range = Math.abs(mean) * 0.1 || 0.1 // 至少10%或0.1
+  }
+
+  // 添加缓冲空间（10%）
+  const buffer = Math.abs(range) * 0.1
+
+  return {
+    min: min - buffer,
+    max: max + buffer,
+  }
+}
+
 export default function StockAnalysisFinancialViewChart({ selectedCompany }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
   const chartInstance = useRef<Chart | null>(null)
@@ -222,75 +327,12 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
 
   useEffect(() => {
     if (!chartRef.current || !records || records.length === 0 || !milestones) return
-    const calculateMetricValue = (record: view_financial_statements) => {
-      const metricField = getFieldForDataType(field, dataType)
 
-      const operateIncomeTtm = Number((record as any)[getFieldForDataType('operate_income_ttm', dataType)] || 0)
-      const operateCostTtm = Number((record as any)[getFieldForDataType('operate_cost_ttm', dataType)] || 0)
-      const netprofitTtm = Number((record as any)[getFieldForDataType('netprofit_ttm', dataType)] || 0)
-      const parentNetprofitTtm = Number((record as any)[getFieldForDataType('parent_netprofit_ttm', dataType)] || 0)
-      const netcashOperateTtm = Number((record as any)[getFieldForDataType('netcash_operate_ttm', dataType)] || 0)
-      const totalParentEquity = Number((record as any).total_parent_equity || 0)
-      const totalAssets = Number((record as any).total_assets || 0)
-
-      if (field === 'cashflow_ratio_ttm') {
-        if (!Number.isFinite(netcashOperateTtm) || !Number.isFinite(parentNetprofitTtm) || parentNetprofitTtm === 0) {
-          return Number.NaN
-        }
-        return netcashOperateTtm / parentNetprofitTtm
-      }
-
-      if (field === 'gross_profit_margin_ttm') {
-        if (!Number.isFinite(operateIncomeTtm) || !Number.isFinite(operateCostTtm) || operateIncomeTtm === 0) {
-          return Number.NaN
-        }
-        return (operateIncomeTtm - operateCostTtm) / operateIncomeTtm
-      }
-
-      if (field === 'net_profit_margin_ttm') {
-        if (!Number.isFinite(operateIncomeTtm) || !Number.isFinite(netprofitTtm) || operateIncomeTtm === 0) {
-          return Number.NaN
-        }
-        return netprofitTtm / operateIncomeTtm
-      }
-
-      if (field === 'sales_net_margin_ttm') {
-        if (!Number.isFinite(operateIncomeTtm) || !Number.isFinite(parentNetprofitTtm) || operateIncomeTtm === 0) {
-          return Number.NaN
-        }
-        return parentNetprofitTtm / operateIncomeTtm
-      }
-
-      if (field === 'total_asset_turnover_ttm') {
-        if (!Number.isFinite(operateIncomeTtm) || !Number.isFinite(totalAssets) || totalAssets === 0) {
-          return Number.NaN
-        }
-        return operateIncomeTtm / totalAssets
-      }
-
-      if (field === 'equity_multiplier_ttm') {
-        if (!Number.isFinite(totalAssets) || !Number.isFinite(totalParentEquity) || totalParentEquity === 0) {
-          return Number.NaN
-        }
-        return totalAssets / totalParentEquity
-      }
-
-      if (field === 'roe_ttm') {
-        if (!Number.isFinite(operateIncomeTtm) || !Number.isFinite(parentNetprofitTtm) || !Number.isFinite(totalAssets) || !Number.isFinite(totalParentEquity) || operateIncomeTtm === 0 || totalAssets === 0 || totalParentEquity === 0) {
-          return Number.NaN
-        }
-        const salesNetMargin = parentNetprofitTtm / operateIncomeTtm
-        const totalAssetTurnover = operateIncomeTtm / totalAssets
-        const equityMultiplier = totalAssets / totalParentEquity
-        return salesNetMargin * totalAssetTurnover * equityMultiplier
-      }
-
-      return Number((record as any)[metricField])
-    }
 
     const charDataMap = new Map<string, { report_date: Date; value: number; sequential_ratio: number; milestones: MilestoneWithRelations[] }>()
+    // 将数据按照报告期聚合，并计算指标值和关联的里程碑事件
     records.forEach((item) => {
-      const metricValue = calculateMetricValue(item)
+      const metricValue = calculateMetricValue(field, item)
       const date = toLuxon(item.report_date!)
       charDataMap.set(date.toFormat('yyyy-Qq'), {
         report_date: date.toJSDate(),
@@ -309,6 +351,7 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
       })
     })
     let chartData = Array.from(charDataMap.values()).sort((a, b) => a.report_date.getTime() - b.report_date.getTime())
+    // 如果是年度数据，只保留每年第四季度的数据点（如果存在），因为年度数据通常以第四季度的 TTM 数据为代表
     if (dataType === 'annual') {
       const lastChartData = chartData[chartData.length - 1]
       chartData = chartData.filter(d => toLuxon(d.report_date).quarter === 4)
@@ -317,6 +360,7 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
         chartData.push(lastChartData)
       }
     }
+    // 计算环比增长率
     chartData.forEach((d, i) => {
       if (i === 0) {
         d.sequential_ratio = Number.NaN
@@ -335,45 +379,7 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
       chartInstance.current.destroy()
       chartInstance.current = null
     }
-    // 计算合理的坐标轴范围（排除极值）
-    const calculateReasonableRange = (values: number[]) => {
-      const validValues = values.filter(v => Number.isFinite(v))
-      if (validValues.length === 0) return { min: undefined, max: undefined }
-      if (validValues.length === 1) {
-        const val = validValues[0]
-        const offset = Math.abs(val) * 0.1 || 0.1
-        return { min: val - offset, max: val + offset }
-      }
 
-      // 使用百分位数方法：保留 1%-99% 的数据范围（数据少时使用 5%-95%）
-      const sorted = [...validValues].sort((a, b) => a - b)
-      const useWideRange = sorted.length < 20
-      const lowPercentile = useWideRange ? 0.05 : 0.01
-      const highPercentile = useWideRange ? 0.95 : 0.99
-
-      const lowIndex = Math.max(0, Math.floor(sorted.length * lowPercentile))
-      const highIndex = Math.min(sorted.length - 1, Math.floor(sorted.length * highPercentile))
-
-      const min = sorted[lowIndex]
-      const max = sorted[highIndex]
-
-      // 计算范围
-      let range = max - min
-
-      // 如果范围太小（方差很小），使用均值的10%作为最小范围
-      if (Math.abs(range) < 1e-10) {
-        const mean = validValues.reduce((a, b) => a + b, 0) / validValues.length
-        range = Math.abs(mean) * 0.1 || 0.1 // 至少10%或0.1
-      }
-
-      // 添加缓冲空间（10%）
-      const buffer = Math.abs(range) * 0.1
-
-      return {
-        min: min - buffer,
-        max: max + buffer,
-      }
-    }
 
     const valueRange = calculateReasonableRange(chartData.map(d => d.value))
     const chart = new Chart({
