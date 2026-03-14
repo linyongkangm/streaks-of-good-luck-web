@@ -1,15 +1,15 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { use, useEffect, useRef, useState } from 'react'
 import { Chart } from '@antv/g2'
 import { DateTime } from 'luxon'
-import type { info__stock_company, view_financial_statements, info__milestone } from '@/types'
+import type { info__stock_company, view_financial_statements, info__milestone, MilestoneWithRelations } from '@/types'
 import Panel from '@/app/widget/Panel'
 import Select from '@/app/widget/Select'
 import Radio from '@/app/widget/Radio'
 import { FormLabel } from '@/app/widget/Form'
 import Loading from '@/app/widget/Loading'
-import { formatNumber } from '@/app/tools'
+import { formatNumber, toLuxon } from '@/app/tools'
 
 interface Props {
   selectedCompany: info__stock_company
@@ -109,12 +109,20 @@ const quickSelectFields: FinancialViewField[] = [
 
 const otherFields: FinancialViewField[] = fieldOrder.filter((field) => !quickSelectFields.includes(field))
 
+function getMilestonePointColor(milestones: MilestoneWithRelations[] | undefined): string {
+  if (!milestones || milestones.length === 0) return '#ffffff00'
+  const hasNegative = milestones.some(milestone => milestone.relation__industry_or_company_milestone?.some(relation => /负面/.test(relation.impact || '')))
+  const hasPositive = milestones.some(milestone => milestone.relation__industry_or_company_milestone?.some(relation => /正面/.test(relation.impact || '')))
+  if (!hasNegative && !hasPositive) return '#51a2ff'
+  return hasNegative ? '#00c950' : '#fb2c36'
+}
+
 export default function StockAnalysisFinancialViewChart({ selectedCompany }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
   const chartInstance = useRef<Chart | null>(null)
   const [loading, setLoading] = useState(false)
-  const [records, setRecords] = useState<view_financial_statements[]>([])
-  const [milestones, setMilestones] = useState<info__milestone[]>([])
+  const [records, setRecords] = useState<view_financial_statements[] | null>(null)
+  const [milestones, setMilestones] = useState<MilestoneWithRelations[] | null>(null)
   const [field, setField] = useState<FinancialViewField>('parent_netprofit_ttm')
   const [dataType, setDataType] = useState<DataType>('ttm')
   const isPercentField = field === 'gross_profit_margin_ttm' || field === 'net_profit_margin_ttm' || field === 'cashflow_ratio_ttm' || field === 'sales_net_margin_ttm' || field === 'roe_ttm'
@@ -158,8 +166,13 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
       }
     }
 
+
+
+    fetchData()
+  }, [selectedCompany])
+  useEffect(() => {
     const fetchMilestones = async () => {
-      if (!selectedCompany?.id || records.length === 0) return
+      if (!selectedCompany?.id || !records || records.length === 0) return
 
       try {
         // 获取公司关联的行业列表
@@ -193,106 +206,22 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
 
         // 去重（基于 id）
         const uniqueMilestones = Array.from(
-          new Map(allMilestones.map((item: info__milestone) => [item.id, item])).values()
+          new Map(allMilestones.map((item: MilestoneWithRelations) => [item.id, item])).values()
         )
 
-        setMilestones(uniqueMilestones as info__milestone[])
+        setMilestones(uniqueMilestones)
       } catch (error) {
         console.error('获取里程碑数据失败:', error)
       }
     }
-
-    fetchData().then(() => {
-      if (records.length > 0) {
-        fetchMilestones()
-      }
-    })
-  }, [selectedCompany])
-
-  useEffect(() => {
-    if (records.length > 0) {
-      const fetchMilestones = async () => {
-        try {
-          const industriesRes = await fetch(`/api/company-industries?company_id=${selectedCompany.id}`)
-          if (!industriesRes.ok) return
-
-          const industriesResult = await industriesRes.json()
-          const industries = industriesResult?.data || []
-
-          if (industries.length === 0) {
-            setMilestones([])
-            return
-          }
-
-          const sortedRecords = [...records].sort((a, b) =>
-            new Date(a.report_date as any).getTime() - new Date(b.report_date as any).getTime()
-          )
-          const startDate = DateTime.fromJSDate(new Date(sortedRecords[0].report_date as any)).toISODate()
-          const endDate = DateTime.fromJSDate(new Date(sortedRecords[sortedRecords.length - 1].report_date as any)).toISODate()
-
-          const milestonePromises = industries.map((industryRelation: any) =>
-            fetch(`/api/milestones?industryId=${industryRelation.industry_id}&startDate=${startDate}&endDate=${endDate}`)
-              .then(res => res.ok ? res.json() : { data: [] })
-              .then(result => result.data || [])
-          )
-
-          const milestonesArrays = await Promise.all(milestonePromises)
-          const allMilestones = milestonesArrays.flat()
-
-          const uniqueMilestones = Array.from(
-            new Map(allMilestones.map((item: info__milestone) => [item.id, item])).values()
-          )
-
-          setMilestones(uniqueMilestones as info__milestone[])
-        } catch (error) {
-          console.error('获取里程碑数据失败:', error)
-        }
-      }
-
+    if (records && records.length > 0) {
       fetchMilestones()
     }
-  }, [records, selectedCompany])
+  }, [records])
+
 
   useEffect(() => {
-    if (chartInstance.current) {
-      chartInstance.current.destroy()
-      chartInstance.current = null
-    }
-
-    if (!chartRef.current || records.length === 0) return
-
-    const sortedRecords = [...records].sort((a, b) => {
-      const aTime = new Date(a.report_date as any).getTime()
-      const bTime = new Date(b.report_date as any).getTime()
-      return aTime - bTime
-    })
-
-    const recordsForChart = (() => {
-      if (dataType !== 'annual') return sortedRecords
-
-      const recordsByYear = new Map<number, view_financial_statements[]>()
-
-      for (const item of sortedRecords) {
-        const date = new Date(item.report_date as any)
-        const year = date.getFullYear()
-        const yearRecords = recordsByYear.get(year) || []
-        yearRecords.push(item)
-        recordsByYear.set(year, yearRecords)
-      }
-
-      return Array.from(recordsByYear.entries())
-        .sort((a, b) => a[0] - b[0])
-        .map(([, yearRecords]) => {
-          const q4Record = [...yearRecords]
-            .sort((a, b) => new Date(a.report_date as any).getTime() - new Date(b.report_date as any).getTime())
-            .findLast((record) => new Date(record.report_date as any).getMonth() + 1 === 12)
-
-          if (q4Record) return q4Record
-
-          return [...yearRecords].sort((a, b) => new Date(a.report_date as any).getTime() - new Date(b.report_date as any).getTime())[yearRecords.length - 1]
-        })
-    })()
-
+    if (!chartRef.current || !records || records.length === 0 || !milestones) return
     const calculateMetricValue = (record: view_financial_statements) => {
       const metricField = getFieldForDataType(field, dataType)
 
@@ -359,51 +288,53 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
       return Number((record as any)[metricField])
     }
 
-    const chartData = recordsForChart
-      .map((item, index) => {
-        const metricValue = calculateMetricValue(item)
-
-        // 计算环比
-        let sequentialRatio = Number.NaN
-        if (index > 0) {
-          const prevData = recordsForChart[index - 1]
-          const prevValue = calculateMetricValue(prevData)
-
-          if (Number.isFinite(metricValue) && Number.isFinite(prevValue) && prevValue !== 0) {
-            sequentialRatio = (metricValue - prevValue) / Math.abs(prevValue)
+    const charDataMap = new Map<string, { report_date: Date; value: number; sequential_ratio: number; milestones: MilestoneWithRelations[] }>()
+    records.forEach((item) => {
+      const metricValue = calculateMetricValue(item)
+      const date = toLuxon(item.report_date!)
+      charDataMap.set(date.toFormat('yyyy-Qq'), {
+        report_date: date.toJSDate(),
+        value: metricValue,
+        sequential_ratio: Number.NaN,
+        milestones: milestones.filter(milestone => {
+          const milestoneDate = toLuxon(milestone.milestone_date)
+          // 先按年份过滤
+          let isFiltered = milestoneDate.year === date.year
+          // 如果是 TTM 数据，进一步按季度过滤，确保里程碑事件与数据点在同一季度
+          if (isFiltered && dataType === 'ttm') {
+            isFiltered = milestoneDate.quarter === date.quarter
           }
-        }
-
-        if (!Number.isFinite(metricValue)) return null
-
-        return {
-          report_date: new Date(item.report_date as any),
-          value: metricValue,
-          sequential_ratio: sequentialRatio,
-          is_milestone: false,
-        }
+          return isFiltered
+        }),
       })
-      .filter(Boolean) as Array<{ report_date: Date; value: number; sequential_ratio: number; is_milestone: boolean; milestone_title?: string; milestone_keyword?: string }>
-
-    // 将里程碑数据合并到chartData中
-    milestones.forEach((milestone) => {
-      const milestoneDate = new Date(milestone.milestone_date as any)
-      const closestDataPoint = chartData.reduce((prev, curr) => {
-        const prevDiff = Math.abs(new Date(prev.report_date).getTime() - milestoneDate.getTime())
-        const currDiff = Math.abs(new Date(curr.report_date).getTime() - milestoneDate.getTime())
-        return currDiff < prevDiff ? curr : prev
-      }, chartData[0])
-
-      if (closestDataPoint) {
-        // 在同一天添加里程碑标记点
-        closestDataPoint.is_milestone = true
-        closestDataPoint.milestone_title = milestone.title
-        closestDataPoint.milestone_keyword = milestone.keyword || undefined
+    })
+    let chartData = Array.from(charDataMap.values()).sort((a, b) => a.report_date.getTime() - b.report_date.getTime())
+    if (dataType === 'annual') {
+      const lastChartData = chartData[chartData.length - 1]
+      chartData = chartData.filter(d => toLuxon(d.report_date).quarter === 4)
+      // 如果最后一个数据点不是第四季度的，说明缺失了年度数据，可以考虑保留这个数据点（虽然它不完整，但总比没有好）
+      if (lastChartData && toLuxon(lastChartData.report_date).quarter !== 4) {
+        chartData.push(lastChartData)
+      }
+    }
+    chartData.forEach((d, i) => {
+      if (i === 0) {
+        d.sequential_ratio = Number.NaN
+      } else {
+        const prevValue = chartData[i - 1].value
+        if (Number.isFinite(d.value) && Number.isFinite(prevValue) && prevValue !== 0) {
+          d.sequential_ratio = (d.value - prevValue) / Math.abs(prevValue)
+        } else {
+          d.sequential_ratio = Number.NaN
+        }
       }
     })
 
     if (chartData.length === 0) return
-
+    if (chartInstance.current) {
+      chartInstance.current.destroy()
+      chartInstance.current = null
+    }
     // 计算合理的坐标轴范围（排除极值）
     const calculateReasonableRange = (values: number[]) => {
       const validValues = values.filter(v => Number.isFinite(v))
@@ -445,8 +376,6 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
     }
 
     const valueRange = calculateReasonableRange(chartData.map(d => d.value))
-    const ratioRange = calculateReasonableRange(chartData.map(d => d.sequential_ratio))
-
     const chart = new Chart({
       container: chartRef.current,
       autoFit: true,
@@ -496,80 +425,60 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
                 if (isPercentField) {
                   return `${(Number(value) * 100).toFixed(2)}%`
                 }
-                return formatNumber(value, 0)
-              },
-              position: 'left' as const,
-            },
-          },
-          tooltip: [
-            {
-              name: '报告期',
-              channel: 'x',
-              valueFormatter: (value) => DateTime.fromJSDate(new Date(value)).toFormat('yyyy-Qq'),
-            },
-            {
-              name: fieldLabels[field],
-              field: 'value',
-              valueFormatter: (value) =>
-                isPercentField
-                  ? `${(Number(value) * 100).toFixed(2)}%`
-                  : formatNumber(Number(value)),
-            },
-            {
-              name: '环比',
-              field: 'sequential_ratio',
-              color: '#ff7f0e',
-              valueFormatter: (value) => {
-                const v = Number(value)
-                return Number.isFinite(v) ? `${(v * 100).toFixed(2)}%` : '-'
+                return formatNumber(value, 2)
               },
             },
-            {
-              name: '事件',
-              field: 'milestone_title',
-              color: '#ff6b6b',
+          },
+          tooltip: {
+            title: (d) => {
+              return `${toLuxon(d.report_date).toFormat('yyyy-Qq')}`
             },
-          ],
-        },
-        {
-          type: 'line',
-          encode: {
-            y: 'sequential_ratio',
-            color: () => '#ff7f0e', // 橙色作为环比线
-          },
-          style: {
-            lineWidth: 2,
-            stroke: '#ff7f0e',
-            strokeDasharray: [5, 5], // 虚线表示环比
-          },
-          scale: {
-            y: {
-              independent: true,
-              nice: true,
-              domainMin: ratioRange.min,
-              domainMax: ratioRange.max,
-            }
-          },
-          axis: {
-            y: {
-              title: `环比%`,
-              labelFormatter: (value: number) => `${(Number(value) * 100).toFixed(2)}%`,
-              position: 'right' as const,
-            },
-          },
-          tooltip: false
+            items: [
+              {
+                name: '报告期',
+                channel: 'x',
+                valueFormatter: (value) => toLuxon(value).toFormat('yyyy-Qq'),
+              },
+              {
+                name: fieldLabels[field],
+                field: 'value',
+                valueFormatter: (value) =>
+                  isPercentField
+                    ? `${(Number(value) * 100).toFixed(2)}%`
+                    : formatNumber(Number(value)),
+              },
+              {
+                name: '环比',
+                field: 'sequential_ratio',
+                color: '#ff7f0e',
+                valueFormatter: (value) => {
+                  const v = Number(value)
+                  return Number.isFinite(v) ? `${(v * 100).toFixed(2)}%` : '-'
+                },
+              },
+              {
+                name: '事件',
+                field: 'milestones',
+                color: '#ff6b6b',
+                valueFormatter: (value) => {
+                  const milestones = value as MilestoneWithRelations[] | undefined
+                  if (!milestones || milestones.length === 0) return undefined as any
+                  return milestones.map(m => m.keyword).join('<br/>')
+                },
+              },
+            ],
+          }
         },
         {
           type: 'point',
           encode: {
             y: 'value',
-            shape: (d: any) => d.is_milestone ? 'diamond' : 'circle',
-            size: (d: any) => d.is_milestone ? 10 : 0,
-            color: (d: any) => d.is_milestone ? '#ff6b6b' : '#ffffff00',
+            shape: 'diamond',
+            size: 8,
           },
           style: {
-            stroke: (d: any) => d.is_milestone ? '#ff6b6b' : '#ffffff00',
-            fill: (d: any) => d.is_milestone ? '#ff6b6b' : '#ffffff00',
+            stroke: (d: typeof chartData[number]) => getMilestonePointColor(d.milestones),
+            fill: (d: typeof chartData[number]) => getMilestonePointColor(d.milestones),
           },
           tooltip: false
         },
@@ -585,7 +494,7 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
         chartInstance.current = null
       }
     }
-  }, [records, field, dataType, selectedCompany, isPercentField])
+  }, [records, milestones, field, dataType, isPercentField])
 
   return (
     <Panel>
@@ -627,7 +536,7 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
       </div>
       {loading ? (
         <Loading />
-      ) : records.length === 0 ? (
+      ) : !records || records.length === 0 ? (
         <div className="text-center py-10 text-slate-500">暂无可绘制数据</div>
       ) : (
         <div ref={chartRef} className="w-full" />
