@@ -16,8 +16,8 @@ interface RadioOption<T = string> {
 
 interface RadioProps<T = string> {
   options: RadioOption<T>[]
-  value: T | null
-  onChange: (value: T | null) => void
+  value: T
+  onChange: (value: T) => void
   disabled?: boolean
   className?: string
   cancelable?: boolean
@@ -37,7 +37,7 @@ export default function Radio<T extends string = string>({
         <button
           key={option.value}
           type="button"
-          onClick={() => !disabled && onChange(option.value === value && cancelable ? null : option.value)}
+          onClick={() => !disabled && onChange((option.value === value && cancelable ? null : option.value) as T)}
           disabled={disabled}
           className={`
             px-4 py-2 transition-colors
