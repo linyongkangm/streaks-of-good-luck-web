@@ -558,7 +558,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
           }
         }),
         // 预测分位数阶梯线
-        ...(predictData.length > 0 ? Quantiles.map((q, index) => {
+        ...(chartDatasource.some(data => data.predict_quantile_price_p50 !== undefined) ? Quantiles.map((q, index) => {
           return {
             type: 'line',
             encode: {
@@ -573,7 +573,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
           }
         }) : []),
         // 显示预测分位数数据点
-        ...(predictData.length > 0 ? Quantiles.map((q, index) => {
+        ...(chartDatasource.some(data => data.predict_quantile_price_p50 !== undefined) ? Quantiles.map((q, index) => {
           return {
             type: 'point',
             encode: {
