@@ -31,6 +31,7 @@ interface ValuationChartData {
   quantile_price_p70: number,
   quantile_price_p90: number,
   predictDividendYields?: Record<number, number>,
+  peg?: number, // 估值指标选择PE时才有这个指标，PEG = 当日PE / 最未来的预测数据的归母净利润相对最新财报的年化复合增长率
   milestones?: MilestoneWithRelations[],
 }
 
@@ -103,6 +104,35 @@ const ValuationFieldMap: Record<ValuationMetric, 'parent_netprofit' | 'total_par
 const Quantiles = [10, 30, 50, 70, 90];
 const GrayGradient = tools.genColorGradient(Quantiles.length, '#6e8a8d', '#2b677f');
 const YellowGradient = tools.genColorGradient(Quantiles.length, '#8f773a', '#d71a1a');
+
+function calculatePegGrowthRatePercent(
+  valuationData: StockValuationResponse['data'],
+  predictData: StockPredictionItem[]
+): number | undefined {
+  if (!valuationData?.results?.length || predictData.length === 0) return undefined
+
+  const latestValuation = valuationData.results[valuationData.results.length - 1]
+  const latestAnnualizedNetprofit = Number(latestValuation.parent_netprofit_ttm)
+  const latestTradeDate = tools.toLuxon(latestValuation.trade_date)
+
+  if (!Number.isFinite(latestAnnualizedNetprofit) || latestAnnualizedNetprofit <= 0) return undefined
+  if (!latestTradeDate.isValid) return undefined
+
+  const furthestPredict = [...predictData]
+    .filter(item => Number(item.parent_netprofit) > 0)
+    .sort((a, b) => tools.toLuxon(b.report_date).toMillis() - tools.toLuxon(a.report_date).toMillis())[0]
+  if (!furthestPredict) return undefined
+  const futureDate = tools.toLuxon(furthestPredict.report_date)
+  const futureNetprofit = Number(furthestPredict.parent_netprofit)
+  if (!futureDate.isValid || !Number.isFinite(futureNetprofit) || futureNetprofit <= 0) return undefined
+
+  const years = futureDate.diff(latestTradeDate, 'years').years
+  if (!Number.isFinite(years) || years <= 0) return undefined
+  const cagr = Math.pow(futureNetprofit / latestAnnualizedNetprofit, 1 / years) - 1
+  // cagr如果不是一个有效的数字或者小于等于0，就返回undefined，表示无法计算PEG增长率
+  if (!Number.isFinite(cagr) || cagr <= 0) return undefined
+  return cagr * 100
+}
 
 function getMilestonePointColor(milestones: MilestoneWithRelations[] | undefined): string {
   if (!milestones || milestones.length === 0) return '#ffffff00'
@@ -233,6 +263,7 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
 
   useEffect(() => {
     if (!chartRef.current || !valuationData || !predictData || !milestones) return
+    const pegGrowthRatePercent = metric === 'pe' ? calculatePegGrowthRatePercent(valuationData, predictData) : undefined
     const totalShare = valuationData.results[valuationData.results.length - 1]?.total_shares!; // 总股本
     const quantileData = valuationData.quantileData?.[adjustType]?.[metric]; // 分位数数据
     const chartDatasourceMap = new Map<string, Partial<ValuationChartData & PredictChartData & JustMilestoneChartData>>()
@@ -291,6 +322,9 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
           date: i_date.toJSDate(),
           closePrice: stockValuationItem[`${adjustType}_close_price`],
           valuation: (stockValuationItem[`${adjustType}_valuation`] as ValuationNumbers)?.[metric] as number,
+          peg: metric === 'pe' && pegGrowthRatePercent
+            ? Number((stockValuationItem[`${adjustType}_valuation`] as ValuationNumbers)?.pe) / pegGrowthRatePercent
+            : undefined,
           total_market_value: total_market_value,
           quantile_price_p10: quantilePriceSet['p10'] as number,
           quantile_price_p30: quantilePriceSet['p30'] as number,
@@ -442,6 +476,11 @@ export default function StockAnalysisVisual({ selectedCompany }: Props) {
               {
                 name: metricLabels[metric],
                 field: 'valuation',
+                valueFormatter: tools.formatNumber,
+              },
+              {
+                name: 'PEG',
+                field: 'peg',
                 valueFormatter: tools.formatNumber,
               },
               {
