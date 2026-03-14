@@ -182,6 +182,10 @@ function calculateMetricValue(field: FinancialViewField, record: view_financial_
   return record[field] !== undefined ? Number((record as any)[field]) : Number.NaN
 }
 
+function isPercentageField(field: string) {
+  return field === 'gross_profit_margin_ttm' || field === 'net_profit_margin_ttm' || field === 'cashflow_ratio_ttm' || field === 'sales_net_margin_ttm' || field === 'roe_ttm'
+}
+
 // 计算合理的坐标轴范围（排除极值）
 function calculateReasonableRange(values: number[]) {
   const validValues = values.filter(v => Number.isFinite(v))
@@ -230,7 +234,7 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
   const [milestones, setMilestones] = useState<MilestoneWithRelations[] | null>(null)
   const [field, setField] = useState<FinancialViewField>('parent_netprofit_ttm')
   const [dataType, setDataType] = useState<DataType>('ttm')
-  const isPercentField = field === 'gross_profit_margin_ttm' || field === 'net_profit_margin_ttm' || field === 'cashflow_ratio_ttm' || field === 'sales_net_margin_ttm' || field === 'roe_ttm'
+  const isPercentField = isPercentageField(field)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -542,3 +546,5 @@ export default function StockAnalysisFinancialViewChart({ selectedCompany }: Pro
     </Panel>
   )
 }
+
+
