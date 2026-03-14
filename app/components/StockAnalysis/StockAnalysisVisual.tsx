@@ -128,6 +128,7 @@ function calculatePegGrowthRatePercent(
 
   const years = futureDate.diff(latestTradeDate, 'years').years
   if (!Number.isFinite(years) || years <= 0) return undefined
+  // 计算年化复合增长率（CAGR）
   const cagr = Math.pow(futureNetprofit / latestAnnualizedNetprofit, 1 / years) - 1
   // cagr如果不是一个有效的数字或者小于等于0，就返回undefined，表示无法计算PEG增长率
   if (!Number.isFinite(cagr) || cagr <= 0) return undefined
